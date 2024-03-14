@@ -19,6 +19,8 @@
 package org.wildfly.security.mechanism.oauth2;
 
 /**
+ * Represents the initial client message for OAuth2 protocol.
+ *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 public class OAuth2InitialClientMessage {
@@ -27,24 +29,51 @@ public class OAuth2InitialClientMessage {
     private final byte[] messageBytes;
     private final String authorizationId;
 
+    /**
+     * Constructs a new {@code OAuth2InitialClientMessage} instance.
+     *
+     * @param authorizationId the ID of the user to be authorized.
+     * @param auth the authorization information in form of a String.
+     * @param messageBytes the byte array containing the message.
+     */
     public OAuth2InitialClientMessage(String authorizationId, String auth, byte[] messageBytes) {
         this.authorizationId = authorizationId;
         this.auth = auth;
         this.messageBytes = messageBytes;
     }
 
+    /**
+     * Returns the ID of the user to be authorized.
+     *
+     * @return the ID of the user to be authorized.
+     */
     public String getAuthorizationId() {
         return this.authorizationId;
     }
 
+    /**
+     * Returns the byte array containing the message.
+     *
+     * @return the byte array containing the message.
+     */
     public byte[] getMessage() {
         return this.messageBytes;
     }
 
+    /**
+     * Returns the authorization information in form of a String.
+     *
+     * @return the authorization information in form of a String.
+     */
     public String getAuth() {
         return auth;
     }
 
+    /**
+     * Returns whether the client provides a Bearer token.
+     *
+     * @return {@code True} if the authorization information contains "Bearer", {@code false} otherwise.
+     */
     public boolean isBearerToken() {
         return this.auth.startsWith("Bearer");
     }

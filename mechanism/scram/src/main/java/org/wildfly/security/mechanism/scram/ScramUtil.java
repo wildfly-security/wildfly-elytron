@@ -26,6 +26,8 @@ import java.util.Random;
 import org.wildfly.common.iteration.ByteIterator;
 
 /**
+ * Common utility functions used by SCRAM authentication mechanism.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 class ScramUtil {
@@ -47,6 +49,13 @@ class ScramUtil {
         randomCharDictionary = dict;
     }
 
+    /**
+     * Generates nonce of specified length.
+     *
+     * @param length the length of the nonce.
+     * @param random the RNG used for creating the nonce.
+     * @return a byte array containing the nonce.
+     */
     public static byte[] generateNonce(int length, Random random) {
         final byte[] chars = new byte[length];
         for (int i = 0; i < length; i ++) {
@@ -55,6 +64,13 @@ class ScramUtil {
         return chars;
     }
 
+    /**
+     * Parses positive integer from provided ByteIterator.
+     *
+     * @param i the ByteIterator to parse the positive integer from.
+     * @return the parsed integer.
+     * @throws NumberFormatException if the ByteIterator doesn't contain number or the number is too big for an integer
+     */
     public static int parsePosInt(final ByteIterator i) {
         int a, c;
         if (! i.hasNext()) {
@@ -80,6 +96,13 @@ class ScramUtil {
         return a;
     }
 
+    /**
+     * Bitwise XOR operation between two byte arrays of the same length.
+     * XOR operation returns 1 if only one of two corresponding bits is 1. For example: 0101 and 0011 gives 0110.
+     *
+     * @param hash the first byte array for the XOR operation. This byte array is modified by the method in place
+     * @param input the second byte array for the XOR operation.
+     */
     static void xor(final byte[] hash, final byte[] input) {
         assert hash.length == input.length;
         for (int i = 0; i < hash.length; i++) {

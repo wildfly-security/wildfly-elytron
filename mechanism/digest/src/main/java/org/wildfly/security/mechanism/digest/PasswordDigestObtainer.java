@@ -45,7 +45,7 @@ import static org.wildfly.security.mechanism.digest.DigestUtil.getTwoWayPassword
 import static org.wildfly.security.mechanism.digest.DigestUtil.userRealmPasswordDigest;
 
 /**
- * Utility class used to obtain username+realm+password using SASL/HTTP mechanism callbacks
+ * Utility class used to obtain username+realm+password using SASL/HTTP mechanism callbacks.
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
@@ -67,6 +67,20 @@ public class PasswordDigestObtainer {
     private RealmCallback realmCallback;
     private NameCallback nameCallback;
 
+    /**
+     * Constructs a new {@code PasswordDigestObtainer} instance.
+     *
+     * @param callbackHandler the callbackHandler to handle the callbacks required to obtain the username and password.
+     * @param defaultUsername the default username to use if a callback is not provided.
+     * @param defaultRealm the default realm to use if a callback is not provided.
+     * @param log the logger to use.
+     * @param credentialAlgorithm the name of the algorithm for obtaining the credential.
+     * @param messageDigest the {@link MessageDigest} used for digesting the password.
+     * @param passwordFactoryProviders the supplier of the providers to use when creating a {@code PasswordFactory} instance.
+     * @param realms the realms to check for a user and password.
+     * @param readOnlyRealmUsername {@code true} if the username passed in the callback can be modified, {@code false} otherwise.
+     * @param skipRealmCallbacks {@code true} if realm callbacks should be skipped, {@code false} otherwise.
+     */
     public PasswordDigestObtainer(CallbackHandler callbackHandler, String defaultUsername, String defaultRealm,
                                   ElytronMessages log, String credentialAlgorithm, MessageDigest messageDigest,
                                   Supplier<Provider[]> passwordFactoryProviders, String[] realms,
@@ -83,14 +97,30 @@ public class PasswordDigestObtainer {
         this.skipRealmCallbacks = skipRealmCallbacks;
     }
 
+    /**
+     * Returns the username obtained from callback or the default one.
+     *
+     * @return the username obtained from callback or the default one.
+     */
     public String getUsername() {
         return username;
     }
 
+    /**
+     * Returns the realm obtained from callback or the default one.
+     *
+     * @return the realm obtained from callback or the default one.
+     */
     public String getRealm() {
         return realm;
     }
 
+    /**
+     * Handles callbacks for user and password information.
+     *
+     * @return the salted password.
+     * @throws AuthenticationMechanismException if the callback handler does not support credential acquisition.
+     */
     public byte[] handleUserRealmPasswordCallbacks() throws AuthenticationMechanismException {
 
         realmChoiceCallBack = skipRealmCallbacks || realms == null || realms.length <= 1 ? null :
@@ -115,6 +145,12 @@ public class PasswordDigestObtainer {
         throw log.mechCallbackHandlerDoesNotSupportCredentialAcquisition(null);
     }
 
+    /**
+     * Obtains the pre-digested salted password for the {@code username} in the {@code realm}.
+     *
+     * @return the pre-digested salted password if obtained, {@code null} otherwise.
+     * @throws AuthenticationMechanismException if an exception occurs while handling the callbacks.
+     */
     private byte[] getPredigestedSaltedPassword() throws AuthenticationMechanismException {
         if (realmChoiceCallBack != null) {
             try {
@@ -180,6 +216,12 @@ public class PasswordDigestObtainer {
         return null;
     }
 
+    /**
+     * Obtains the salted password from a two-way callback.
+     *
+     * @return the byte array of the salted password if obtained, {@code null} otherwise.
+     * @throws AuthenticationMechanismException if an error occurs during the process of handling callbacks or obtaining the password.
+     */
     private byte[] getSaltedPasswordFromTwoWay() throws AuthenticationMechanismException {
         if (realmChoiceCallBack != null) {
             try {
@@ -253,6 +295,12 @@ public class PasswordDigestObtainer {
         return null;
     }
 
+    /**
+     * Obtains the salted password from a password callback.
+     *
+     * @return the byte array of the salted password.
+     * @throws AuthenticationMechanismException if an error occurs during the process of handling callbacks or obtaining the password.
+     */
     private byte[] getSaltedPasswordFromPasswordCallback() throws AuthenticationMechanismException {
         PasswordCallback passwordCallback = new PasswordCallback("User password: ", false);
 

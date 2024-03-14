@@ -21,6 +21,8 @@ package org.wildfly.security.mechanism.scram;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 
 /**
+ * Final client message for the SCRAM authentication.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ScramFinalClientMessage {
@@ -32,6 +34,16 @@ public final class ScramFinalClientMessage {
     private final byte[] messageBytes;
     private final int proofOffset;
 
+    /**
+     * Constructs a new {@code ScramFinalClientMessage} instance.
+     *
+     * @param initialResponse the initial client message.
+     * @param initialChallenge the initial server message.
+     * @param password the password used for authentication.
+     * @param clientProof the client proof sent to the server.
+     * @param messageBytes the byte array of the message.
+     * @param proofOffset the proof location in the {@code messageBytes}.
+     */
     ScramFinalClientMessage(final ScramInitialClientMessage initialResponse, final ScramInitialServerMessage initialChallenge, final ScramDigestPassword password, final byte[] clientProof, final byte[] messageBytes, final int proofOffset) {
         this.initialResponse = initialResponse;
         this.initialChallenge = initialChallenge;
@@ -41,38 +53,83 @@ public final class ScramFinalClientMessage {
         this.proofOffset = proofOffset;
     }
 
+    /**
+     * Returns the initial client message.
+     *
+     * @return the initial client message.
+     */
     public ScramInitialClientMessage getInitialResponse() {
         return initialResponse;
     }
 
+    /**
+     * Returns the initial server message.
+     *
+     * @return the initial server message.
+     */
     public ScramInitialServerMessage getInitialChallenge() {
         return initialChallenge;
     }
 
+    /**
+     * Returns the password used for authentication.
+     *
+     * @return the password used for authentication.
+     */
     public ScramDigestPassword getPassword() {
         return password;
     }
 
+    /**
+     * Returns the client proof sent to the server.
+     *
+     * @return the client proof sent to the server.
+     */
     byte[] getRawClientProof() {
         return clientProof;
     }
 
+    /**
+     * Returns the byte array of the message.
+     *
+     * @return the byte array of the message.
+     */
     byte[] getRawMessageBytes() {
         return messageBytes;
     }
 
+    /**
+     * Returns a copy of the client proof sent to the server.
+     *
+     * @return a copy of the client proof sent to the server.
+     */
     public byte[] getClientProof() {
         return clientProof.clone();
     }
 
+    /**
+     * Returns a copy of the byte array of the message.
+     *
+     * @return a copy of the byte array of the message.
+     */
     public byte[] getMessageBytes() {
         return messageBytes.clone();
     }
 
+    /**
+     * Returns the SCRAM mechanism in the initial client message.
+     *
+     * @return the SCRAM mechanism in the initial client message.
+     */
     public ScramMechanism getMechanism() {
         return initialResponse.getMechanism();
     }
 
+    /**
+     * Returns the proof location in the message.
+     *
+     * @return the proof location in the message.
+     */
     int getProofOffset() {
         return proofOffset;
     }

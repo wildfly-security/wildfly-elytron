@@ -40,7 +40,7 @@ import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 
 /**
- * An OAuth2 Sasl Server based on RFC-7628.
+ * An OAuth2 Server based on RFC-7628.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
@@ -53,12 +53,26 @@ public class OAuth2Server {
     private final Map<String, ?> serverConfig;
     private ElytronMessages log;
 
+    /**
+     * Constructs a new {@code OAuth2Server} instance.
+     *
+     * @param callbackHandler the callback handler for verifying the Bearer token.
+     * @param serverConfig the server configuration.
+     * @param log the logger to use.
+     */
     public OAuth2Server(CallbackHandler callbackHandler, Map<String, ?> serverConfig, ElytronMessages log) {
         this.callbackHandler = callbackHandler;
         this.serverConfig = serverConfig;
         this.log = log;
     }
 
+    /**
+     * Parses the initial client's message in OAuth2 protocol.
+     *
+     * @param fromBytes the initial client's message.
+     * @return parsed client's message.
+     * @throws AuthenticationMechanismException if an error occurs during the parsing or the message is invalid.
+     */
     public OAuth2InitialClientMessage parseInitialClientMessage(byte[] fromBytes) throws AuthenticationMechanismException {
         byte[] messageBytes = fromBytes.clone();
         ByteIterator byteIterator = ByteIterator.ofBytes(fromBytes.clone());
@@ -98,6 +112,13 @@ public class OAuth2Server {
         }
     }
 
+    /**
+     * Returns the value associated with a key from an OAuth2 message.
+     *
+     * @param key the key for which the value is extracted.
+     * @param keyValuesPart the String containing key-value pairs in form of OAuth2 message.
+     * @return the value of the key-value pair, {@code null} if the key is not found.
+     */
     private String getValue(String key, String keyValuesPart) {
         for (String current : keyValuesPart.split(KV_DELIMITER)) {
             String[] keyValue = current.split("=");
@@ -110,6 +131,14 @@ public class OAuth2Server {
         return null;
     }
 
+    /**
+     * Evaluates the initial response sent by the client and verifies if the Bearer token is valid.
+     * If so, authorizes the user.
+     *
+     * @param initialClientMessage the initial client's message containing the Bearer token.
+     * @return an empty byte array if the token was authorized, error message otherwise.
+     * @throws AuthenticationMechanismException if an error occurs during the evaluation or the message doesn't contain the Bearer token.
+     */
     public byte[] evaluateInitialResponse(OAuth2InitialClientMessage initialClientMessage) throws AuthenticationMechanismException {
         if (initialClientMessage.isBearerToken()) {
             String auth = initialClientMessage.getAuth();
@@ -153,6 +182,12 @@ public class OAuth2Server {
         throw log.mechInvalidClientMessage();
     }
 
+    /**
+     * Creates an error message in the format of a json object.
+     *
+     * @return The error message containing a "status" field with the value "invalid_token"
+     * and an optional field "openid-configuration" with {@code CONFIG_OPENID_CONFIGURATION_URL} value.
+     */
     private byte[] createErrorMessage() {
         JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
 

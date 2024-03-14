@@ -67,6 +67,7 @@ public final class MechanismUtil {
      * @param <S> the password type
      * @param log mechanism specific logger
      * @return the password
+     * @throws AuthenticationMechanismException if there is an error retrieving the password
      */
     public static <S extends Password> S getPasswordCredential(String userName, CallbackHandler callbackHandler, Class<S> passwordType, String passwordAlgorithm, AlgorithmParameterSpec matchParameters, AlgorithmParameterSpec generateParameters, Supplier<Provider[]> providers, ElytronMessages log) throws AuthenticationMechanismException {
         Assert.checkNotNullParam("userName", userName);
@@ -168,6 +169,7 @@ public final class MechanismUtil {
      * @param scope the HTTP scope to store computed value (must not be {@code null})
      * @param key the key to retrieve (must not be {@code null})
      * @param mappingFunction the function to apply to acquire the value (must not be {@code null})
+     * @param <R> the type of returned value
      * @return the stored or new value (not {@code null})
      */
     public static <R> R computeIfAbsent(HttpScope scope, String key, Function<String, R> mappingFunction) {

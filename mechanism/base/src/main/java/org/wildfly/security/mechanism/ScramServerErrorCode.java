@@ -45,6 +45,9 @@ public enum ScramServerErrorCode {
     private final String text;
     private final byte[] messageBytes;
 
+    /**
+     * Creates an error code instance with a String representation and a byte array for error message.
+     */
     ScramServerErrorCode() {
         text = name().replace('_', '-').toLowerCase(Locale.US);
         final int length = text.length();
@@ -54,14 +57,29 @@ public enum ScramServerErrorCode {
         messageBytes = msg;
     }
 
+    /**
+     * Returns the String representation of the error code.
+     *
+     * @return String representation of the error code.
+     */
     public String getText() {
         return text;
     }
 
+    /**
+     * Returns the copy of the byte array representing the error message.
+     *
+     * @return copy of the byte array representing the error message.
+     */
     public byte[] getMessageBytes() {
         return messageBytes.clone();
     }
 
+    /**
+     * Returns the byte array representing the error message.
+     *
+     * @return the byte array representing the error message.
+     */
     byte[] getRawMessageBytes() {
         return messageBytes;
     }

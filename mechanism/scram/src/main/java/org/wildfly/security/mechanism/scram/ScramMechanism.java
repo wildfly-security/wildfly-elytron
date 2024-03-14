@@ -30,10 +30,12 @@ import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.sasl.WildFlySasl;
 
 /**
+ * Implementation of the SCRAM authentication mechanism.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ScramMechanism {
-    /** Hash size; may be less than the output size of the MD/MAC */
+    // Hash size; may be less than the output size of the MD/MAC
     private final int hashSize;
     private final String messageDigestName;
     private final String hmacName;
@@ -41,6 +43,15 @@ public final class ScramMechanism {
     private final String passwordAlgorithm;
     private final String toString;
 
+    /**
+     * Constructs a new {@code ScramMechanism}.
+     *
+     * @param hashSize the size of the hash of the SCRAM mechanism.
+     * @param messageDigestName the name of the message digest algorithm.
+     * @param hmacName the name of the HMAC algorithm.
+     * @param plus {@code true} to use the PLUS channel binding, {@code false} otherwise.
+     * @param passwordAlgorithm the name of the password algorithm in {@link ScramDigestPassword}.
+     */
     private ScramMechanism(final int hashSize, final String messageDigestName, final String hmacName, final boolean plus, final String passwordAlgorithm) {
         this.hashSize = hashSize;
         this.messageDigestName = messageDigestName;
@@ -75,6 +86,7 @@ public final class ScramMechanism {
      * @param bindingCallback the optional channel binding callback result (may be {@code null})
      * @param minimumIterationCount the minimum iteration count to allow
      * @param maximumIterationCount the maximum iteration count to allow
+     * @param providers the security providers.
      * @return the SCRAM client, or {@code null} if the client cannot be created from this mechanism variant
      * @throws AuthenticationMechanismException if the mechanism fails for some reason
      * @see WildFlySasl#SCRAM_MIN_ITERATION_COUNT
@@ -94,6 +106,18 @@ public final class ScramMechanism {
         return new ScramClient(this, authorizationId, callbackHandler, secureRandom, bindingData, bindingType, minimumIterationCount, maximumIterationCount, providers);
     }
 
+    /**
+     * Create a SCRAM server for this mechanism.
+     *
+     * @param callbackHandler the callback handler (may not be {@code null}).
+     * @param random an optional secure random implementation to use (may be {@code null}).
+     * @param bindingCallback the optional channel binding callback result (may be {@code null}).
+     * @param minimumIterationCount the minimum iteration count to allow.
+     * @param maximumIterationCount the maximum iteration count to allow.
+     * @param providers the security providers.
+     * @return the SCRAM server, or {@code null} if the server cannot be created from this mechanism variant.
+     * @throws AuthenticationMechanismException if the mechanism fails for some reason.
+     */
     public ScramServer createServer(final CallbackHandler callbackHandler, final SecureRandom random, final ChannelBindingCallback bindingCallback, final int minimumIterationCount, final int maximumIterationCount, final Supplier<Provider[]> providers) throws AuthenticationMechanismException {
         final byte[] bindingData;
         final String bindingType;
@@ -108,26 +132,57 @@ public final class ScramMechanism {
         return new ScramServer(this, callbackHandler, random, bindingData, bindingType, minimumIterationCount, maximumIterationCount, providers);
     }
 
+    /**
+     * Returns the size of the hash of the SCRAM mechanism.
+     *
+     * @return the size of the hash of the SCRAM mechanism.
+     */
     public int getHashSize() {
         return hashSize;
     }
 
+    /**
+     * Returns the name of the message digest algorithm.
+     *
+     * @return the name of the message digest algorithm.
+     */
     public String getMessageDigestName() {
         return messageDigestName;
     }
 
+    /**
+     * Returns the name of the HMAC algorithm.
+     *
+     * @return the name of the HMAC algorithm.
+     */
     public String getHmacName() {
         return hmacName;
     }
 
+    /**
+     * Returns whether the SCRAM mechanism uses the PLUS channel binding.
+     *
+     * @return {@code true} to use the PLUS channel binding, {@code false} otherwise.
+     */
     public boolean isPlus() {
         return plus;
     }
 
+    /**
+     * Returns the name of the password algorithm from {@code ScramDigestPassword}.
+     *
+     * @return the name of the password algorithm.
+     */
     public String getPasswordAlgorithm() {
         return passwordAlgorithm;
     }
 
+    /**
+     * Returns a String representation of the SCRAM mechanism.
+     * Contains the Digest name, PLUS channel binding and hash size.
+     *
+     * @return a String representation of the SCRAM mechanism.
+     */
     public String toString() {
         return toString;
     }

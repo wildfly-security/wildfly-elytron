@@ -55,6 +55,8 @@ import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.util.StringPrep;
 
 /**
+ * A server-side implementation for the SCRAM authentication.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ScramServer {
@@ -67,6 +69,18 @@ public final class ScramServer {
     private final int minimumIterationCount;
     private final int maximumIterationCount;
 
+    /**
+     * Constructs a new {@code ScramServer}.
+     *
+     * @param mechanism the SCRAM mechanism used for the authentication.
+     * @param callbackHandler the callback handler for the authentication.
+     * @param random an optional secure RNG to use.
+     * @param bindingData the binding data for the "PLUS" channel binding option.
+     * @param bindingType the binding type for the "PLUS" channel binding option.
+     * @param minimumIterationCount the minimum number of iterations for password hashing.
+     * @param maximumIterationCount the maximum number of iterations for password hashing.
+     * @param providers the security providers.
+     */
     ScramServer(final ScramMechanism mechanism, final CallbackHandler callbackHandler, final SecureRandom random, final byte[] bindingData, final String bindingType, final int minimumIterationCount, final int maximumIterationCount, final Supplier<Provider[]> providers) {
         this.mechanism = mechanism;
         this.callbackHandler = callbackHandler;
@@ -185,6 +199,14 @@ public final class ScramServer {
         }
     }
 
+    /**
+     * Evaluates the initial client response message in SCRAM authentication.
+     * Generates a server nonce and salted password.
+     *
+     * @param clientMessage the initial client response message.
+     * @return the initial server result, containing the initial server message and the digest password.
+     * @throws AuthenticationMechanismException if an error occurs during the evaluation.
+     */
     public ScramInitialServerResult evaluateInitialResponse(final ScramInitialClientMessage clientMessage) throws AuthenticationMechanismException {
         final boolean trace = saslScram.isTraceEnabled();
 
@@ -240,6 +262,16 @@ public final class ScramServer {
         return new ScramInitialServerResult(new ScramInitialServerMessage(clientMessage, serverNonce, salt, iterationCount, messageBytes), password);
     }
 
+    /**
+     * Parses the final client message and constructs the {@link ScramFinalClientMessage} from this parsed information.
+     * Also checks if the message has all necessary properties.
+     *
+     * @param initialResponse the initial client response message provided by {@link ScramServer#parseInitialClientMessage(ChannelBindingCallback, byte[])}.
+     * @param initialResult the initial server result provided by {@link ScramServer#evaluateInitialResponse(ScramInitialClientMessage)}.
+     * @param bytes the byte array representation of the client response.
+     * @return the final client message.
+     * @throws AuthenticationMechanismException if an error occurs during the parsing.
+     */
     public ScramFinalClientMessage parseFinalClientMessage(final ScramInitialClientMessage initialResponse, final ScramInitialServerResult initialResult, final byte[] bytes) throws AuthenticationMechanismException {
         final ScramInitialServerMessage initialChallenge = initialResult.getScramInitialChallenge();
         Assert.checkNotNullParam("initialResponse", initialResponse);
@@ -352,6 +384,14 @@ public final class ScramServer {
         }
     }
 
+    /**
+     * Evaluates a SCRAM final client message and authorizes the user.
+     *
+     * @param initialResult the result of the initial server message evaluation provided by {@link ScramServer#evaluateInitialResponse(ScramInitialClientMessage)}.
+     * @param clientMessage the final client message provided by {@link ScramServer#parseFinalClientMessage(ScramInitialClientMessage, ScramInitialServerResult, byte[])}.
+     * @return the final server message providing the server signature and response.
+     * @throws AuthenticationMechanismException if an error occurs during the evaluation.
+     */
     public ScramFinalServerMessage evaluateFinalClientMessage(final ScramInitialServerResult initialResult, final ScramFinalClientMessage clientMessage) throws AuthenticationMechanismException {
         final boolean trace = saslScram.isTraceEnabled();
 
@@ -464,26 +504,56 @@ public final class ScramServer {
         }
     }
 
+    /**
+     * Returns the SCRAM mechanism used for the authentication.
+     *
+     * @return the SCRAM mechanism used for the authentication.
+     */
     public ScramMechanism getMechanism() {
         return mechanism;
     }
 
+    /**
+     * Returns the callback handler for the authentication.
+     *
+     * @return the callback handler for the authentication.
+     */
     public CallbackHandler getCallbackHandler() {
         return callbackHandler;
     }
 
+    /**
+     * Returns the RNG used for the authentication.
+     *
+     * @return the RNG used for the authentication.
+     */
     Random getRandom() {
         return random != null ? random : ThreadLocalRandom.current();
     }
 
+    /**
+     * Returns the copy of the binding data for the "PLUS" channel binding option.
+     *
+     * @return the copy of the binding data for the "PLUS" channel binding option.
+     */
     public byte[] getBindingData() {
         return bindingData == null ? null : bindingData.clone();
     }
 
+    /**
+     * Returns the binding data for the "PLUS" channel binding option.
+     *
+     * @return the binding data for the "PLUS" channel binding option.
+     */
     byte[] getRawBindingData() {
         return bindingData;
     }
 
+    /**
+     * Returns the binding type for the "PLUS" channel binding option.
+     *
+     * @return the binding type for the "PLUS" channel binding option.
+     */
     public String getBindingType() {
         return bindingType;
     }

@@ -49,13 +49,24 @@ public abstract class UsernamePasswordAuthenticationMechanism implements HttpSer
     protected final CallbackHandler callbackHandler;
 
     /**
-     * @param callbackHandler
+     * Constructs a new {@code UsernamePasswordAuthenticationMechanism} instance.
+     *
+     * @param callbackHandler the CallbackHandler used for authentication.
      */
     protected UsernamePasswordAuthenticationMechanism(CallbackHandler callbackHandler) {
         super();
         this.callbackHandler = callbackHandler;
     }
 
+    /**
+     * Authenticates the user for provided realm using their username and password.
+     *
+     * @param realmName the realm for which the user is authenticating.
+     * @param username the username of the authenticating user.
+     * @param password the password of the authenticating user.
+     * @return {@code true} if the user is authenticated for the realm, {@code false} otherwise.
+     * @throws HttpAuthenticationException if there was an IOException caused by the CallbackHandler.
+     */
     protected boolean authenticate(String realmName, String username, char[] password) throws HttpAuthenticationException {
         RealmCallback realmCallback = realmName != null ? new RealmCallback("User realm", realmName) : null;
         NameCallback nameCallback = new NameCallback("Remote Authentication Name", username);
@@ -94,6 +105,13 @@ public abstract class UsernamePasswordAuthenticationMechanism implements HttpSer
         }
     }
 
+    /**
+     * Checks if the user is authorized.
+     *
+     * @param username the username to authorize.
+     * @return {@code true} if the user is authorized, {@code false} otherwise.
+     * @throws HttpAuthenticationException if there was an IOException caused by the CallbackHandler.
+     */
     protected boolean authorize(String username) throws HttpAuthenticationException {
         httpUserPass.debugf("Username authorization. Username: [%s].",
                 username);
@@ -111,10 +129,22 @@ public abstract class UsernamePasswordAuthenticationMechanism implements HttpSer
         }
     }
 
+    /**
+     * Sends the information to the callbackHandler that the authorization succeeded.
+     *
+     * @throws IOException if an input or output error occurs.
+     * @throws UnsupportedCallbackException if the implementation of callbackHandler does not support the specified Callback type.
+     */
     protected void succeed() throws IOException, UnsupportedCallbackException {
         callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.SUCCEEDED });
     }
 
+    /**
+     * Sends the information to the callbackHandler that the authorization failed.
+     *
+     * @throws IOException if an input or output error occurs.
+     * @throws UnsupportedCallbackException if the implementation of callbackHandler does not support the specified Callback type.
+     */
     protected void fail() throws IOException, UnsupportedCallbackException {
         callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
     }

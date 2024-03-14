@@ -83,6 +83,11 @@ public class ScramServerException extends AuthenticationMechanismException {
         return super.getMessage() + ": " + error.getText();
     }
 
+    /**
+     * Returns the error code of the exception.
+     *
+     * @return the error code of the exception.
+     */
     public ScramServerErrorCode getError() {
         return error;
     }
