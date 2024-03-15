@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
-import org.apache.directory.api.ldap.model.exception.LdapInvalidDnException;
 import org.apache.directory.api.ldap.model.ldif.LdifEntry;
 import org.apache.directory.api.ldap.model.ldif.LdifReader;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
@@ -37,21 +36,21 @@ import org.apache.directory.server.core.factory.DefaultDirectoryServiceFactory;
 import org.apache.directory.server.core.factory.DirectoryServiceFactory;
 import org.apache.directory.server.core.factory.PartitionFactory;
 import org.apache.directory.server.core.kerberos.KeyDerivationInterceptor;
-import org.apache.directory.server.kerberos.KerberosConfig;
-import org.apache.directory.server.kerberos.kdc.KdcServer;
 import org.apache.directory.server.kerberos.shared.crypto.encryption.KerberosKeyFactory;
-import org.apache.directory.server.kerberos.shared.keytab.Keytab;
-import org.apache.directory.server.kerberos.shared.keytab.KeytabEntry;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.directory.server.protocol.shared.transport.Transport;
-import org.apache.directory.server.protocol.shared.transport.UdpTransport;
-import org.apache.directory.shared.kerberos.KerberosTime;
 import org.apache.directory.shared.kerberos.codec.types.EncryptionType;
 import org.apache.directory.shared.kerberos.components.EncryptionKey;
+import org.apache.kerby.kerberos.kerb.KrbException;
+import org.apache.kerby.kerberos.kerb.keytab.Keytab;
+import org.apache.kerby.kerberos.kerb.keytab.KeytabEntry;
+import org.apache.kerby.kerberos.kerb.server.SimpleKdcServer;
+import org.apache.kerby.kerberos.kerb.server.impl.DefaultInternalKdcServerImpl;
+import org.apache.kerby.kerberos.kerb.type.KerberosTime;
+import org.apache.kerby.kerberos.kerb.type.base.PrincipalName;
 import org.jboss.logging.Logger;
 
-import javax.security.auth.kerberos.KerberosPrincipal;
 
 /**
  * Utility class to wrap starting and stopping of the directory server and the KDC.
@@ -63,7 +62,7 @@ public class TestKDC {
     private static Logger log = Logger.getLogger(TestKDC.class);
     private File workingDir;
     private DirectoryService directoryService;
-    private KdcServer kdcServer;
+    private SimpleKdcServer kdcServer;
     private String originalConfig;
     private boolean exposeLdapServer;
     private LdapServer ldapServer;
@@ -117,7 +116,6 @@ public class TestKDC {
         for (String current : indexAttributes) {
             pf.addIndex(p, current, 10);
         }
-        p.setCacheService(directoryService.getCacheService());
         p.initialize();
         directoryService.addPartition(p);
     }
@@ -156,27 +154,24 @@ public class TestKDC {
         File configPath = new File(TestKDC.class.getResource("/krb5.conf").getFile());
         originalConfig = System.setProperty("java.security.krb5.conf", configPath.getAbsolutePath());
 
-        KdcServer kdcServer = new KdcServer();
-        kdcServer.setServiceName("TestKDCServer");
-        kdcServer.setSearchBaseDn("dc=wildfly,dc=org");
-        KerberosConfig config = kdcServer.getConfig();
-        config.setServicePrincipal("krbtgt/WILDFLY.ORG@WILDFLY.ORG");
-        config.setPrimaryRealm("WILDFLY.ORG");
-        config.setMaximumTicketLifetime(60000 * 1440);
-        config.setMaximumRenewableLifetime(60000 * 10080);
-
-        config.setPaEncTimestampRequired(false);
-
-        UdpTransport udp = new UdpTransport("localhost", 6088);
-        kdcServer.addTransports(udp);
-
-        kdcServer.setDirectoryService(directoryService);
-
-        // Launch the server
         try {
+            SimpleKdcServer kdcServer = new SimpleKdcServer();
+            kdcServer.setKdcRealm("WILDFLY.ORG");
+            kdcServer.setKdcHost("localhost");
+            kdcServer.setInnerKdcImpl(new DefaultInternalKdcServerImpl(kdcServer.getKdcSetting()));
+            kdcServer.setAllowUdp(true);
+            kdcServer.setKdcUdpPort(6088);
+
+            kdcServer.init();
+
+            kdcServer.createPrincipal("sasl/test_server_1@WILDFLY.ORG", "servicepwd");
+            kdcServer.createPrincipal("sasl/test_server_2@WILDFLY.ORG", "servicepwd");
+            kdcServer.createPrincipal("jduke@WILDFLY.ORG", "theduke");
+
+            // Launch the server
             kdcServer.start();
             this.kdcServer = kdcServer;
-        } catch (IOException | LdapInvalidDnException e) {
+        } catch (KrbException e) {
             throw new IllegalStateException("Unable to start KDC", e);
         }
     }
@@ -186,7 +181,11 @@ public class TestKDC {
             return;
         }
 
-        kdcServer.stop();
+        try {
+            kdcServer.stop();
+        } catch (KrbException e) {
+            throw new IllegalStateException("Unable to stop KDC", e);
+        }
         kdcServer = null;
 
         if (originalConfig != null) {
@@ -232,7 +231,7 @@ public class TestKDC {
     public String generateKeyTab(String keyTabFileName, String... credentials) {
         log.debug("Generating keytab: " + keyTabFileName);
         List<KeytabEntry> entries = new ArrayList<>();
-        KerberosTime ktm = new KerberosTime();
+        KerberosTime ktm = KerberosTime.now();
 
         for (int i = 0; i < credentials.length;) {
             String principal = credentials[i++];
@@ -242,15 +241,16 @@ public class TestKDC {
                     .entrySet()) {
                 EncryptionKey key = keyEntry.getValue();
                 log.debug("Adding key=" + key + " for principal=" + principal);
-                entries.add(new KeytabEntry(principal, KerberosPrincipal.KRB_NT_PRINCIPAL, ktm, (byte) key.getKeyVersion(), key));
+                entries.add(new KeytabEntry(new PrincipalName(principal), ktm, key.getKeyVersion(),
+                        new org.apache.kerby.kerberos.kerb.type.base.EncryptionKey(key.getKeyType().getValue(), key.getKeyValue(), key.getKeyVersion())));
             }
         }
 
-        Keytab keyTab = Keytab.getInstance();
-        keyTab.setEntries(entries);
+        Keytab keyTab = new Keytab();
+        keyTab.addKeytabEntries(entries);
         try {
             File keyTabFile = new File(workingDir, keyTabFileName);
-            keyTab.write(keyTabFile);
+            keyTab.store(keyTabFile);
             return keyTabFile.getAbsolutePath();
         } catch (IOException e) {
             throw new IllegalStateException("Cannot create keytab: " + keyTabFileName, e);
