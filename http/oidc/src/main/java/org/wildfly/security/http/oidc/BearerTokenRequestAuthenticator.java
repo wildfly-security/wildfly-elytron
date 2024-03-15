@@ -18,14 +18,14 @@
 
 package org.wildfly.security.http.oidc;
 
-import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN_PATTERN;
-import static org.wildfly.security.http.HttpConstants.ERROR;
-import static org.wildfly.security.http.HttpConstants.ERROR_DESCRIPTION;
-import static org.wildfly.security.http.HttpConstants.INVALID_TOKEN;
 import static org.wildfly.security.http.HttpConstants.REALM;
-import static org.wildfly.security.http.HttpConstants.STALE_TOKEN;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
+import static org.wildfly.security.http.oidc.Oidc.BEARER_TOKEN_PATTERN;
+import static org.wildfly.security.http.oidc.Oidc.ERROR;
+import static org.wildfly.security.http.oidc.Oidc.ERROR_DESCRIPTION;
+import static org.wildfly.security.http.oidc.Oidc.INVALID_TOKEN;
+import static org.wildfly.security.http.oidc.Oidc.STALE_TOKEN;
 import static org.wildfly.security.http.oidc.Oidc.logToken;
 
 import java.security.cert.Certificate;

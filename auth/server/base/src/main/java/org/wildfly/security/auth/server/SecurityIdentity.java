@@ -203,7 +203,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.verifier = old.verifier;
         this.publicCredentials = old.publicCredentials;
         this.privateCredentials = old.privateCredentials;
-        this.withSuppliedIdentities = null;
+        this.withSuppliedIdentities = old.withSuppliedIdentities;
         this.withIdentities = old.withIdentities;
     }
 
@@ -218,7 +218,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.verifier = old.verifier;
         this.publicCredentials = old.publicCredentials;
         this.privateCredentials = old.privateCredentials;
-        this.withSuppliedIdentities = null;
+        this.withSuppliedIdentities = old.withSuppliedIdentities;
         this.withIdentities = old.withIdentities;
     }
 

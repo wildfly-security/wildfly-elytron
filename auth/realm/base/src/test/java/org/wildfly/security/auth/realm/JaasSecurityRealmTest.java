@@ -18,6 +18,12 @@
 
 package org.wildfly.security.auth.realm;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -33,12 +39,6 @@ import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.PublicKeyCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Testsuite for the {@link JaasSecurityRealm}.
