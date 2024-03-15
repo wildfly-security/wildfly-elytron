@@ -19,16 +19,20 @@
 package org.wildfly.security.http.oidc;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 
+import org.apache.http.HttpStatus;
 import org.junit.AfterClass;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.testcontainers.DockerClientFactory;
@@ -68,6 +72,8 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     public static final String CLIENT_SECRET = "secret";
     public static KeycloakContainer KEYCLOAK_CONTAINER;
     public static final String TEST_REALM = "WildFly";
+    public static final String TENANT1_REALM = "tenant1";
+    public static final String TENANT2_REALM = "tenant2";
     public static final String KEYCLOAK_USERNAME = "username";
     public static final String KEYCLOAK_PASSWORD = "password";
     public static final String KEYCLOAK_LOGIN = "login";
@@ -76,6 +82,8 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     public static final String CLIENT_PAGE_TEXT = "Welcome page!";
     public static final String CLIENT_HOST_NAME = "localhost";
     public static MockWebServer client; // to simulate the application being secured
+    public static final String TENANT1_ENDPOINT = "tenant1";
+    public static final String TENANT2_ENDPOINT = "tenant2";
 
     protected HttpServerAuthenticationMechanismFactory oidcFactory;
 
@@ -163,7 +171,71 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
         };
     }
 
-    protected WebClient getWebClient() {
+    protected static Dispatcher createAppResponse(HttpServerAuthenticationMechanism mechanism, int expectedStatusCode, String expectedLocation, String clientPageText,
+                                                  Map<String, Object> sessionScopeAttachments) {
+        return new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest recordedRequest) throws InterruptedException {
+                String path = recordedRequest.getPath();
+                if (path.contains("/" + CLIENT_APP) && path.contains("&code=")) {
+                    try {
+                        TestingHttpServerRequest request = new TestingHttpServerRequest(new String[0],
+                                new URI(recordedRequest.getRequestUrl().toString()), recordedRequest.getHeader("Cookie"));
+                        mechanism.evaluateRequest(request);
+                        TestingHttpServerResponse response = request.getResponse();
+                        assertEquals(expectedStatusCode, response.getStatusCode());
+                        assertEquals(expectedLocation, response.getLocation());
+                        for (String key : request.getSessionScopeAttachments().keySet()) {
+                            sessionScopeAttachments.put(key, request.getSessionScopeAttachments().get(key));
+                        }
+                        return new MockResponse().setBody(clientPageText);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                return new MockResponse()
+                        .setBody("");
+            }
+        };
+    }
+
+    protected static Dispatcher createAppResponse(HttpServerAuthenticationMechanism mechanism, String clientPageText,
+                                                  Map<String, Object> sessionScopeAttachments, String tenant, boolean sameTenant) {
+        return new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest recordedRequest) throws InterruptedException {
+                String path = recordedRequest.getPath();
+                if (path.contains("/" + CLIENT_APP + "/" + tenant)) {
+                    try {
+                        TestingHttpServerRequest request = new TestingHttpServerRequest(new String[0],
+                                new URI(recordedRequest.getRequestUrl().toString()), sessionScopeAttachments);
+                        mechanism.evaluateRequest(request);
+                        TestingHttpServerResponse response = request.getResponse();
+                        if (sameTenant) {
+                            // should be able to access the same tenant without logging in again
+                            assertEquals(Status.COMPLETE, request.getResult());
+                            return new MockResponse().setBody(clientPageText);
+                        } else {
+                            // should be redirected to Keycloak to access the other tenant
+                            assertEquals(Status.NO_AUTH, request.getResult());
+                            assertEquals(HttpStatus.SC_MOVED_TEMPORARILY, response.getStatusCode());
+                            assertTrue(response.getLocation().contains(KEYCLOAK_CONTAINER.getAuthServerUrl()));
+                            HtmlPage keycloakLoginPage = getWebClient().getPage(response.getLocation());
+                            HtmlForm loginForm = keycloakLoginPage.getForms().get(0);
+                            assertNotNull(loginForm.getInputByName(KEYCLOAK_USERNAME));
+                            assertNotNull(loginForm.getInputByName(KEYCLOAK_PASSWORD));
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                return new MockResponse()
+                        .setBody("");
+            }
+        };
+    }
+
+    static WebClient getWebClient() {
         WebClient webClient = new WebClient();
         webClient.setCssErrorHandler(new SilentCssErrorHandler());
         webClient.setJavaScriptErrorListener(new SilentJavaScriptErrorListener());
@@ -172,6 +244,10 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
 
     protected static String getClientUrl() {
         return "http://" + CLIENT_HOST_NAME + ":" + CLIENT_PORT + "/" + CLIENT_APP;
+    }
+
+    protected static String getClientUrlForTenant(String tenant) {
+        return "http://" + CLIENT_HOST_NAME + ":" + CLIENT_PORT + "/" + CLIENT_APP + "/" + tenant;
     }
 
     protected HtmlInput loginToKeycloak(String username, String password, URI requestUri, String location, List<HttpServerCookie> cookies) throws IOException {
