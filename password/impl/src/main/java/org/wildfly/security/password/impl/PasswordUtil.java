@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.password.impl;
 
-import java.util.concurrent.ThreadLocalRandom;
+import java.security.SecureRandom;
 
 /**
  * Helper utility methods for operations on passwords.
@@ -27,6 +27,8 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 final class PasswordUtil {
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     /**
      * Generate a random salt as byte array.
      *
@@ -35,7 +37,24 @@ final class PasswordUtil {
      */
     public static byte[] generateRandomSalt(int saltSize) {
         byte[] randomSalt = new byte[saltSize];
-        ThreadLocalRandom.current().nextBytes(randomSalt);
+        RANDOM.nextBytes(randomSalt);
         return randomSalt;
+    }
+
+    /**
+     * Generate a random salt as int.
+     *
+     * @return a byte array representing the random salt
+     */
+    public static int generateRandomSaltInt() {
+        byte[] saltBytes = generateRandomSalt(4);
+        return convertBytesToInt(saltBytes);
+    }
+
+    static int convertBytesToInt(byte[] saltBytes) {
+        if (saltBytes.length != 4) {
+            throw new IllegalArgumentException("4 bytes are needed for conversion to int, bytes given: " + saltBytes.length);
+        }
+        return (saltBytes[0] & 0xff) << 24 | (saltBytes[1] & 0xff) << 16 | (saltBytes[2] & 0xff) << 8 | saltBytes[3] & 0xff;
     }
 }
