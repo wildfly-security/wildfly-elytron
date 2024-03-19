@@ -8,6 +8,10 @@ Welcome to the WildFly Elytron project! We welcome contributions from the commun
   - [Good First Issues](#good-first-issues)
 - [Setting up your Developer Environment](#setting-up-your-developer-environment)
 - [Contributing Guidelines](#contributing-guidelines)
+  - [Testing](#testing)
+  - [Pull Request Process](#pull-request-process)
+  - [Documentation](#documentation)
+- [FAQ for New Contributors](#faq-for-new-contributors)
 - [Community](#community)
 
 
@@ -85,8 +89,18 @@ Note: Some tests will fail if `localhost` is not listed first in `/etc/hosts` fi
 
 For more information, including details on how WildFly Elytron is integrated in WildFly Core and WildFly, check out our [developer guide](https://wildfly-security.github.io/wildfly-elytron/getting-started-for-developers/).
 
+
 ## Contributing Guidelines
 
+### Testing
+Ensure that your changes are thoroughly tested before submitting a pull request. Follow these testing guidelines:
+
+- Run the existing unit tests using Maven: `mvn clean test`
+- Include new unit tests for your code changes.
+
+If applicable, provide instructions on how to run integration tests or any additional testing procedures.
+
+### Pull Request Process
 When submitting a PR, please keep the following guidelines in mind:
 
 1. In general, it's good practice to squash all of your commits into a single commit. For larger changes, it's ok to have multiple meaningful commits. If you need help with squashing your commits, feel free to ask us how to do this on your pull request. We're more than happy to help!
@@ -96,6 +110,13 @@ When submitting a PR, please keep the following guidelines in mind:
 3. Please include the link to the JIRA issue you worked on in the description of the pull request. For example, if your PR adds a fix for [ELY-2127](https://issues.redhat.com/browse/ELY-2127), the PR description should contain a link to https://issues.redhat.com/browse/ELY-2127.
 
 For an example of a properly formatted PR, take a look at https://github.com/wildfly-security/wildfly-elytron/pull/1532
+
+### Documentation
+Contributors are encouraged to keep documentation up-to-date along with code changes. If your changes impact user-facing features, update the relevant documentation files in directory.
+Community documentation can be found in the [wildfly repository](https://github.com/wildfly/wildfly/tree/main/docs)
+
+## FAQ for New Contributors
+Check out our [Frequently Asked Questions](https://fjuma.github.io/wildfly-elytron/blog/frequently-asked-questions-new-contributors/) for New Contributors.
 
 ## Code Reviews
 
