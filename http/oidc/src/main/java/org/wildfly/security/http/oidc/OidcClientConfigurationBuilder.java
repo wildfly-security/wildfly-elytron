@@ -21,6 +21,15 @@ package org.wildfly.security.http.oidc;
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.jose4j.jws.AlgorithmIdentifiers.NONE;
 import static org.wildfly.security.http.oidc.Oidc.AuthenticationFormat.REQUEST_TYPE_OAUTH2;
+import static org.wildfly.security.http.oidc.Oidc.AUTHENTICATION_REQUEST_FORMAT;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_CONTENT_ENCRYPTION_ALGORITHM;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_ENCRYPTION_ALGORITHM;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_ALGORITHM;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_KEY_ALIAS;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_KEY_PASSWORD;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_KEYSTORE_FILE;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_KEYSTORE_PASSWORD;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_KEYSTORE_TYPE;
 import static org.wildfly.security.http.oidc.Oidc.SSLRequired;
 import static org.wildfly.security.http.oidc.Oidc.TokenStore;
 
@@ -201,6 +210,16 @@ public class OidcClientConfigurationBuilder {
         };
     }
 
+    public static OidcClientConfiguration buildWithoutUnsupportedAttributes(InputStream is, String unsupportedOidcAttributes) {
+        OidcJsonConfiguration oidcJsonConfiguration = loadOidcJsonConfiguration(is);
+        try {
+            failIfUnsupportedAttribute(unsupportedOidcAttributes, oidcJsonConfiguration);
+            return new OidcClientConfigurationBuilder().internalBuild(oidcJsonConfiguration);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static OidcClientConfiguration build(InputStream is) {
         OidcJsonConfiguration oidcJsonConfiguration = loadOidcJsonConfiguration(is);
         return new OidcClientConfigurationBuilder().internalBuild(oidcJsonConfiguration);
@@ -220,5 +239,61 @@ public class OidcClientConfigurationBuilder {
 
     public static OidcClientConfiguration build(OidcJsonConfiguration oidcJsonConfiguration) {
         return new OidcClientConfigurationBuilder().internalBuild(oidcJsonConfiguration);
+    }
+
+    private static void failIfUnsupportedAttribute(String unsupportedAttributesParameter, OidcJsonConfiguration config) throws IOException {
+        if (unsupportedAttributesParameter == null) {
+            return;
+        }
+        String[] unsupportedAttributes = unsupportedAttributesParameter.split(" ");
+        for (String attributeName : unsupportedAttributes) {
+            switch(attributeName) {
+                case AUTHENTICATION_REQUEST_FORMAT:
+                    if (config.getAuthenticationRequestFormat()!= null) {
+                        throw log.unsupportedAttribute(attributeName);
+                    }
+                    break;
+                case REQUEST_OBJECT_CONTENT_ENCRYPTION_ALGORITHM:
+                    if (config.getRequestContentEncryptionMethod()!= null) {
+                        throw log.unsupportedAttribute(attributeName);
+                    }
+                    break;
+                case REQUEST_OBJECT_ENCRYPTION_ALGORITHM:
+                    if (config.getRequestEncryptAlgorithm()!= null) {
+                        throw log.unsupportedAttribute(attributeName);
+                    }
+                    break;
+                case REQUEST_OBJECT_SIGNING_ALGORITHM:
+                    if (config.getRequestSignatureAlgorithm()!= null) {
+                        throw log.unsupportedAttribute(attributeName);
+                    }
+                    break;
+                case REQUEST_OBJECT_SIGNING_KEY_ALIAS:
+                    if (config.getRequestObjectSigningKeyAlias()!= null) {
+                        throw log.unsupportedAttribute(attributeName);
+                    }
+                    break;
+                case REQUEST_OBJECT_SIGNING_KEY_PASSWORD:
+                    if (config.getRequestObjectSigningKeyPassword()!= null) {
+                        throw log.unsupportedAttribute(attributeName);
+                    }
+                    break;
+                case REQUEST_OBJECT_SIGNING_KEYSTORE_FILE:
+                    if (config.getRequestObjectSigningKeyStoreFile()!= null) {
+                        throw log.unsupportedAttribute(attributeName);
+                    }
+                    break;
+                case REQUEST_OBJECT_SIGNING_KEYSTORE_PASSWORD:
+                    if (config.getRequestObjectSigningKeystorePassword()!= null) {
+                        throw log.unsupportedAttribute(attributeName);
+                    }
+                    break;
+                case REQUEST_OBJECT_SIGNING_KEYSTORE_TYPE:
+                    if (config.getRequestObjectSigningKeystoreType()!= null) {
+                        throw log.unsupportedAttribute(attributeName);
+                    }
+                    break;
+            }
+        }
     }
 }

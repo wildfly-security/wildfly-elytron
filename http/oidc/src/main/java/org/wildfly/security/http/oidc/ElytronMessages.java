@@ -250,5 +250,9 @@ interface ElytronMessages extends BasicLogger {
     @LogMessage(level = INFO)
     @Message(id = 23061, value = "The OpenID provider does not support request parameters. Sending the request using OAuth2 format.")
     void requestParameterNotSupported();
+
+    @Message(id = 23062, value = "Oidc attribute '%s' is not supported")
+    IOException unsupportedAttribute(String error);
+
 }
 

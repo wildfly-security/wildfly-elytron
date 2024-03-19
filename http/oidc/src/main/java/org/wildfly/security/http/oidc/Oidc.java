@@ -45,6 +45,7 @@ import org.wildfly.security.jose.util.JsonSerialization;
 public class Oidc {
 
     public static final String ACCEPT = "Accept";
+    public static final String AUTHENTICATION_REQUEST_FORMAT = "authentication-request-format";
     public static final String OIDC_NAME = "OIDC";
     public static final String JSON_CONTENT_TYPE = "application/json";
     public static final String HTML_CONTENT_TYPE = "text/html";
@@ -53,6 +54,7 @@ public class Oidc {
     public static final String DISCOVERY_PATH = ".well-known/openid-configuration";
     public static final String KEYCLOAK_REALMS_PATH = "realms/";
     public static final String JSON_CONFIG_CONTEXT_PARAM = "org.wildfly.security.http.oidc.json.config";
+    public static final String JSON_CONFIG_UNSUPPORTED_ATTRIBUTE_PARAM = "org.wildfly.security.http.oidc.json.config.unsupported.attributes";
     static final String ACCOUNT_PATH = "account";
     public static final String CLIENTS_MANAGEMENT_REGISTER_NODE_PATH = "clients-managements/register-node";
     public static final String CLIENTS_MANAGEMENT_UNREGISTER_NODE_PATH = "clients-managements/unregister-node";
@@ -74,6 +76,14 @@ public class Oidc {
     public static final String PASSWORD = "password";
     public static final String PROMPT = "prompt";
     public static final String REQUEST = "request";
+    public static final String REQUEST_OBJECT_CONTENT_ENCRYPTION_ALGORITHM = "request-object-content-encryption-algorithm";
+    public static final String REQUEST_OBJECT_ENCRYPTION_ALGORITHM = "request-object-encryption-algorithm";
+    public static final String REQUEST_OBJECT_SIGNING_ALGORITHM = "request-object-signing-algorithm";
+    public static final String REQUEST_OBJECT_SIGNING_KEYSTORE_FILE = "request-object-signing-keystore-file";
+    public static final String REQUEST_OBJECT_SIGNING_KEYSTORE_PASSWORD = "request-object-signing-keystore-password";
+    public static final String REQUEST_OBJECT_SIGNING_KEY_PASSWORD = "request-object-signing-key-password";
+    public static final String REQUEST_OBJECT_SIGNING_KEY_ALIAS = "request-object-signing-key-alias";
+    public static final String REQUEST_OBJECT_SIGNING_KEYSTORE_TYPE = "request-object-signing-keystore-type";
     public static final String REQUEST_URI = "request_uri";
     public static final String SCOPE = "scope";
     public static final String UI_LOCALES = "ui_locales";
