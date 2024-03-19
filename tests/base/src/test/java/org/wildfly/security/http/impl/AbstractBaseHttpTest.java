@@ -81,6 +81,7 @@ import org.wildfly.security.http.basic.BasicMechanismFactory;
 import org.wildfly.security.http.bearer.BearerMechanismFactory;
 import org.wildfly.security.http.digest.DigestMechanismFactory;
 import org.wildfly.security.http.digest.NonceManager;
+import org.wildfly.security.http.digest.PersistentNonceManager;
 import org.wildfly.security.http.external.ExternalMechanismFactory;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -109,6 +110,16 @@ public class AbstractBaseHttpTest {
                 return nonce;
             }
 
+            @Mock
+            boolean useNonce(final String nonce, byte[] salt, int nonceCount) {
+                return true;
+            }
+        };
+        new MockUp<PersistentNonceManager>(){
+            @Mock
+            String generateNonce(byte[] salt) {
+                return nonce;
+            }
             @Mock
             boolean useNonce(final String nonce, byte[] salt, int nonceCount) {
                 return true;

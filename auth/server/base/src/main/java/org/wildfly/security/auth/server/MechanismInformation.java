@@ -74,6 +74,7 @@ public interface MechanismInformation {
         public String getHostName() {
             return null;
         }
+
     };
 
 }
