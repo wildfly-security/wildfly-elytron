@@ -20,6 +20,7 @@ package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.wildfly.security.http.oidc.Oidc.JSON_CONFIG_CONTEXT_PARAM;
+import static org.wildfly.security.http.oidc.Oidc.JSON_CONFIG_UNSUPPORTED_ATTRIBUTE_PARAM;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_CLIENT_CONFIG_RESOLVER;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_CLIENT_CONTEXT_KEY;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_CONFIG_FILE_LOCATION;
@@ -66,7 +67,7 @@ public class OidcConfigurationServletListener implements ServletContextListener 
                 if (is == null) {
                     oidcClientConfiguration = new OidcClientConfiguration();
                 } else {
-                    oidcClientConfiguration = OidcClientConfigurationBuilder.build(is);
+                    oidcClientConfiguration = OidcClientConfigurationBuilder.buildWithoutUnsupportedAttributes(is, servletContext.getInitParameter(JSON_CONFIG_UNSUPPORTED_ATTRIBUTE_PARAM));
                 }
                 clientContext = new OidcClientContext(oidcClientConfiguration);
             }

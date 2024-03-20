@@ -20,6 +20,7 @@ package org.wildfly.security.http.oidc;
 
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 import static org.jboss.logging.annotations.Message.NONE;
 
@@ -233,6 +234,25 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 23056, value = "No message entity")
     IOException noMessageEntity();
+
+    @Message(id = 23057, value = "Invalid keystore configuration for signing Request Objects.")
+    IOException invalidKeyStoreConfiguration();
+
+    @Message(id = 23058, value = "The signature algorithm specified is not supported by the OpenID Provider.")
+    IOException invalidRequestObjectSignatureAlgorithm();
+
+    @Message(id = 23059, value = "The encryption algorithm specified is not supported by the OpenID Provider.")
+    IOException invalidRequestObjectEncryptionAlgorithm();
+
+    @Message(id = 23060, value = "The content encryption algorithm specified is not supported by the OpenID Provider.")
+    IOException invalidRequestObjectContentEncryptionAlgorithm();
+
+    @LogMessage(level = INFO)
+    @Message(id = 23061, value = "The OpenID provider does not support request parameters. Sending the request using OAuth2 format.")
+    void requestParameterNotSupported();
+
+    @Message(id = 23062, value = "Oidc attribute '%s' is not supported")
+    IOException unsupportedAttribute(String error);
 
 }
 
