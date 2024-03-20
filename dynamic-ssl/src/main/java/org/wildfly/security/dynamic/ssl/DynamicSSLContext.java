@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.dynamic.ssl;
 
+import org.wildfly.security.auth.client.ActiveSessionsSSLContext;
+
 import javax.net.ssl.SSLContext;
 import java.security.NoSuchAlgorithmException;
 
@@ -25,7 +27,7 @@ import java.security.NoSuchAlgorithmException;
  *
  * @author <a href="mailto:dvilkola@redhat.com">Diana Krepinska</a>
  */
-public final class DynamicSSLContext extends SSLContext {
+public final class DynamicSSLContext extends SSLContext implements ActiveSessionsSSLContext {
 
     private static SSLContext resolverSSLContext(DynamicSSLContextSPI dynamicSSLContextSPIImpl) throws NoSuchAlgorithmException, DynamicSSLContextException {
         return dynamicSSLContextSPIImpl.getConfiguredDefault() == null ?
