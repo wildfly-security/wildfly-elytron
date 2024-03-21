@@ -498,6 +498,7 @@ class Params {
     static final String SILENT_PARAM = "silent";
     static final String STORE_LOCATION_PARAM = "location";
     static final String SUMMARY_PARAM = "summary";
+    static final String OVERWRITE_SCRIPT_FILE = "overwrite-script-file";
 
     // Other constants
     static final Pattern BOOLEAN_ARG_REGEX = Pattern.compile("(true|false)", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);

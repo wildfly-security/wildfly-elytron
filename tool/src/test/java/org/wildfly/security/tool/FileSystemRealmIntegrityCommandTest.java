@@ -17,6 +17,7 @@ package org.wildfly.security.tool;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.wildfly.security.tool.Command.GENERAL_CONFIGURATION_ERROR;
@@ -36,6 +37,7 @@ import static org.wildfly.security.tool.Params.KEYSTORE_TYPE_PARAM;
 import static org.wildfly.security.tool.Params.KEY_PAIR_ALIAS_PARAM;
 import static org.wildfly.security.tool.Params.LEVELS_PARAM;
 import static org.wildfly.security.tool.Params.OUTPUT_LOCATION_PARAM;
+import static org.wildfly.security.tool.Params.OVERWRITE_SCRIPT_FILE;
 import static org.wildfly.security.tool.Params.PASSWORD_ENV_PARAM;
 import static org.wildfly.security.tool.Params.PASSWORD_PARAM;
 import static org.wildfly.security.tool.Params.REALM_NAME_PARAM;
@@ -114,6 +116,90 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
                 .setKeyPairAlias(keyPairAlias)
                 .setKeyStoreType(keyStoreType);
         validateScript(params, FS_REALM_SIGNED_PATH.resolve(realmName + ".cli"));
+    }
+
+    @Test
+    public void testScriptFileOverwriteFalse() throws IOException {
+        String realmName = "scriptOverwriteFalse";
+        Path keyStore = Paths.get(RELATIVE_BASE_DIR, "fsKeyStoreEC.jceks");
+        String keyStoreType = "JCEKS";
+        String keyPairAlias = "curveKeyPair";
+
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, "fsRealmSingle");
+        String[] firstRealmArgs = {
+                "--" + INPUT_LOCATION_PARAM, inputLocation.toString(),
+                "--" + OUTPUT_LOCATION_PARAM, FS_REALM_SIGNED_PATH.toString(),
+                "--" + REALM_NAME_PARAM, realmName,
+                "--" + KEYSTORE_PARAM, keyStore.toString(),
+                "--" + KEYSTORE_TYPE_PARAM, keyStoreType,
+                "--" + KEY_PAIR_ALIAS_PARAM, keyPairAlias,
+                "--" + PASSWORD_PARAM, KEYSTORE_PASSWORD
+        };
+
+        runCommand(inputLocation, firstRealmArgs, ElytronToolExitStatus_OK);
+
+        File scriptFile = FS_REALM_SIGNED_PATH.resolve(realmName + ".cli").toFile();
+        Long modifiedBefore = scriptFile.lastModified();
+
+        inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, "fsRealmAl");
+        String[] secondRealmArgs = {
+                "--" + INPUT_LOCATION_PARAM, inputLocation.toString(),
+                "--" + OUTPUT_LOCATION_PARAM, FS_REALM_SIGNED_PATH.toString(),
+                "--" + REALM_NAME_PARAM, realmName,
+                "--" + KEYSTORE_PARAM, keyStore.toString(),
+                "--" + KEYSTORE_TYPE_PARAM, keyStoreType,
+                "--" + KEY_PAIR_ALIAS_PARAM, keyPairAlias,
+                "--" + PASSWORD_PARAM, KEYSTORE_PASSWORD,
+                "--" + OVERWRITE_SCRIPT_FILE, "false"
+        };
+
+        runCommand(inputLocation, secondRealmArgs, ElytronToolExitStatus_OK);
+
+        Long modifiedAfter = scriptFile.lastModified();
+
+        assertEquals(modifiedBefore, modifiedAfter);
+    }
+
+    @Test
+    public void testScriptFileOverwriteTrue() throws IOException {
+        String realmName = "scriptOverwriteTrue";
+        Path keyStore = Paths.get(RELATIVE_BASE_DIR, "fsKeyStoreEC.jceks");
+        String keyStoreType = "JCEKS";
+        String keyPairAlias = "curveKeyPair";
+
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, "fsRealmSingle");
+        String[] firstRealmArgs = {
+                "--" + INPUT_LOCATION_PARAM, inputLocation.toString(),
+                "--" + OUTPUT_LOCATION_PARAM, FS_REALM_SIGNED_PATH.toString(),
+                "--" + REALM_NAME_PARAM, realmName,
+                "--" + KEYSTORE_PARAM, keyStore.toString(),
+                "--" + KEYSTORE_TYPE_PARAM, keyStoreType,
+                "--" + KEY_PAIR_ALIAS_PARAM, keyPairAlias,
+                "--" + PASSWORD_PARAM, KEYSTORE_PASSWORD
+        };
+
+        runCommand(inputLocation, firstRealmArgs, ElytronToolExitStatus_OK);
+
+        File scriptFile = FS_REALM_SIGNED_PATH.resolve(realmName + ".cli").toFile();
+        Long modifiedBefore = scriptFile.lastModified();
+
+        inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, "fsRealmAl");
+        String[] secondRealmArgs = {
+                "--" + INPUT_LOCATION_PARAM, inputLocation.toString(),
+                "--" + OUTPUT_LOCATION_PARAM, FS_REALM_SIGNED_PATH.toString(),
+                "--" + REALM_NAME_PARAM, realmName,
+                "--" + KEYSTORE_PARAM, keyStore.toString(),
+                "--" + KEYSTORE_TYPE_PARAM, keyStoreType,
+                "--" + KEY_PAIR_ALIAS_PARAM, keyPairAlias,
+                "--" + PASSWORD_PARAM, KEYSTORE_PASSWORD,
+                "--" + OVERWRITE_SCRIPT_FILE, "true"
+        };
+
+        runCommand(inputLocation, secondRealmArgs, ElytronToolExitStatus_OK);
+
+        Long modifiedAfter = scriptFile.lastModified();
+
+        assertNotEquals(modifiedBefore, modifiedAfter);
     }
 
     @Test

@@ -39,6 +39,7 @@ import static org.wildfly.security.tool.Params.LINE_SEPARATOR;
 import static org.wildfly.security.tool.Params.NAME_PARAM;
 import static org.wildfly.security.tool.Params.NUMBER_PARAM;
 import static org.wildfly.security.tool.Params.OUTPUT_LOCATION_PARAM;
+import static org.wildfly.security.tool.Params.OVERWRITE_SCRIPT_FILE;
 import static org.wildfly.security.tool.Params.PASSWORD_ENV_PARAM;
 import static org.wildfly.security.tool.Params.PASSWORD_PARAM;
 import static org.wildfly.security.tool.Params.REALM_NAME_PARAM;
@@ -157,6 +158,9 @@ public class FileSystemRealmIntegrityCommand extends Command {
         options.addOption(Option.builder("b").longOpt(BULK_CONVERT_PARAM).desc(ElytronToolMessages.msg.cmdFileSystemRealmIntegrityBulkConvertDesc())
                         .hasArg().argName(FILE_PARAM)
                         .build());
+        options.addOption(Option.builder("w").longOpt(OVERWRITE_SCRIPT_FILE).desc(ElytronToolMessages.msg.cmdFileSystemRealmOverwriteCliScriptFileDesc())
+                        .hasArg().argName(BOOLEAN_PARAM)
+                        .build());
 
         // General options
         options.addOption(Option.builder("h").longOpt(HELP_PARAM).desc(ElytronToolMessages.msg.cmdLineHelp())
@@ -185,6 +189,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
         private Encoding hashEncoding;
         private Charset hashCharset;
         private Boolean encoded;
+        private Boolean overwriteScriptFile;
 
         private Boolean upgradeInPlace;
         private Boolean missingRequiredValue;
@@ -212,6 +217,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
             this.hashEncoding = descriptor.hashEncoding;
             this.hashCharset = descriptor.hashCharset;
             this.encoded = descriptor.encoded;
+            this.overwriteScriptFile = descriptor.overwriteScriptFile;
 
             this.upgradeInPlace = descriptor.upgradeInPlace;
             this.missingRequiredValue = descriptor.missingRequiredValue;
@@ -322,6 +328,9 @@ public class FileSystemRealmIntegrityCommand extends Command {
         public Boolean getRealmUpgraded() {
             return realmUpgraded;
         }
+        public Boolean getOverwriteScriptFile() {
+            return overwriteScriptFile;
+        }
 
         public void setInputRealmPath(String inputRealmPath) {
             setInputRealmPath(Paths.get(inputRealmPath).normalize().toAbsolutePath());
@@ -410,6 +419,9 @@ public class FileSystemRealmIntegrityCommand extends Command {
         public void setRealmUpgraded() {
             this.realmUpgraded = true;
         }
+        public void setOverwriteScriptFile(Boolean overwriteScriptFile) {
+            this.overwriteScriptFile = overwriteScriptFile;
+        }
 
         void reset(boolean resetMissingValues) {
             // Required values are set to null if contents are null, or equal "MISSING"
@@ -428,6 +440,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
             hashEncoding = null;
             hashCharset = null;
             encoded = null;
+            overwriteScriptFile = null;
 
             upgradeInPlace = false;
             realmUpgraded = false;
@@ -476,6 +489,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
         String hashCharsetOption = cmdLine.getOptionValue("u");
         String encodedOption = cmdLine.getOptionValue("f");
         String bulkConvertOption = cmdLine.getOptionValue("b");
+        String overwriteScriptFileOption = cmdLine.getOptionValue("w");
 
         if (bulkConvertOption == null) {
             if (summaryMode) {
@@ -572,6 +586,10 @@ public class FileSystemRealmIntegrityCommand extends Command {
                 throw ElytronToolMessages.msg.encodedMustBeBoolean();
             } else {
                 descriptor.setEncoded(Boolean.parseBoolean(encodedOption));
+            }
+
+            if (overwriteScriptFileOption != null) {
+                descriptor.setOverwriteScriptFile(Boolean.valueOf(overwriteScriptFileOption));
             }
 
             descriptors.add(descriptor);
@@ -950,22 +968,26 @@ public class FileSystemRealmIntegrityCommand extends Command {
             String fileSystemRealmName = descriptor.getFileSystemRealmName();
             Path outputRealmPath = descriptor.getOutputRealmPath();
             boolean upgradeInPlace = descriptor.getUpgradeInPlace();
+            Boolean overwriteScript = descriptor.getOverwriteScriptFile();
 
             String createScriptCheck = "";
             Path scriptPath = Paths.get(String.format("%s/%s.cli", outputRealmPath, fileSystemRealmName));
 
-            // Ask to overwrite CLI script, if already exists
-            if(scriptPath.toFile().exists()) {
-                createScriptCheck = prompt(
-                        true,
-                        ElytronToolMessages.msg.shouldFileBeOverwritten(scriptPath.toString()),
-                        false,
-                        null
-                );
-                if (createScriptCheck.trim().isEmpty()) createScriptCheck = "n";
+            if (overwriteScript == null) {
+                // Ask to overwrite CLI script, if already exists
+                if(scriptPath.toFile().exists()) {
+                    createScriptCheck = prompt(
+                            true,
+                            ElytronToolMessages.msg.shouldFileBeOverwritten(scriptPath.toString()),
+                            false,
+                            null
+                    );
+                    if (createScriptCheck.trim().isEmpty()) createScriptCheck = "n";
+                }
+
+                overwriteScript = createScriptCheck.isEmpty() || createScriptCheck.toLowerCase().startsWith("y");
             }
 
-            boolean overwriteScript = createScriptCheck.isEmpty() || createScriptCheck.toLowerCase().startsWith("y");
             if (!overwriteScript) {
                 do {
                     scriptPath = Paths.get(String.format("%s/%s.cli",
