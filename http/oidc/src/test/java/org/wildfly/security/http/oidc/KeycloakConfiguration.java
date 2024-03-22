@@ -33,6 +33,8 @@ import org.keycloak.representations.idm.UserRepresentation;
 
 import io.restassured.RestAssured;
 
+import static org.wildfly.security.http.oidc.Oidc.OIDC_SCOPE;
+
 /**
  * Keycloak configuration for testing.
  *
@@ -47,6 +49,7 @@ public class KeycloakConfiguration {
     private static final String BOB = "bob";
     private static final String BOB_PASSWORD = "bob123+";
     public static final String ALLOWED_ORIGIN = "http://somehost";
+    public static final boolean EMAIL_VERIFIED = false;
 
     /**
      * Configure RealmRepresentation as follows:
@@ -60,8 +63,8 @@ public class KeycloakConfiguration {
      * </ul>
      */
     public static RealmRepresentation getRealmRepresentation(final String realmName, String clientId, String clientSecret,
-                                                             String clientHostName, int clientPort, String clientApp) {
-        return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp);
+                                                             String clientHostName, int clientPort, String clientApp, boolean configureClientScopes) {
+        return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp, configureClientScopes);
     }
 
     public static RealmRepresentation getRealmRepresentation(final String realmName, String clientId, String clientSecret,
@@ -101,15 +104,22 @@ public class KeycloakConfiguration {
                 .as(AccessTokenResponse.class).getToken();
     }
 
+    private static RealmRepresentation createRealm(final String realmName, String clientId, String clientSecret,
+                               String clientHostName, int clientPort, String clientApp,
+                               boolean directAccessGrantEnabled, String bearerOnlyClientId,
+                               String corsClientId) {
+       return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, bearerOnlyClientId, corsClientId, false);
+    }
+
     private static RealmRepresentation createRealm(String name, String clientId, String clientSecret,
-                                                   String clientHostName, int clientPort, String clientApp) {
-        return createRealm(name, clientId, clientSecret, clientHostName, clientPort, clientApp, false, null, null);
+                                                   String clientHostName, int clientPort, String clientApp, boolean configureClientScopes) {
+        return createRealm(name, clientId, clientSecret, clientHostName, clientPort, clientApp, false, null, null, configureClientScopes);
     }
 
     private static RealmRepresentation createRealm(String name, String clientId, String clientSecret,
                                                    String clientHostName, int clientPort, String clientApp,
                                                    boolean directAccessGrantEnabled, String bearerOnlyClientId,
-                                                   String corsClientId) {
+                                                   String corsClientId, boolean configureClientScopes) {
         RealmRepresentation realm = new RealmRepresentation();
 
         realm.setRealm(name);
@@ -127,8 +137,12 @@ public class KeycloakConfiguration {
 
         realm.getRoles().getRealm().add(new RoleRepresentation("user", null, false));
         realm.getRoles().getRealm().add(new RoleRepresentation("admin", null, false));
-
-        realm.getClients().add(createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled));
+        ClientRepresentation webAppClient = createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled);
+        if (configureClientScopes) {
+            webAppClient.setDefaultClientScopes(Collections.singletonList(OIDC_SCOPE));
+            webAppClient.setOptionalClientScopes(Arrays.asList("phone", "email", "profile"));
+        }
+        realm.getClients().add(webAppClient);
 
         if (bearerOnlyClientId != null) {
             realm.getClients().add(createBearerOnlyClient(bearerOnlyClientId));
@@ -178,6 +192,7 @@ public class KeycloakConfiguration {
         user.setCredentials(new ArrayList<>());
         user.setRealmRoles(realmRoles);
         user.setEmail(username + "@gmail.com");
+        user.setEmailVerified(EMAIL_VERIFIED);
 
         CredentialRepresentation credential = new CredentialRepresentation();
         credential.setType(CredentialRepresentation.PASSWORD);

@@ -45,8 +45,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
@@ -166,10 +168,13 @@ public class OidcRequestAuthenticator {
 
             List<String> forwardableQueryParams = Arrays.asList(LOGIN_HINT, DOMAIN_HINT, KC_IDP_HINT, PROMPT, MAX_AGE, UI_LOCALES, SCOPE);
             List<NameValuePair> forwardedQueryParams = new ArrayList<>(forwardableQueryParams.size());
+            Set<String> allScopes = new HashSet<>();
+            addScopes(deployment.getScope(), allScopes);
+
             for (String paramName : forwardableQueryParams) {
                 String paramValue = getQueryParamValue(facade, paramName);
                 if (SCOPE.equals(paramName)) {
-                    paramValue = addOidcScopeIfNeeded(paramValue);
+                    paramValue = combineAndReorderScopes(allScopes, paramValue);
                 }
                 if (paramValue != null && !paramValue.isEmpty()) {
                     forwardedQueryParams.add(new BasicNameValuePair(paramName, paramValue));
@@ -180,6 +185,7 @@ public class OidcRequestAuthenticator {
             if (deployment.getAuthUrl() == null) {
                 return null;
             }
+
             URIBuilder redirectUriBuilder = new URIBuilder(deployment.getAuthUrl())
                     .addParameter(RESPONSE_TYPE, CODE)
                     .addParameter(CLIENT_ID, deployment.getResourceName())
@@ -415,5 +421,25 @@ public class OidcRequestAuthenticator {
             }
         }
         return false;
+    }
+
+    private String combineAndReorderScopes(Set<String> allScopes, String paramValue) {
+        StringBuilder combinedScopes = new StringBuilder();
+        addScopes(paramValue, allScopes);
+
+        //some OpenID providers require openid scope to be added in the beginning
+        combinedScopes.append(OIDC_SCOPE);
+        for (String scope : allScopes) {
+            if (!scope.equals(OIDC_SCOPE)) {
+                combinedScopes.append(" ").append(scope);
+            }
+        }
+        return combinedScopes.toString();
+    }
+
+    private void addScopes(String scopes, Set<String> allScopes) {
+        if (scopes != null && !scopes.isEmpty()) {
+            allScopes.addAll(Arrays.asList(scopes.split("\\s+")));
+        }
     }
 }
