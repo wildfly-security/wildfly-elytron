@@ -30,6 +30,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -1083,7 +1084,8 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     ((SecurityIdentityCallback) callback).setSecurityIdentity(identity);
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AvailableRealmsCallback) {
-                    Collection<String> names = stateRef.get().getMechanismConfiguration().getMechanismRealmNames();
+                    MechanismConfiguration mechanismConfiguration = stateRef.get().getMechanismConfiguration();
+                    Collection<String> names = mechanismConfiguration != null ? mechanismConfiguration.getMechanismRealmNames() : Collections.emptyList();
                     if (log.isTraceEnabled()) {
                         log.tracef("Handling AvailableRealmsCallback: realms = [%s]", String.join(", ", names));
                     }
@@ -1403,7 +1405,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
         public InactiveState(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechanismConfigurationSelector,
                              MechanismInformation mechanismInformation, IdentityCredentials privateCredentials, IdentityCredentials publicCredentials, Attributes runtimeAttributes) {
             this.capturedIdentity = capturedIdentity;
-            this.mechanismConfigurationSelector = mechanismConfigurationSelector;
+            this.mechanismConfigurationSelector = mechanismConfigurationSelector != null ? mechanismConfigurationSelector : MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY);
             this.mechanismInformation = checkNotNullParam("mechanismInformation", mechanismInformation);
             this.privateCredentials = privateCredentials;
             this.publicCredentials = publicCredentials;
