@@ -3652,6 +3652,11 @@ public final class ElytronXmlParser {
                 try (InputStream fis = createStream()) {
                     keyStore.load(fis, passwordFactory == null ? null : passwordFactory.get());
                 }
+                //warnings as keystore.load("",pass) won't fail
+                if (passwordFactory == null || passwordFactory.get() == null) {
+                    //check for empty password
+                    xmlLog.warn("No Keystore password specified, it is recommended to specify a keystore password for security.");
+                }
                 return keyStore;
             } catch (GeneralSecurityException | IOException e) {
                 throw xmlLog.xmlFailedToLoadKeyStoreData(location, e);
