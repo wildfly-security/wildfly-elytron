@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import org.apache.http.HttpStatus;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -464,9 +465,9 @@ public class BearerTest extends OidcBaseTest {
             try {
                 // browser login should succeed
                 client.setDispatcher(createAppResponse(mechanism, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT));
-                TextPage page = loginToKeycloak(KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD, requestUri, response.getLocation(),
+                HtmlPage page = loginToKeycloak(KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD, requestUri, response.getLocation(),
                         response.getCookies()).click();
-                assertTrue(page.getContent().contains(CLIENT_PAGE_TEXT));
+                assertTrue(page.asText().contains(CLIENT_PAGE_TEXT));
             } finally {
                 client.setDispatcher(new QueueDispatcher());
             }

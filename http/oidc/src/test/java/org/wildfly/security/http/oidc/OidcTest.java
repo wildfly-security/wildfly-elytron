@@ -36,7 +36,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 
-import com.gargoylesoftware.htmlunit.TextPage;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import io.restassured.RestAssured;
@@ -156,9 +155,9 @@ public class OidcTest extends OidcBaseTest {
 
             if (loginToKeycloak) {
                 client.setDispatcher(createAppResponse(mechanism, expectedDispatcherStatusCode, expectedLocation, clientPageText));
-                TextPage page = loginToKeycloak(username, password, requestUri, response.getLocation(),
+                HtmlPage page = loginToKeycloak(username, password, requestUri, response.getLocation(),
                         response.getCookies()).click();
-                assertTrue(page.getContent().contains(clientPageText));
+                assertTrue(page.asText().contains(clientPageText));
             }
         } finally {
             client.setDispatcher(new QueueDispatcher());
