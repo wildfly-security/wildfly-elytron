@@ -178,6 +178,8 @@ public class KeycloakConfiguration {
         user.setCredentials(new ArrayList<>());
         user.setRealmRoles(realmRoles);
         user.setEmail(username + "@gmail.com");
+        user.setFirstName("Alice");
+        user.setLastName("Smith");
 
         CredentialRepresentation credential = new CredentialRepresentation();
         credential.setType(CredentialRepresentation.PASSWORD);

@@ -77,6 +77,7 @@ public class JwtValidator implements TokenValidator {
 
     private final Set<String> issuers;
     private final Set<String> audiences;
+    private final Set<String> allowedJkuValues;
     private final JwkManager jwkManager;
     private final Map<String, PublicKey> namedKeys;
 
@@ -85,12 +86,13 @@ public class JwtValidator implements TokenValidator {
     JwtValidator(Builder configuration) {
         this.issuers = checkNotNullParam("issuers", configuration.issuers);
         this.audiences = checkNotNullParam("audience", configuration.audience);
+        this.allowedJkuValues = checkNotNullParam("allowedJkuValues", configuration.allowedJkuValues);
         this.defaultPublicKey = configuration.publicKey;
         this.namedKeys = configuration.namedKeys;
         if (configuration.sslContext != null) {
             this.jwkManager = new JwkManager(configuration.sslContext,
                                             configuration.hostnameVerifier != null ? configuration.hostnameVerifier : HttpsURLConnection.getDefaultHostnameVerifier(),
-                                            configuration.updateTimeout, configuration.connectionTimeout, configuration.readTimeout, configuration.minTimeBetweenRequests);
+                                            configuration.updateTimeout, configuration.connectionTimeout, configuration.readTimeout, configuration.minTimeBetweenRequests, configuration.allowedJkuValues);
         }
         else {
             log.tokenRealmJwtNoSSLIgnoringJku();
@@ -105,6 +107,9 @@ public class JwtValidator implements TokenValidator {
         }
         if (audiences.isEmpty()) {
             log.tokenRealmJwtWarnNoAudienceIgnoringAudienceCheck();
+        }
+        if (allowedJkuValues.isEmpty()) {
+            log.allowedJkuValuesNotConfigured();
         }
 
     }
@@ -311,6 +316,10 @@ public class JwtValidator implements TokenValidator {
                 log.debugf("Cannot validate token with jku [%s]. SSL is not configured and jku claim is not supported.", jku);
                 return null;
             }
+            if (! allowedJkuValues.contains(jku.getString())) {
+                log.debug("Cannot validate token, jku value is not allowed");
+                return null;
+            }
             try {
                 return jwkManager.getPublicKey(kid.getString(), new URL(jku.getString()));
             } catch (MalformedURLException e) {
@@ -340,6 +349,7 @@ public class JwtValidator implements TokenValidator {
 
         private Set<String> issuers = new LinkedHashSet<>();
         private Set<String> audience = new LinkedHashSet<>();
+        private Set<String> allowedJkuValues = new LinkedHashSet<>();
         private PublicKey publicKey;
         private Map<String, PublicKey> namedKeys = new LinkedHashMap<>();
         private HostnameVerifier hostnameVerifier;
@@ -492,6 +502,19 @@ public class JwtValidator implements TokenValidator {
          */
         public Builder setJkuMinTimeBetweenRequests(int minTimeBetweenRequests) {
             this.minTimeBetweenRequests = minTimeBetweenRequests;
+            return this;
+        }
+
+        /**
+         * One or more string values representing the jku values that are supported by this configuration.
+         * During JWT validation, if the jku header parameter is present in a token, it must exactly match
+         * one of the strings defined here or token validation will fail.
+         *
+         * @param allowedJkuValues the allowed values for the jku header parameter
+         * @return this instance
+         */
+        public Builder setAllowedJkuValues(String... allowedJkuValues) {
+            this.allowedJkuValues.addAll(asList(allowedJkuValues));
             return this;
         }
 
