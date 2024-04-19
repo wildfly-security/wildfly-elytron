@@ -675,7 +675,7 @@ public final class SecurityDomain {
         if (sm != null) {
             sm.checkPermission(CREATE_AD_HOC_IDENTITY);
         }
-        return new SecurityIdentity(this, principal, EMPTY_REALM_INFO, AuthorizationIdentity.EMPTY, emptyMap(), IdentityCredentials.NONE, IdentityCredentials.NONE);
+        return this.transform(new SecurityIdentity(this, principal, EMPTY_REALM_INFO, AuthorizationIdentity.EMPTY, emptyMap(), IdentityCredentials.NONE, IdentityCredentials.NONE));
     }
 
     Supplier<SecurityIdentity> getAndSetCurrentSecurityIdentity(Supplier<SecurityIdentity> newIdentity) {
