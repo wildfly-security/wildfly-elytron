@@ -20,6 +20,7 @@ package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_STATE_COOKIE;
+import static org.wildfly.security.http.oidc.Oidc.checkCachedAccountMatchesRequest;
 
 import java.net.URISyntaxException;
 import java.util.List;
@@ -72,8 +73,7 @@ public class OidcCookieTokenStore implements OidcTokenStore {
             return false;
         }
         OidcAccount account = new OidcAccount(principal);
-        if (deployment.getRealm() != null && ! deployment.getRealm().equals(account.getOidcSecurityContext().getRealm())) {
-            log.debug("Account in session belongs to a different realm than for this request.");
+        if (! checkCachedAccountMatchesRequest(account, deployment)) {
             return false;
         }
 
