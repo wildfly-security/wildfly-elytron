@@ -19,6 +19,7 @@
 package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
+import static org.wildfly.security.http.oidc.Oidc.checkCachedAccountMatchesRequest;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -88,9 +89,7 @@ public class OidcSessionTokenStore implements OidcTokenStore {
         }
 
         OidcClientConfiguration deployment = httpFacade.getOidcClientConfiguration();
-
-        if (deployment.getRealm() != null && ! deployment.getRealm().equals(account.getOidcSecurityContext().getRealm())) {
-            log.debug("Account in session belongs to a different realm than for this request.");
+        if (! checkCachedAccountMatchesRequest(account, deployment)) {
             return false;
         }
 
