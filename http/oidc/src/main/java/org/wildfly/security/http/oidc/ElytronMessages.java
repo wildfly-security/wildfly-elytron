@@ -18,6 +18,7 @@
 
 package org.wildfly.security.http.oidc;
 
+import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 import static org.jboss.logging.annotations.Message.NONE;
@@ -232,6 +233,10 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 23056, value = "No message entity")
     IOException noMessageEntity();
+
+    @LogMessage(level = DEBUG)
+    @Message(id = 23057, value = "principal-attribute '%s' claim does not exist, falling back to 'sub'")
+    void principalAttributeClaimDoesNotExist(String principalAttributeClaim);
 
 }
 
