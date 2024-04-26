@@ -41,6 +41,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -133,7 +134,7 @@ public class OAuth2IntrospectValidator implements TokenValidator {
 
             HashMap<String, String> parameters = new HashMap<>();
 
-            parameters.put("token", token);
+            parameters.put("token", URLEncoder.encode(token, StandardCharsets.UTF_8.toString()));
             parameters.put("token_type_hint", "access_token");
 
             byte[] params = buildParameters(parameters);
