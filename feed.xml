@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Thu, 07 Mar 2024 20:37:17 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 29 Apr 2024 21:02:40 +0000</lastBuildDate>
+        
+        <item>
+            <title>Securing a WildFly Application Using OpenID Connect With Additional Scope Values</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/elytron-oidc-client-scope/
+            </link>
+            <description>
+                WildFly 32 includes the ability to add additional scope values when securing applications using OpenID Connect (OIDC). This new feature is available at the Preview stability level. OpenID Connect is an identity layer on top of the OAuth 2.0 protocol that makes it possible for a client to verify a...
+            </description>
+            <pubDate>Mon, 29 Apr 2024 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/elytron-oidc-client-scope/
+            </guid>
+        </item>
         
         <item>
             <title>Trying Out An Upcoming Security Feature for WildFly on OpenShift</title>
@@ -130,20 +144,6 @@
             <pubDate>Wed, 08 Nov 2023 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Adding Support for Integrity Checking to an Existing Filesystem Realm</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-integrity-elytron-tool/
-            </link>
-            <description>
-                WildFly 27 included the ability to add integrity checking support to filesystem realms. This uses an asymmetric key pair that has a private and public key to secure the filesystem realm. In the filesystem realm, each identity will be signed using the private key. This makes it possible to verify...
-            </description>
-            <pubDate>Thu, 02 Nov 2023 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-integrity-elytron-tool/
             </guid>
         </item>
         
