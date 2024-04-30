@@ -56,7 +56,7 @@
 
     <properties>
         <jdk.min.version>11</jdk.min.version>
-        <version.com.fasterxml.jackson>2.15.4</version.com.fasterxml.jackson>
+        <version.com.fasterxml.jackson>2.17.0</version.com.fasterxml.jackson>
         <version.com.fasterxml.jackson.databind>${version.com.fasterxml.jackson}</version.com.fasterxml.jackson.databind>
         <version.commons-cli>1.6.0</version.commons-cli>
         <version.jakarta.enterprise>4.0.1</version.jakarta.enterprise>
