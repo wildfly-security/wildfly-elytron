@@ -299,7 +299,12 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     }
 
     protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
-                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
+                                         int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
+        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, getClientUrl(), expectedLocation, clientPageText);
+    }
+
+    protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+                                       int expectedDispatcherStatusCode, String clientUrl, String expectedLocation, String clientPageText) throws Exception {
         try {
             Map<String, Object> props = new HashMap<>();
             OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(oidcConfig);
@@ -309,7 +314,7 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
             oidcFactory = new OidcMechanismFactory(oidcClientContext);
             HttpServerAuthenticationMechanism mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, getCallbackHandler());
 
-            URI requestUri = new URI(getClientUrl());
+            URI requestUri = new URI(clientUrl);
             TestingHttpServerRequest request = new TestingHttpServerRequest(null, requestUri);
             mechanism.evaluateRequest(request);
             TestingHttpServerResponse response = request.getResponse();
