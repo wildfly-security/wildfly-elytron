@@ -21,9 +21,14 @@ package org.wildfly.security.http.oidc;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.http.oidc.Oidc.OIDC_NAME;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +54,7 @@ import org.wildfly.security.http.impl.AbstractBaseHttpTest;
 import org.wildfly.security.jose.util.JsonSerialization;
 
 import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
+import com.gargoylesoftware.htmlunit.TextPage;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
@@ -59,6 +65,7 @@ import io.restassured.RestAssured;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 
 /**
@@ -291,4 +298,45 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
         return header.toString();
     }
 
+    protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
+        try {
+            Map<String, Object> props = new HashMap<>();
+            OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(oidcConfig);
+            assertEquals(OidcClientConfiguration.RelativeUrlsUsed.NEVER, oidcClientConfiguration.getRelativeUrls());
+
+            OidcClientContext oidcClientContext = new OidcClientContext(oidcClientConfiguration);
+            oidcFactory = new OidcMechanismFactory(oidcClientContext);
+            HttpServerAuthenticationMechanism mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, getCallbackHandler());
+
+            URI requestUri = new URI(getClientUrl());
+            TestingHttpServerRequest request = new TestingHttpServerRequest(null, requestUri);
+            mechanism.evaluateRequest(request);
+            TestingHttpServerResponse response = request.getResponse();
+            assertEquals(loginToKeycloak ? HttpStatus.SC_MOVED_TEMPORARILY : HttpStatus.SC_FORBIDDEN, response.getStatusCode());
+            assertEquals(Status.NO_AUTH, request.getResult());
+
+            if (loginToKeycloak) {
+                client.setDispatcher(createAppResponse(mechanism, expectedDispatcherStatusCode, expectedLocation, clientPageText));
+                TextPage page = loginToKeycloak(username, password, requestUri, response.getLocation(),
+                        response.getCookies()).click();
+                assertTrue(page.getContent().contains(clientPageText));
+            }
+        } finally {
+            client.setDispatcher(new QueueDispatcher());
+        }
+    }
+
+    protected InputStream getOidcConfigurationInputStreamWithProviderUrl() {
+        String oidcConfig = "{\n" +
+                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"public-client\" : \"false\",\n" +
+                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
+                "    \"ssl-required\" : \"EXTERNAL\",\n" +
+                "    \"credentials\" : {\n" +
+                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    }\n" +
+                "}";
+        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
+    }
 }

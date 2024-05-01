@@ -363,35 +363,6 @@ public class OidcTest extends OidcBaseTest {
         assertTrue(page.getBody().asText().contains("Invalid username or password"));
     }
 
-    private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
-                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
-        try {
-            Map<String, Object> props = new HashMap<>();
-            OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(oidcConfig);
-            assertEquals(OidcClientConfiguration.RelativeUrlsUsed.NEVER, oidcClientConfiguration.getRelativeUrls());
-
-            OidcClientContext oidcClientContext = new OidcClientContext(oidcClientConfiguration);
-            oidcFactory = new OidcMechanismFactory(oidcClientContext);
-            HttpServerAuthenticationMechanism mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, getCallbackHandler());
-
-            URI requestUri = new URI(getClientUrl());
-            TestingHttpServerRequest request = new TestingHttpServerRequest(null, requestUri);
-            mechanism.evaluateRequest(request);
-            TestingHttpServerResponse response = request.getResponse();
-            assertEquals(loginToKeycloak ? HttpStatus.SC_MOVED_TEMPORARILY : HttpStatus.SC_FORBIDDEN, response.getStatusCode());
-            assertEquals(Status.NO_AUTH, request.getResult());
-
-            if (loginToKeycloak) {
-                client.setDispatcher(createAppResponse(mechanism, expectedDispatcherStatusCode, expectedLocation, clientPageText));
-                TextPage page = loginToKeycloak(username, password, requestUri, response.getLocation(),
-                        response.getCookies()).click();
-                assertTrue(page.getContent().contains(clientPageText));
-            }
-        } finally {
-            client.setDispatcher(new QueueDispatcher());
-        }
-    }
-
     private void performTenantRequestWithAuthServerUrl(String username, String password, String tenant, String otherTenant) throws Exception {
         performTenantRequest(username, password, tenant, otherTenant, true);
     }
@@ -462,19 +433,6 @@ public class OidcTest extends OidcBaseTest {
                 "    \"ssl-required\" : \"EXTERNAL\",\n" +
                 "    \"credentials\" : {\n" +
                 "        \"secret\" : \"" + clientSecret + "\"\n" +
-                "    }\n" +
-                "}";
-        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private InputStream getOidcConfigurationInputStreamWithProviderUrl() {
-        String oidcConfig = "{\n" +
-                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
