@@ -132,13 +132,13 @@ public class OidcTest extends OidcBaseTest {
 
     @Test
     public void testWrongAuthServerUrl() throws Exception {
-        loginToAppMultiTenancy(getOidcConfigurationInputStream(CLIENT_SECRET, "http://fakeauthserver/auth"), KeycloakConfiguration.ALICE,
+        performAuthentication(getOidcConfigurationInputStream(CLIENT_SECRET, "http://fakeauthserver/auth"), KeycloakConfiguration.ALICE,
                 KeycloakConfiguration.ALICE_PASSWORD, false, -1, null, null);
     }
 
     @Test
     public void testWrongClientSecret() throws Exception {
-        loginToAppMultiTenancy(getOidcConfigurationInputStream("WRONG_CLIENT_SECRET"), KeycloakConfiguration.ALICE,
+        performAuthentication(getOidcConfigurationInputStream("WRONG_CLIENT_SECRET"), KeycloakConfiguration.ALICE,
                 KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_FORBIDDEN, null,"Forbidden");
     }
 
@@ -149,19 +149,19 @@ public class OidcTest extends OidcBaseTest {
 
     @Test
     public void testSucessfulAuthenticationWithAuthServerUrl() throws Exception {
-        loginToAppMultiTenancy(getOidcConfigurationInputStream(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+        performAuthentication(getOidcConfigurationInputStream(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
                 true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
     }
 
     @Test
     public void testSucessfulAuthenticationWithProviderUrl() throws Exception {
-        loginToAppMultiTenancy(getOidcConfigurationInputStreamWithProviderUrl(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+        performAuthentication(getOidcConfigurationInputStreamWithProviderUrl(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
                 true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
     }
 
     @Test
     public void testSucessfulAuthenticationWithProviderUrlTrailingSlash() throws Exception {
-        loginToAppMultiTenancy(getOidcConfigurationInputStreamWithProviderUrlTrailingSlash(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+        performAuthentication(getOidcConfigurationInputStreamWithProviderUrlTrailingSlash(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
                 true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
     }
 
@@ -171,20 +171,20 @@ public class OidcTest extends OidcBaseTest {
         String providerUrlEnv = System.getenv("OIDC_PROVIDER_URL_ENV");
         assertEquals(oidcProviderUrl, providerUrlEnv);
 
-        loginToAppMultiTenancy(getOidcConfigurationInputStreamWithEnvironmentVariableExpression(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+        performAuthentication(getOidcConfigurationInputStreamWithEnvironmentVariableExpression(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
                 true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
     }
 
     @Test
     public void testSucessfulAuthenticationWithSystemPropertyExpression() throws Exception {
-        loginToAppMultiTenancy(getOidcConfigurationInputStreamWithSystemPropertyExpression(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+        performAuthentication(getOidcConfigurationInputStreamWithSystemPropertyExpression(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
                 true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
     }
 
     @Test
     public void testTokenSignatureAlgorithm() throws Exception {
         // keycloak uses RS256
-        loginToAppMultiTenancy(getOidcConfigurationInputStreamWithTokenSignatureAlgorithm(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+        performAuthentication(getOidcConfigurationInputStreamWithTokenSignatureAlgorithm(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
                 true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
     }
 
@@ -363,8 +363,8 @@ public class OidcTest extends OidcBaseTest {
         assertTrue(page.getBody().asText().contains("Invalid username or password"));
     }
 
-    private void loginToAppMultiTenancy(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
-                                        int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
+    private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
         try {
             Map<String, Object> props = new HashMap<>();
             OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(oidcConfig);
