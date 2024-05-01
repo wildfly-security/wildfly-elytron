@@ -343,11 +343,25 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     // Note: The tests will fail if `localhost` is not listed first in `/etc/hosts` file for the loopback addresses (IPv4 and IPv6).
     protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
                                        int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
-        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, expectedLocation, clientPageText, null, false);
+        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, getClientUrl(), expectedLocation,
+                clientPageText, null, false);
+    }
+
+    protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+                                         int expectedDispatcherStatusCode, String clientUrl, String expectedLocation, String clientPageText) throws Exception {
+        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, clientUrl, expectedLocation,
+                clientPageText, null, false);
+    }
+
+    protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak, int expectedDispatcherStatusCode,
+                                         String expectedLocation, String clientPageText, String expectedScope, boolean checkInvalidScopeError) throws Exception {
+        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, getClientUrl(), expectedLocation, clientPageText,
+                expectedScope, checkInvalidScopeError);
     }
 
     private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
-                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText, String expectedScope, boolean checkInvalidScopeError) throws Exception {
+                                       int expectedDispatcherStatusCode, String clientUrl, String expectedLocation, String clientPageText,
+                                       String expectedScope, boolean checkInvalidScopeError) throws Exception {
         try {
             Map<String, Object> props = new HashMap<>();
             OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(oidcConfig);
@@ -362,7 +376,7 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
                 mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, getCallbackHandler(true, expectedScope));
             }
 
-            URI requestUri = new URI(getClientUrl());
+            URI requestUri = new URI(clientUrl);
             TestingHttpServerRequest request = new TestingHttpServerRequest(null, requestUri);
             mechanism.evaluateRequest(request);
             TestingHttpServerResponse response = request.getResponse();
