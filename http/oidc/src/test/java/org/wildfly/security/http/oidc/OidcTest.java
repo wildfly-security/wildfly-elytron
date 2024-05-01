@@ -237,37 +237,6 @@ public class OidcTest extends OidcBaseTest {
                 true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT, expectedScope, false);
     }
 
-    // Note: The tests will fail if `localhost` is not listed first in `/etc/hosts` file for the loopback addresses (IPv4 and IPv6).
-    private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
-                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
-        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, expectedLocation, clientPageText, null, false);
-    }
-
-    private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
-                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText,
-                                       CallbackHandler callbackHandler) throws Exception {
-        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, expectedLocation,
-                clientPageText, null, false, callbackHandler);
-    }
-
-    @Test
-    public void testPrincipalAttribute() throws Exception {
-        // custom principal-attribute
-        performAuthentication(getOidcConfigurationInputStreamWithPrincipalAttribute("aud"), KeycloakConfiguration.ALICE,
-                KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT,
-                getCallbackHandler( "test-webapp"));
-
-        // standard principal-attribute
-        performAuthentication(getOidcConfigurationInputStreamWithPrincipalAttribute("given_name"), KeycloakConfiguration.ALICE,
-                KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT,
-                getCallbackHandler("Alice"));
-
-        // invalid principal-attribute, logging in should still succeed
-        performAuthentication(getOidcConfigurationInputStreamWithPrincipalAttribute("invalid_claim"), KeycloakConfiguration.ALICE,
-                KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT,
-                getCallbackHandler());
-    }
-
     /*****************************************************************************************************************************************
      * Tests for multi-tenancy.
      *
@@ -527,55 +496,6 @@ public class OidcTest extends OidcBaseTest {
         }
     }
 
-    private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
-                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText,
-                                       String expectedScope, boolean checkInvalidScopeError) throws Exception {
-        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, expectedLocation,
-                clientPageText, expectedScope, checkInvalidScopeError, getCallbackHandler(checkInvalidScopeError,
-                        expectedScope, null));
-    }
-
-    private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
-                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText,
-                                       String expectedScope, boolean checkInvalidScopeError,
-                                       CallbackHandler callbackHandler) throws Exception {
-        try {
-            Map<String, Object> props = new HashMap<>();
-            OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(oidcConfig);
-            assertEquals(OidcClientConfiguration.RelativeUrlsUsed.NEVER, oidcClientConfiguration.getRelativeUrls());
-
-            OidcClientContext oidcClientContext = new OidcClientContext(oidcClientConfiguration);
-            oidcFactory = new OidcMechanismFactory(oidcClientContext);
-            HttpServerAuthenticationMechanism mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, callbackHandler);
-
-            URI requestUri = new URI(getClientUrl());
-            TestingHttpServerRequest request = new TestingHttpServerRequest(null, requestUri);
-            mechanism.evaluateRequest(request);
-            TestingHttpServerResponse response = request.getResponse();
-            assertEquals(loginToKeycloak ? HttpStatus.SC_MOVED_TEMPORARILY : HttpStatus.SC_FORBIDDEN, response.getStatusCode());
-            assertEquals(Status.NO_AUTH, request.getResult());
-            if (expectedScope != null) {
-                assertTrue(response.getFirstResponseHeaderValue("Location").contains("scope=" + expectedScope));
-            }
-
-            if (loginToKeycloak) {
-                client.setDispatcher(createAppResponse(mechanism, expectedDispatcherStatusCode, expectedLocation, clientPageText));
-
-                if (checkInvalidScopeError) {
-                    WebClient webClient = getWebClient();
-                    TextPage keycloakLoginPage = webClient.getPage(response.getLocation());
-                    assertTrue(keycloakLoginPage.getWebResponse().getWebRequest().toString().contains("error_description=Invalid+scopes"));
-                } else {
-                    TextPage page = loginToKeycloak(username, password, requestUri, response.getLocation(),
-                            response.getCookies()).click();
-                    assertTrue(page.getContent().contains(clientPageText));
-                }
-            }
-        } finally {
-            client.setDispatcher(new QueueDispatcher());
-        }
-    }
-
     private InputStream getOidcConfigurationInputStream() {
         return getOidcConfigurationInputStream(CLIENT_SECRET);
     }
@@ -593,19 +513,6 @@ public class OidcTest extends OidcBaseTest {
                 "    \"ssl-required\" : \"EXTERNAL\",\n" +
                 "    \"credentials\" : {\n" +
                 "        \"secret\" : \"" + clientSecret + "\"\n" +
-                "    }\n" +
-                "}";
-        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private InputStream getOidcConfigurationInputStreamWithProviderUrl() {
-        String oidcConfig = "{\n" +
-                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
