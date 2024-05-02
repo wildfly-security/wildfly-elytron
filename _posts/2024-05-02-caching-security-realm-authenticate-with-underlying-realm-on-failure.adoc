@@ -1,0 +1,41 @@
+---
+layout: post
+title: 'Caching realm now automatically tries to authenticate users with the underlying realm if authentication with cached credentials fails'
+date: 2024-05-02
+tags: caching realm authentication
+synopsis: Caching realm will now attempt to authenticate users with the underlying realm if credential verification with the cached credentials fails.
+author: dvilkola
+---
+
+:toc: macro
+:toc-title:
+
+WildFly 32+ will automatically attempt to verify credentials with the underlying realm if an authentication fails with the cached credentials. If this authentication succeeds, the obsolete credential will be replaced with the updated credential. This functionality is useful if the credentials have been updated externally of WildFly.
+
+toc::[]
+
+== Caching security realm
+
+Elytron provides a `caching-realm` that allows you to cache the results of a credential lookup from a security realm. For example, you can configure a cache for credentials coming from LDAP or a database to improve performance for frequently queried users. The `caching-realm` caches the credential using the Least Recently Used caching strategy, where the least accessed entries are discarded when the maximum number of entries is reached.
+
+== Obsolete credentials
+
+Prior to these changes, for those LDAP servers that support persistent search, the WildFly server automatically received and continues to receive change notifications when a user's credentials or attributes are updated externally. Therefore, the replacement of obsolete credentials was already taking place for these LDAP servers.
+
+Starting with WildFly 32+, if authentication with cached credentials fails, the server will automatically attempt to authenticate a user with the provided credentials directly with the underlying realm. If the underlying realm authentication is successful, the caching realm will update its cached credentials and attributes for the user.
+
+This new functionality has been added for those LDAP servers that do not support the persistent search, and for other types of security realms.
+
+*Note:* Persistent search is a mechanism extending LDAP search operation that provides clients with a means to track changes in the directory and receive notifications.
+
+*Note:* The underlying realm refers to the realm that is being cached (LDAP, database, ...) and from which the identities are retrieved.
+
+
+== Summary
+
+From WildFly 32 onwards, if the authentication with the cached credentials fails, the server will automatically attempt to authenticate a user with the underlying security realm. If this authentication is successful, the user's outdated credentials and attributes are replaced with the updated credentials and attributes.
+
+== Resources
+
+* https://docs.wildfly.org/32/wildscribe/subsystem/elytron/caching-realm/index.html[Caching realm]
+* https://docs.wildfly.org/32/WildFly_Elytron_Security.html#realms[Elytron security realms]
