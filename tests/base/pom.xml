@@ -54,6 +54,7 @@
 
     <properties>
         <version.org.codehaus.mojo.xml.plugin>1.0.2</version.org.codehaus.mojo.xml.plugin>
+        <version.org.glassfish.jaxb.jaxb-runtime>2.4.0-b180830.0438</version.org.glassfish.jaxb.jaxb-runtime>
     </properties>
 
     <build>
@@ -773,15 +774,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-core</artifactId>
-            <version>2.3.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
-            <version>2.3.0</version>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>${version.org.glassfish.jaxb.jaxb-runtime}</version>
             <scope>test</scope>
         </dependency>
 
