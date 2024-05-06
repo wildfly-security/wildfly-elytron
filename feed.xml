@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Mon, 29 Apr 2024 21:02:40 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 06 May 2024 14:33:59 +0000</lastBuildDate>
+        
+        <item>
+            <title>Caching realm now automatically tries to authenticate users with the underlying realm if authentication with cached credentials fails</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/caching-security-realm-authenticate-with-underlying-realm-on-failure/
+            </link>
+            <description>
+                WildFly 32+ will automatically attempt to verify credentials with the underlying realm if an authentication fails with the cached credentials. If this authentication succeeds, the obsolete credential will be replaced with the updated credential. This functionality is useful if the credentials have been updated externally of WildFly. Caching security realm...
+            </description>
+            <pubDate>Thu, 02 May 2024 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/caching-security-realm-authenticate-with-underlying-realm-on-failure/
+            </guid>
+        </item>
         
         <item>
             <title>Securing a WildFly Application Using OpenID Connect With Additional Scope Values</title>
@@ -130,20 +144,6 @@
             <pubDate>Tue, 14 Nov 2023 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/specify-file-audit-log-encoding/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Securing WildFly Apps with OIDC on OpenShift</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/
-            </link>
-            <description>
-                You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Keycloak as the OIDC provider. Prerequisites Example Application...
-            </description>
-            <pubDate>Wed, 08 Nov 2023 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/
             </guid>
         </item>
         
