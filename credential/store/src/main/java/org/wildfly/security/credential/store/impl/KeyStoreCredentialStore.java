@@ -800,6 +800,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                             e.addSuppressed(t);
                             throw e;
                         }
+                        throw log.cannotFlushCredentialStore(t);
                     }
                 }
             } catch (IOException e) {

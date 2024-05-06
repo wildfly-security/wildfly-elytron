@@ -23,6 +23,7 @@ import static org.wildfly.security.http.HttpConstants.AUTH;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.BAD_REQUEST;
 import static org.wildfly.security.http.HttpConstants.CNONCE;
+import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.NC;
 import static org.wildfly.security.http.HttpConstants.QOP;
 import static org.wildfly.security.http.HttpConstants.URI;
@@ -49,6 +50,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Supplier;
 
 import javax.security.auth.callback.Callback;
@@ -326,8 +328,17 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
     }
 
     private byte[] getH_A1(final MessageDigest messageDigest, final String username, final String messageRealm) throws AuthenticationMechanismException {
-        PasswordDigestObtainer obtainer = new PasswordDigestObtainer(callbackHandler, username, messageRealm, httpDigest, DigestPassword.ALGORITHM_DIGEST_MD5, messageDigest, providers, null, true, false);
+        PasswordDigestObtainer obtainer = new PasswordDigestObtainer(callbackHandler, username, messageRealm, httpDigest, getCredentialAlgorithm(getMechanismName()), messageDigest, providers, null, true, false);
         return obtainer.handleUserRealmPasswordCallbacks();
+    }
+
+    private String getCredentialAlgorithm(String mechanismName) {
+        switch (mechanismName) {
+            case DIGEST_NAME:
+                return DigestPassword.ALGORITHM_DIGEST_MD5;
+            default:
+                return mechanismName.toLowerCase(Locale.ROOT);
+        }
     }
 
     private String convertToken(final String name, final byte[] value) throws AuthenticationMechanismException {

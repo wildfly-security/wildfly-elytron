@@ -36,11 +36,11 @@ public class ElytronTool {
     /**
      * status code for unrecognized command
      */
-    public static int ElytronToolExitStatus_unrecognizedCommand = 1;
+    public static final int ElytronToolExitStatus_unrecognizedCommand = 1;
     /**
      * status code for no problems
      */
-    public static int ElytronToolExitStatus_OK = 0;
+    public static final int ElytronToolExitStatus_OK = 0;
 
     private Map<String, Command> commandRegistry = new HashMap<>();
     /**
@@ -58,6 +58,7 @@ public class ElytronTool {
         commandRegistry.put(VaultCommand.VAULT_COMMAND, new VaultCommand()); // uses exit code 7
         commandRegistry.put(FileSystemRealmCommand.FILE_SYSTEM_REALM_COMMAND, new FileSystemRealmCommand()); // uses exit code 7
         commandRegistry.put(FileSystemEncryptRealmCommand.FILE_SYSTEM_ENCRYPT_COMMAND, new FileSystemEncryptRealmCommand()); // uses exit code 7
+        commandRegistry.put(FileSystemRealmIntegrityCommand.FILE_SYSTEM_REALM_INTEGRITY_COMMAND, new FileSystemRealmIntegrityCommand()); // uses exit code 7
     }
 
     /**

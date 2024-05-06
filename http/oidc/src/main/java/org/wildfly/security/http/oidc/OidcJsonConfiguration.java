@@ -46,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "register-node-at-startup", "register-node-period", "token-store", "adapter-state-cookie-path", "principal-attribute",
         "proxy-url", "turn-off-change-session-id-on-login", "token-minimum-time-to-live",
         "min-time-between-jwks-requests", "public-key-cache-ttl",
-        "ignore-oauth-query-parameter", "verify-token-audience", "token-signature-algorithm"
+        "ignore-oauth-query-parameter", "verify-token-audience", "token-signature-algorithm", "scope"
 })
 public class OidcJsonConfiguration {
 
@@ -139,6 +139,9 @@ public class OidcJsonConfiguration {
     protected String clientId;
     @JsonProperty("token-signature-algorithm")
     protected String tokenSignatureAlgorithm = DEFAULT_TOKEN_SIGNATURE_ALGORITHM;
+
+    @JsonProperty("scope")
+    protected String scope;
 
     /**
      * The Proxy url to use for requests to the auth-server, configurable via the adapter config property {@code proxy-url}.
@@ -511,5 +514,12 @@ public class OidcJsonConfiguration {
         this.tokenSignatureAlgorithm = tokenSignatureAlgorithm;
     }
 
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
 }
 

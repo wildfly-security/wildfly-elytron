@@ -18,17 +18,17 @@
 
 package org.wildfly.security.http.oidc;
 
-import static org.wildfly.security.http.HttpConstants.ACCEPT;
-import static org.wildfly.security.http.HttpConstants.FACES_REQUEST;
-import static org.wildfly.security.http.HttpConstants.PARTIAL;
-import static org.wildfly.security.http.HttpConstants.SOAP_ACTION;
-import static org.wildfly.security.http.HttpConstants.XML_HTTP_REQUEST;
-import static org.wildfly.security.http.HttpConstants.X_REQUESTED_WITH;
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
+import static org.wildfly.security.http.oidc.Oidc.ACCEPT;
 import static org.wildfly.security.http.oidc.Oidc.AuthOutcome;
+import static org.wildfly.security.http.oidc.Oidc.FACES_REQUEST;
 import static org.wildfly.security.http.oidc.Oidc.HTML_CONTENT_TYPE;
+import static org.wildfly.security.http.oidc.Oidc.PARTIAL;
+import static org.wildfly.security.http.oidc.Oidc.SOAP_ACTION;
 import static org.wildfly.security.http.oidc.Oidc.TEXT_CONTENT_TYPE;
 import static org.wildfly.security.http.oidc.Oidc.WILDCARD_CONTENT_TYPE;
+import static org.wildfly.security.http.oidc.Oidc.XML_HTTP_REQUEST;
+import static org.wildfly.security.http.oidc.Oidc.X_REQUESTED_WITH;
 
 import java.util.Collections;
 import java.util.List;
@@ -54,10 +54,8 @@ public class RequestAuthenticator {
 
     public AuthOutcome authenticate() {
         AuthOutcome authenticate = doAuthenticate();
-        if (AuthOutcome.AUTHENTICATED.equals(authenticate)) {
-            if (! facade.isAuthorized()) {
-                return AuthOutcome.FAILED;
-            }
+        if (AuthOutcome.AUTHENTICATED.equals(authenticate) && !facade.isAuthorized()) {
+            return AuthOutcome.FAILED;
         }
         return authenticate;
     }
@@ -152,11 +150,6 @@ public class RequestAuthenticator {
             log.debug("NOT_ATTEMPTED: bearer only");
             return AuthOutcome.NOT_ATTEMPTED;
         }
-        if (isAutodetectedBearerOnly()) {
-            challenge = bearer.getChallenge();
-            log.debug("NOT_ATTEMPTED: Treating as bearer only");
-            return AuthOutcome.NOT_ATTEMPTED;
-        }
 
         if (log.isTraceEnabled()) {
             log.trace("try oidc");
@@ -166,6 +159,12 @@ public class RequestAuthenticator {
             if (verifySSL()) return AuthOutcome.FAILED;
             log.debug("AUTHENTICATED: was cached");
             return AuthOutcome.AUTHENTICATED;
+        }
+
+        if (isAutodetectedBearerOnly()) {
+            challenge = bearer.getChallenge();
+            log.debug("NOT_ATTEMPTED: Treating as bearer only");
+            return AuthOutcome.NOT_ATTEMPTED;
         }
 
         OidcRequestAuthenticator oidc = createOidcAuthenticator();

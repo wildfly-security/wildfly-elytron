@@ -33,6 +33,7 @@ import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,13 +43,14 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-
 import javax.net.ssl.SSLSession;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.x500.X500Principal;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
@@ -56,18 +58,21 @@ import okhttp3.mockwebserver.RecordedRequest;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
+import org.wildfly.security.auth.callback.PrincipalAuthorizeCallback;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.authz.Roles;
+import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpExchangeSpi;
 import org.wildfly.security.http.HttpScope;
@@ -78,31 +83,40 @@ import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.http.Scope;
 import org.wildfly.security.http.basic.BasicMechanismFactory;
+import org.wildfly.security.http.bearer.BearerMechanismFactory;
+import org.wildfly.security.http.cert.ClientCertMechanismFactory;
 import org.wildfly.security.http.digest.DigestMechanismFactory;
 import org.wildfly.security.http.digest.NonceManager;
 import org.wildfly.security.http.external.ExternalMechanismFactory;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
+import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 
 import mockit.Mock;
 import mockit.MockUp;
 
-// has dependency on wildfly-elytron-sasl, wildfly-elytron-http-basic and wildfly-elytron-digest
+// has dependency on wildfly-elytron-sasl, wildfly-elytron-http-cert, wildfly-elytron-http-basic and wildfly-elytron-digest
 public class AbstractBaseHttpTest {
 
     protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
     protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
     protected final HttpServerAuthenticationMechanismFactory externalFactory = new ExternalMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
+    protected final HttpServerAuthenticationMechanismFactory bearerFactory = new BearerMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
+    protected HttpServerAuthenticationMechanismFactory certFactory = new ClientCertMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get()[0]);
     protected HttpServerAuthenticationMechanismFactory statefulBasicFactory = new org.wildfly.security.http.sfbasic.BasicMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
 
-    protected void mockDigestNonce(final String nonce){
-        new MockUp<NonceManager>(){
+    protected void mockDigestNonce(final String nonce) {
+        new MockUp<NonceManager>() {
             @Mock
             String generateNonce(byte[] salt) {
                 return nonce;
             }
+
             @Mock
             boolean useNonce(final String nonce, byte[] salt, int nonceCount) {
                 return true;
@@ -116,6 +130,7 @@ public class AbstractBaseHttpTest {
             public Principal getPrincipal() {
                 return p;
             }
+
             @Mock
             public Roles getRoles() {
                 return Roles.NONE;
@@ -142,8 +157,10 @@ public class AbstractBaseHttpTest {
         private List<HttpServerCookie> cookies;
         private String requestMethod = "GET";
         private Map<String, List<String>> requestHeaders = new HashMap<>();
+        private Map<String, Object> attachments = new HashMap<>();
         private Map<Scope, HttpScope> scopes = new HashMap<>();
         private HttpScope sessionScope;
+        private X500Principal testPrincipal = null;
 
         public TestingHttpServerRequest(String[] authorization) {
             if (authorization != null) {
@@ -153,6 +170,15 @@ public class AbstractBaseHttpTest {
             this.cookies = new ArrayList<>();
         }
 
+        public TestingHttpServerRequest(String[] authorization, X500Principal principal) {
+            if (authorization != null) {
+                requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
+            }
+            this.remoteUser = null;
+            this.cookies = new ArrayList<>();
+            this.testPrincipal = principal;
+        }
+
         public TestingHttpServerRequest(String[] authorization, URI requestURI) {
             if (authorization != null) {
                 requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
@@ -160,6 +186,16 @@ public class AbstractBaseHttpTest {
             this.remoteUser = null;
             this.requestURI = requestURI;
             this.cookies = new ArrayList<>();
+        }
+
+        public TestingHttpServerRequest(String[] authorization, URI requestURI, Map<String, Object> attachments) {
+            if (authorization != null) {
+                requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
+            }
+            this.remoteUser = null;
+            this.requestURI = requestURI;
+            this.cookies = new ArrayList<>();
+            this.attachments = attachments;
         }
 
         public TestingHttpServerRequest(String[] authorization, URI requestURI, List<HttpServerCookie> cookies) {
@@ -193,47 +229,7 @@ public class AbstractBaseHttpTest {
             if (cookie != null) {
                 final String cookieName = cookie.substring(0, cookie.indexOf('='));
                 final String cookieValue = cookie.substring(cookie.indexOf('=') + 1);
-                cookies.add(new HttpServerCookie() {
-                    @Override
-                    public String getName() {
-                        return cookieName;
-                    }
-
-                    @Override
-                    public String getValue() {
-                        return cookieValue;
-                    }
-
-                    @Override
-                    public String getDomain() {
-                        return null;
-                    }
-
-                    @Override
-                    public int getMaxAge() {
-                        return -1;
-                    }
-
-                    @Override
-                    public String getPath() {
-                        return "/";
-                    }
-
-                    @Override
-                    public boolean isSecure() {
-                        return false;
-                    }
-
-                    @Override
-                    public int getVersion() {
-                        return 0;
-                    }
-
-                    @Override
-                    public boolean isHttpOnly() {
-                        return true;
-                    }
-                });
+                cookies.add(HttpServerCookie.getInstance(cookieName, cookieValue, null, -1, "/", false, 0, true));
             }
             this.sessionScope = sessionScope;
         }
@@ -244,7 +240,6 @@ public class AbstractBaseHttpTest {
             this.body = serverRequest.getBody().readUtf8();
             this.contentType = serverRequest.getHeader("Content-Type");
         }
-
 
         public Status getResult() {
             return result;
@@ -265,12 +260,18 @@ public class AbstractBaseHttpTest {
             return headerValues != null ? headerValues.get(0) : null;
         }
 
+
         public SSLSession getSSLSession() {
-            throw new IllegalStateException();
+            return null;
         }
 
         public Certificate[] getPeerCertificates() {
-            throw new IllegalStateException();
+            if (testPrincipal != null) {
+                X509Certificate cert1 = SelfSignedX509CertificateAndSigningKey.builder().setDn(testPrincipal).build().getSelfSignedCertificate();
+                return new Certificate[]{ cert1 };
+            }
+
+            return null;
         }
 
         public void noAuthenticationInProgress(HttpServerMechanismsResponder responder) {
@@ -368,6 +369,10 @@ public class AbstractBaseHttpTest {
         }
 
         public HttpScope getScope(Scope scope) {
+            if (scope.equals(Scope.SSL_SESSION)) {
+                return null;
+            }
+
             if (Scope.SESSION.equals(scope) && sessionScope != null) {
                 return sessionScope;
             }
@@ -375,9 +380,7 @@ public class AbstractBaseHttpTest {
             HttpScope httpScope = scopes.get(scope);
 
             if (httpScope == null) {
-                httpScope = new HttpScope() {
-
-                    Map<String, Object> attachments = new HashMap<>();
+                return new HttpScope() {
 
                     @Override
                     public boolean exists() {
@@ -410,8 +413,8 @@ public class AbstractBaseHttpTest {
                     }
 
                 };
-                scopes.put(scope, httpScope);
             }
+            scopes.put(scope, httpScope);
 
             return httpScope;
         }
@@ -427,13 +430,17 @@ public class AbstractBaseHttpTest {
             return scopes.get(scope);
         }
 
-        public void setRemoteUser (String remoteUser) {
+        public void setRemoteUser(String remoteUser) {
             this.remoteUser = remoteUser;
         }
 
         @Override
         public String getRemoteUser() {
             return remoteUser;
+        }
+
+        public Map<String, Object> getAttachments() {
+            return attachments;
         }
     }
 
@@ -490,9 +497,25 @@ public class AbstractBaseHttpTest {
         }
     }
 
+    protected CallbackHandler getCallbackHandler(String realm) {
+        return getCallbackHandler(null, realm, null);
+    };
+
     protected CallbackHandler getCallbackHandler(String username, String realm, String password) {
+        return getCallbackHandler(username, realm, password, null, false);
+    }
+
+    protected CallbackHandler getCallbackHandler(String username, String realm, String password, String token) {
+        return getCallbackHandler(username, realm, password, token, false);
+    }
+
+    protected CallbackHandler getCallbackHandler(String username, String realm, String password, boolean useDigestPassword) {
+        return getCallbackHandler(username, realm, password, null, useDigestPassword);
+    }
+
+    protected CallbackHandler getCallbackHandler(String username, String realm, String password, String token, boolean useDigestPassword) {
         return callbacks -> {
-            for(Callback callback : callbacks) {
+            for (Callback callback : callbacks) {
                 if (callback instanceof AvailableRealmsCallback) {
                     ((AvailableRealmsCallback) callback).setRealmNames(realm);
                 } else if (callback instanceof RealmCallback) {
@@ -500,38 +523,75 @@ public class AbstractBaseHttpTest {
                 } else if (callback instanceof NameCallback) {
                     Assert.assertEquals(username, ((NameCallback) callback).getDefaultName());
                 } else if (callback instanceof CredentialCallback) {
-                    if (!ClearPassword.ALGORITHM_CLEAR.equals(((CredentialCallback) callback).getAlgorithm())) {
-                        throw new UnsupportedCallbackException(callback);
-                    }
-                    try {
-                        PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, ELYTRON_PASSWORD_PROVIDERS);
-                        Password pass = factory.generatePassword(new ClearPasswordSpec(password.toCharArray()));
-                        ((CredentialCallback) callback).setCredential(new PasswordCredential(pass));
-                    } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-                        throw new IllegalStateException(e);
+                    if (useDigestPassword) {
+                        String credentialAlgorithm = ((CredentialCallback) callback).getAlgorithm();
+                        if (! DigestPassword.ALGORITHM_DIGEST_SHA_256.equals(credentialAlgorithm) &&
+                                ! DigestPassword.ALGORITHM_DIGEST_MD5.equals(credentialAlgorithm)) {
+                            throw new UnsupportedCallbackException(callback);
+                        }
+                        try {
+                            PasswordFactory factory = PasswordFactory.getInstance(credentialAlgorithm, ELYTRON_PASSWORD_PROVIDERS);
+                            DigestPasswordAlgorithmSpec algorithmSpec = new DigestPasswordAlgorithmSpec(username, realm);
+                            EncryptablePasswordSpec encryptableSpec = new EncryptablePasswordSpec(password.toCharArray(), algorithmSpec);
+                            DigestPassword digestPassword = (DigestPassword) factory.generatePassword(encryptableSpec);
+                            ((CredentialCallback) callback).setCredential(new PasswordCredential(digestPassword));
+                        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                            throw new IllegalStateException(e);
+                        }
+                    } else {
+                        if (!ClearPassword.ALGORITHM_CLEAR.equals(((CredentialCallback) callback).getAlgorithm())) {
+                            throw new UnsupportedCallbackException(callback);
+                        }
+                        try {
+                            PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, ELYTRON_PASSWORD_PROVIDERS);
+                            Password pass = factory.generatePassword(new ClearPasswordSpec(password.toCharArray()));
+                            ((CredentialCallback) callback).setCredential(new PasswordCredential(pass));
+                        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                            throw new IllegalStateException(e);
+                        }
                     }
                 } else if (callback instanceof EvidenceVerifyCallback) {
-                    PasswordGuessEvidence evidence = (PasswordGuessEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
-                    ((EvidenceVerifyCallback) callback).setVerified(Arrays.equals(evidence.getGuess(), password.toCharArray()));
-                    evidence.destroy();
+                    if (((EvidenceVerifyCallback) callback).getEvidence() instanceof PasswordGuessEvidence) {
+                        PasswordGuessEvidence evidence = (PasswordGuessEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
+                        ((EvidenceVerifyCallback) callback).setVerified(Arrays.equals(evidence.getGuess(), password.toCharArray()));
+                        evidence.destroy();
+                    } else if (((EvidenceVerifyCallback) callback).getEvidence() instanceof BearerTokenEvidence) {
+                        BearerTokenEvidence evidence = (BearerTokenEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
+                        ((EvidenceVerifyCallback) callback).setVerified(Objects.equals(token, evidence.getToken()));
+                    } else if (((EvidenceVerifyCallback) callback).getEvidence() instanceof X509PeerCertificateChainEvidence) {
+                        X509PeerCertificateChainEvidence evidence = (X509PeerCertificateChainEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
+                        evidence.setDecodedPrincipal(evidence.getFirstCertificate().getIssuerX500Principal());
+                        ((EvidenceVerifyCallback) callback).setVerified("CN=Duk3,OU=T3st,O=W0nd3rl4nd,C=US".equals(evidence.getFirstCertificate().getIssuerX500Principal().getName()));
+                    }
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     // NO-OP
                 } else if (callback instanceof IdentityCredentialCallback) {
                     Credential credential = ((IdentityCredentialCallback) callback).getCredential();
-                    MatcherAssert.assertThat(credential, CoreMatchers.instanceOf(PasswordCredential.class));
-                    ClearPassword clearPwdCredential = ((PasswordCredential) credential).getPassword().castAs(ClearPassword.class);
-                    Assert.assertNotNull(clearPwdCredential);
-                    Assert.assertArrayEquals(password.toCharArray(), clearPwdCredential.getPassword());
+                    if (token != null) {
+                        MatcherAssert.assertThat(credential, CoreMatchers.instanceOf(BearerTokenCredential.class));
+                        String obtainedToken = ((BearerTokenCredential) credential).getToken();
+                        Assert.assertNotNull(obtainedToken);
+                        Assert.assertEquals(obtainedToken, token);
+                    } else {
+                        MatcherAssert.assertThat(credential, CoreMatchers.instanceOf(PasswordCredential.class));
+                        ClearPassword clearPwdCredential = ((PasswordCredential) credential).getPassword().castAs(ClearPassword.class);
+                        Assert.assertNotNull(clearPwdCredential);
+                        Assert.assertArrayEquals(password.toCharArray(), clearPwdCredential.getPassword());
+                    }
                 } else if (callback instanceof AuthorizeCallback) {
-                    if(username.equals(((AuthorizeCallback) callback).getAuthenticationID()) &&
-                       username.equals(((AuthorizeCallback) callback).getAuthorizationID())) {
+                    if (token != null) {
                         ((AuthorizeCallback) callback).setAuthorized(true);
                     } else {
-                        ((AuthorizeCallback) callback).setAuthorized(false);
+                        if (username.equals(((AuthorizeCallback) callback).getAuthenticationID()) &&
+                                username.equals(((AuthorizeCallback) callback).getAuthorizationID())) {
+                            ((AuthorizeCallback) callback).setAuthorized(true);
+                        } else {
+                            ((AuthorizeCallback) callback).setAuthorized(false);
+                        }
                     }
                 } else if (callback instanceof CachedIdentityAuthorizeCallback) {
                     CachedIdentityAuthorizeCallback ciac = (CachedIdentityAuthorizeCallback) callback;
-                    if(ciac.getAuthorizationPrincipal() != null &&
+                    if (ciac.getAuthorizationPrincipal() != null &&
                             username.equals(ciac.getAuthorizationPrincipal().getName())) {
                         ciac.setAuthorized(mockSecurityIdentity(ciac.getAuthorizationPrincipal()));
                     } else if (ciac.getIdentity() != null && username.equals(ciac.getIdentity().getPrincipal().getName())) {
@@ -539,6 +599,9 @@ public class AbstractBaseHttpTest {
                     } else {
                         ciac.setAuthorized(null);
                     }
+                } else if (callback instanceof PrincipalAuthorizeCallback){
+                    PrincipalAuthorizeCallback pac = (PrincipalAuthorizeCallback) callback;
+                    pac.setAuthorized(true);
                 } else {
                     throw new UnsupportedCallbackException(callback);
                 }

@@ -48,7 +48,7 @@ public class RegexRoleMapperTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 3);
+        assertEquals(3, count);
     }
 
     @Test
@@ -69,7 +69,7 @@ public class RegexRoleMapperTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 2);
+        assertEquals(2,count);
     }
 
     @Test
@@ -90,7 +90,7 @@ public class RegexRoleMapperTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 2);
+        assertEquals(2,count);
     }
 
     @Test
@@ -111,7 +111,7 @@ public class RegexRoleMapperTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 3);
+        assertEquals(3,count);
     }
 
     @Test
@@ -132,7 +132,7 @@ public class RegexRoleMapperTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 3);
+        assertEquals(3,count);
     }
 
     @Test
@@ -153,7 +153,7 @@ public class RegexRoleMapperTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 2);
+        assertEquals( 2,count);
     }
 
     @Test
@@ -174,7 +174,7 @@ public class RegexRoleMapperTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 2);
+        assertEquals( 2,count);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -238,7 +238,7 @@ public class RegexRoleMapperTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 2);
+        assertEquals(2,count);
     }
 
     private Set<String> createSet(String... values) {

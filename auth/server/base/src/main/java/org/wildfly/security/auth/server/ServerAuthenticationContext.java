@@ -30,7 +30,9 @@ import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -48,6 +50,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
+import org.wildfly.security.auth.callback.AuthenticationConfigurationCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
 import org.wildfly.security.auth.callback.CallbackUtil;
@@ -62,6 +65,7 @@ import org.wildfly.security.auth.callback.PrincipalAuthorizeCallback;
 import org.wildfly.security.auth.callback.MechanismInformationCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
+import org.wildfly.security.auth.callback.RequestInformationCallback;
 import org.wildfly.security.auth.callback.SSLCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
@@ -862,6 +866,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
         return new CallbackHandler() {
             private SSLConnection sslConnection;
             private X509Certificate[] peerCerts;
+            private boolean saslSkipCertificateVerification;
 
             @Override
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -890,9 +895,16 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                         // external method (e.g.: EXTERNAL SASL and TLS) where only authorization is necessary. We delay authentication
                         // until we receive an authorization request.
                         // In the future, we may want to support external methods other than TLS peer authentication
-                        if (stateRef.get().canVerifyEvidence()) {
-                            if (peerCerts != null) {
-                                log.tracef("Authentication ID is null but SSL peer certificates are available. Trying to authenticate peer");
+                        if (stateRef.get().canVerifyEvidence() && peerCerts != null) {
+                            log.tracef("Authentication ID is null but SSL peer certificates are available. Trying to authenticate peer");
+                            // if SASL mechanism is used with skip-certificate-verification property then do not verifyEvidence against the security realm
+                            if (saslSkipCertificateVerification) {
+                                // Since evidence verification is being skipped here, ensure evidence decoding still takes place
+                                X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(peerCerts);
+                                setDecodedEvidencePrincipal(evidence);
+                                stateRef.get().setPrincipal(evidence.getDecodedPrincipal(), false);
+                            }
+                            else {
                                 verifyEvidence(new X509PeerCertificateChainEvidence(peerCerts));
                             }
                         }
@@ -1147,7 +1159,22 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     log.tracef("Handling PrincipalAuthorizeCallback: principal = %s  authorized = %b", principal, authorized);
                     authorizeCallback.setAuthorized(authorized);
                     handleOne(callbacks, idx + 1);
-                } else {
+                } else if (callback instanceof AuthenticationConfigurationCallback) {
+                    AuthenticationConfigurationCallback authenticationConfigurationCallback = (AuthenticationConfigurationCallback) callback;
+                    saslSkipCertificateVerification = authenticationConfigurationCallback.getSaslSkipCertificateVerification();
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof RequestInformationCallback) {
+                    HashMap<String, Object> props = ((RequestInformationCallback) callback).getProperties();
+                    Attributes runtimeAttributes = new MapAttributes();
+                    for (Map.Entry<String, Object> entry : props.entrySet()) {
+                        if (entry.getValue() != null) {
+                            runtimeAttributes.addFirst(entry.getKey(), entry.getValue().toString());
+                        }
+                    }
+                    addRuntimeAttributes(runtimeAttributes);
+                    handleOne(callbacks, idx + 1);
+                }
+                else {
                     CallbackUtil.unsupported(callback);
                     handleOne(callbacks, idx + 1);
                 }
@@ -1374,7 +1401,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
         }
 
         public InactiveState(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechanismConfigurationSelector,
-                MechanismInformation mechanismInformation, IdentityCredentials privateCredentials, IdentityCredentials publicCredentials, Attributes runtimeAttributes) {
+                             MechanismInformation mechanismInformation, IdentityCredentials privateCredentials, IdentityCredentials publicCredentials, Attributes runtimeAttributes) {
             this.capturedIdentity = capturedIdentity;
             this.mechanismConfigurationSelector = mechanismConfigurationSelector;
             this.mechanismInformation = checkNotNullParam("mechanismInformation", mechanismInformation);
@@ -2092,13 +2119,56 @@ public final class ServerAuthenticationContext implements AutoCloseable {
         void fail(final boolean requireInProgress) {
             final SecurityIdentity capturedIdentity = getSourceIdentity();
             final AtomicReference<State> stateRef = getStateRef();
-            if (! stateRef.compareAndSet(this, FAILED)) {
+            if (!stateRef.compareAndSet(this, FAILED)) {
                 stateRef.get().fail(requireInProgress);
                 return;
             }
-            SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmFailedAuthenticationEvent(realmIdentity, null, null));
+            SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmFailedAuthenticationEvent(getRealmIdentityWithRuntimeAttributes(), null, null));
             SecurityDomain.safeHandleSecurityEvent(capturedIdentity.getSecurityDomain(), new SecurityAuthenticationFailedEvent(capturedIdentity, realmIdentity.getRealmIdentityPrincipal()));
             realmIdentity.dispose();
+        }
+
+        private RealmIdentity getRealmIdentityWithRuntimeAttributes() {
+            return new RealmIdentity() {
+                @Override
+                public Principal getRealmIdentityPrincipal() {
+                    return realmIdentity.getRealmIdentityPrincipal();
+                }
+
+                @Override
+                public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+                    return realmIdentity.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
+                }
+
+                @Override
+                public <C extends Credential> C getCredential(Class<C> credentialType) throws RealmUnavailableException {
+                    return realmIdentity.getCredential(credentialType);
+                }
+
+                @Override
+                public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
+                    return realmIdentity.getEvidenceVerifySupport(evidenceType, algorithmName);
+                }
+
+                @Override
+                public boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
+                    return realmIdentity.verifyEvidence(evidence);
+                }
+
+                @Override
+                public boolean exists() throws RealmUnavailableException {
+                    return realmIdentity.exists();
+                }
+
+                @Override
+                public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+                    if (realmIdentity.exists()) {
+                        return AuthorizationIdentity.basicIdentity(realmIdentity.getAuthorizationIdentity(), runtimeAttributes);
+                    } else {
+                        return AuthorizationIdentity.basicIdentity(AuthorizationIdentity.EMPTY, runtimeAttributes);
+                    }
+                }
+            };
         }
 
         @Override

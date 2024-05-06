@@ -136,12 +136,7 @@ public class CompatibilityServerTest {
         assertEquals("chris", server.getAuthorizationID());
     }
 
-
-    /**
-     * Test with authorization ID (authzid) of other user
-     */
-    @Test
-    public void testUnauthorizedAuthorizationId() throws Exception {
+    private SaslServer testCommonInitSaslServer() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
         Map<String, Object> serverProps = new HashMap<String, Object>();
@@ -158,6 +153,18 @@ public class CompatibilityServerTest {
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
         assertFalse(server.isComplete());
+
+        return server;
+    }
+
+
+    //********************************************** */
+    /**
+     * Test with authorization ID (authzid) of other user
+     */
+    @Test
+    public void testUnauthorizedAuthorizationId() throws Exception {
+        SaslServer server = testCommonInitSaslServer();
 
         byte[] message2 = "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA9BSuZWMSpW8m\",digest-uri=\"acap/elwood.innosoft.com\",maxbuf=65536,response=0d071450228e395e2c0999e02b6aa665,qop=auth,authzid=\"george\"".getBytes(StandardCharsets.UTF_8);
 
@@ -560,22 +567,7 @@ public class CompatibilityServerTest {
      */
     @Test
     public void testReplayAttack() throws Exception {
-        mockNonce("OA9BSXrbuRhWay");
-
-        Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
-        SaslServer server =
-                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
-                        .setUserName("chris")
-                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
-                        .setProtocol("acap").setServerName("elwood.innosoft.com")
-                        .setProperties(serverProps)
-                        .build();
-        assertFalse(server.isComplete());
-
-        byte[] message1 = server.evaluateResponse(new byte[0]);
-        assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
-        assertFalse(server.isComplete());
+        SaslServer server = testCommonInitSaslServer();
 
         byte[] message2 = "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",response=d388dad90d4bbd760a152321f2143af7,qop=auth".getBytes(StandardCharsets.UTF_8);
         try{
@@ -591,22 +583,7 @@ public class CompatibilityServerTest {
      */
     @Test
     public void testBadResponse() throws Exception {
-        mockNonce("OA9BSXrbuRhWay");
-
-        Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
-        SaslServer server =
-                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
-                        .setUserName("chris")
-                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
-                        .setProtocol("acap").setServerName("elwood.innosoft.com")
-                        .setProperties(serverProps)
-                        .build();
-        assertFalse(server.isComplete());
-
-        byte[] message1 = server.evaluateResponse(new byte[0]);
-        assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
-        assertFalse(server.isComplete());
+        SaslServer server = testCommonInitSaslServer();
 
         byte[] message2 = "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA9BSuZWMSpW8m\",digest-uri=\"acap/elwood.innosoft.com\",response=d388dad90d4bbd760a152321f2143af7,qop=auth".getBytes(StandardCharsets.UTF_8);
         try{
@@ -743,4 +720,28 @@ public class CompatibilityServerTest {
         assertEquals("chris", server.getAuthorizationID());
     }
 
+    @Test
+    public void testIncorrectResponseField() throws Exception {
+        mockNonce("OA6MG9tEQGm2hh");
+
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("imap").setServerName("elwood.innosoft.com")
+                        .addMechanismRealm("elwood.innosoft.com")
+                        .build();
+        assertFalse(server.isComplete());
+
+        byte[] message = server.evaluateResponse(new byte[0]);
+        assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",charset=utf-8,algorithm=md5-sess", new String(message, "UTF-8"));
+        assertFalse(server.isComplete());
+
+        byte[] invalidMessage = "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",response=incorrectResponse,qop=auth".getBytes(StandardCharsets.UTF_8);
+        try {
+            server.evaluateResponse(invalidMessage);
+        } catch (SaslException e) {
+            assertTrue(e.getMessage().contains("invalid proof"));
+        }
+    }
 }

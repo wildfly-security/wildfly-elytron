@@ -60,7 +60,7 @@ public abstract class AbstractLogoutTest extends OidcBaseTest {
         OidcBaseTest.client = new MockWebServer();
         OidcBaseTest.client.start(new InetSocketAddress(0).getAddress(), CLIENT_PORT);
         configureDispatcher();
-        RealmRepresentation realm = KeycloakConfiguration.getRealmRepresentation(TEST_REALM, CLIENT_ID, CLIENT_SECRET, CLIENT_HOST_NAME, CLIENT_PORT, CLIENT_APP);
+        RealmRepresentation realm = KeycloakConfiguration.getRealmRepresentation(TEST_REALM, CLIENT_ID, CLIENT_SECRET, CLIENT_HOST_NAME, CLIENT_PORT, CLIENT_APP, CONFIGURE_CLIENT_SCOPES);
 
         realm.setAccessTokenLifespan(100);
         realm.setSsoSessionMaxLifespan(100);

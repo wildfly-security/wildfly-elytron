@@ -19,6 +19,8 @@ package org.wildfly.security.tool;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.tool.Params.FILE_SEPARATOR;
+import static org.wildfly.security.tool.Params.LINE_SEPARATOR;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -225,11 +227,11 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
     public static void getAbsolutePaths() throws Exception {
         ABSOLUTE_BASE_DIR = Paths.get(FileSystemRealmCommandTest.class.getProtectionDomain().getCodeSource().getLocation().toURI())
                 .toAbsolutePath()
-                + System.getProperty("file.separator")
+                + FILE_SEPARATOR
                 + "filesystem-realm"
-                + System.getProperty("file.separator");
-        ABSOLUTE_BASE_DIR_USERS = ABSOLUTE_BASE_DIR + "users" + System.getProperty("file.separator");
-        ABSOLUTE_BASE_DIR_ROLES = ABSOLUTE_BASE_DIR + "roles" + System.getProperty("file.separator");
+                + FILE_SEPARATOR;
+        ABSOLUTE_BASE_DIR_USERS = ABSOLUTE_BASE_DIR + "users" + FILE_SEPARATOR;
+        ABSOLUTE_BASE_DIR_ROLES = ABSOLUTE_BASE_DIR + "roles" + FILE_SEPARATOR;
         OUTPUT_LOCATIONS_CLI[0] = RELATIVE_BASE_DIR + "output-1";
         OUTPUT_LOCATIONS_CLI[1] = ABSOLUTE_BASE_DIR + "output-2";
         OUTPUT_LOCATIONS_CLI[2] = RELATIVE_BASE_DIR + "output-3";
@@ -260,26 +262,26 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
     public static void createAbsoluteDescriptorFile() throws Exception {
         String fileText = "";
         fileText = fileText + "users-file:" + ABSOLUTE_BASE_DIR_USERS + "users-5.properties";
-        fileText += System.getProperty("line.separator");
+        fileText += LINE_SEPARATOR;
         fileText = fileText + "roles-file:" + ABSOLUTE_BASE_DIR_ROLES + "roles-5.properties";
-        fileText += System.getProperty("line.separator");
+        fileText += LINE_SEPARATOR;
         fileText += "output-location:" + ABSOLUTE_BASE_DIR + "output-5-bulk";
-        fileText += System.getProperty("line.separator");
+        fileText += LINE_SEPARATOR;
         fileText += "filesystem-realm-name:nameOfFileSystemRealm5";
-        fileText += System.getProperty("line.separator");
+        fileText += LINE_SEPARATOR;
         fileText += "security-domain-name:nameOfSecurityDomain5";
-        fileText += System.getProperty("line.separator");
-        fileText += System.getProperty("line.separator");
+        fileText += LINE_SEPARATOR;
+        fileText += LINE_SEPARATOR;
         fileText = fileText + "users-file:" + ABSOLUTE_BASE_DIR_USERS + "users-6.properties";
-        fileText += System.getProperty("line.separator");
+        fileText += LINE_SEPARATOR;
         fileText = fileText + "roles-file:" + ABSOLUTE_BASE_DIR_ROLES + "roles-6.properties";
-        fileText += System.getProperty("line.separator");
+        fileText += LINE_SEPARATOR;
         fileText = fileText + "output-location:" + ABSOLUTE_BASE_DIR + "output-6-bulk";
-        fileText += System.getProperty("line.separator");
+        fileText += LINE_SEPARATOR;
         fileText += "filesystem-realm-name:nameOfFileSystemRealm6";
-        fileText += System.getProperty("line.separator");
+        fileText += LINE_SEPARATOR;
         fileText += "security-domain-name:nameOfSecurityDomain6";
-        fileText += System.getProperty("line.separator");
+        fileText += LINE_SEPARATOR;
         Files.write(Paths.get(RELATIVE_BASE_DIR + "descriptor-file-2"), fileText.getBytes(), StandardOpenOption.CREATE);
     }
 

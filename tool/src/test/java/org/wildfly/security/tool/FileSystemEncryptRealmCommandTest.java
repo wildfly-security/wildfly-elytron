@@ -19,15 +19,21 @@ package org.wildfly.security.tool;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.wildfly.security.tool.FileSystemEncryptRealmCommand.ELYTRON_PASSWORD_PROVIDERS;
+import static org.wildfly.security.tool.Command.ELYTRON_KS_PASS_PROVIDERS;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.crypto.SecretKey;
+
 import org.apache.commons.cli.MissingArgumentException;
+import org.junit.AfterClass;
 import org.junit.Test;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
@@ -37,9 +43,14 @@ import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.impl.PropertiesCredentialStore;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 
-public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
+/**
+ * @author <a href="mailto:araskar@redhat.com">Ashpan Raskar</a>
+ * @author <a href="mailto:carodrig@redhat.com">Cameron Rodriguez</a>
+ */
+public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest {
 
     private static final String RELATIVE_BASE_DIR = "./target/test-classes/filesystem-encrypt/";
+    private static final String CREDENTIAL_STORE_PATH = RELATIVE_BASE_DIR + "mycredstore.cs";
 
     private void run(String inputLocation, String outputLocation, String fileSystemRealmName, int expectedStatus) {
         runCommandSilent(inputLocation, outputLocation, fileSystemRealmName, expectedStatus);
@@ -51,19 +62,29 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
 
     private void runCommand(String inputLocation, String outputLocation, String fileSystemRealmName, String encoded, boolean create, int expectedStatus) {
         String[] requiredArgs;
-        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", "mycredstore.cs"};
+        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", CREDENTIAL_STORE_PATH};
         executeCommandAndCheckStatus(requiredArgs, expectedStatus);
     }
 
     private void runCommand(String inputLocation, String outputLocation, String fileSystemRealmName, int levels, String encoded, boolean create, int expectedStatus) {
         String[] requiredArgs;
-        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--levels", String.valueOf(levels), "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", "mycredstore.cs"};
+        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--levels", String.valueOf(levels), "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", CREDENTIAL_STORE_PATH};
+        executeCommandAndCheckStatus(requiredArgs, expectedStatus);
+    }
+
+    private void runCommand(String inputLocation, String outputLocation, String fileSystemRealmName, String keyStoreLocation,
+                            String keyPairAlias, String keyStorePassword, int levels, boolean create, int expectedStatus) {
+        String[] requiredArgs;
+        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName,
+                "--keystore", keyStoreLocation, "--key-pair", keyPairAlias, "--password", keyStorePassword,
+                "--levels", String.valueOf(levels), "--create", String.valueOf(create),
+                "--credential-store", CREDENTIAL_STORE_PATH};
         executeCommandAndCheckStatus(requiredArgs, expectedStatus);
     }
 
     private void runCommand(String inputLocation, String outputLocation, String fileSystemRealmName, String credentialStore, String secretKey, String encoded, boolean create, int expectedStatus) {
         String[] requiredArgs;
-        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--credential-store", credentialStore, "--secret-key", secretKey, "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", "mycredstore.cs"};
+        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--credential-store", credentialStore, "--secret-key", secretKey, "--encoded", encoded, "--create", String.valueOf(create)};
         executeCommandAndCheckStatus(requiredArgs, expectedStatus);
     }
 
@@ -75,7 +96,7 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
 
     private void runCommandInvalid(String outputLocation, String fileSystemRealmName, String encoded, boolean create, int expectedStatus) {
         String[] requiredArgs;
-        requiredArgs = new String[]{"--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", "mycredstore.cs"};
+        requiredArgs = new String[]{"--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", CREDENTIAL_STORE_PATH};
         executeCommandAndCheckStatus(requiredArgs, expectedStatus);
     }
 
@@ -106,12 +127,18 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
     public void testBulk() throws Exception {
         String descriptorFileLocation = "./target/test-classes/bulk-encryption-conversion-desc";
         runCommand(descriptorFileLocation, 0);
-        String[] files = new String[]{"multiple-credential-types/O/OBWGC2LOKVZWK4Q.xml", "multiple-credential-types/O/ONQWY5DFMRKXGZLS.xml", "multiple-credential-types/O/OVZWK4RUGI.xml", "multiple-credential-types/M/MFXG65DIMVZFK43FOI.xml", "multiple-credential-types/M/MFZWQ4DBNY.xml", "multiple-credential-types/N/NZSXOU3BNR2GKZCVONSXEMQ.xml", "hash-encoding/O/B/OBSXE43PNYZA.xml", "hash-encoding/O/5/O5UWYZDGNR4TO.xml", "hash-encoding/O/V/OVZWK4RR.xml", "hash-encoding/M/J/MJXXSNA.xml", "hash-encoding/M/5/M5UXE3BV.xml", "hash-encoding/M/V/MVQXAOA.xml", "hash-encoding/N/J/NJRG643TGY.xml", "hash-encoding/N/F/NFSGK3TUNF2HSMY.xml", "hash-charset/O/B/OBSXE43PNYZA.xml", "hash-charset/O/5/O5UWYZDGNR4TO.xml", "hash-charset/O/V/OVZWK4RR.xml", "hash-charset/M/J/MJXXSNA.xml", "hash-charset/M/5/M5UXE3BV.xml", "hash-charset/M/V/MVQXAOA.xml", "hash-charset/N/J/NJRG643TGY.xml", "hash-charset/N/F/NFSGK3TUNF2HSMY.xml", "level-4/O/B/S/X/OBSXE43PNYZA.xml", "level-4/O/5/U/W/O5UWYZDGNR4TO.xml", "level-4/O/V/Z/W/OVZWK4RR.xml", "level-4/M/J/X/X/MJXXSNA.xml", "level-4/M/5/U/X/M5UXE3BV.xml", "level-4/M/V/Q/X/MVQXAOA.xml", "level-4/N/J/R/G/NJRG643TGY.xml", "level-4/N/F/S/G/NFSGK3TUNF2HSMY.xml"};
+        String[] files = new String[]{"multiple-credential-types/O/OBWGC2LOKVZWK4Q.xml", "multiple-credential-types/O/ONQWY5DFMRKXGZLS.xml", "multiple-credential-types/O/OVZWK4RUGI.xml", "multiple-credential-types/M/MFXG65DIMVZFK43FOI.xml", "multiple-credential-types/M/MFZWQ4DBNY.xml", "multiple-credential-types/N/NZSXOU3BNR2GKZCVONSXEMQ.xml", "hash-encoding/O/B/OBSXE43PNYZA.xml", "hash-encoding/O/5/O5UWYZDGNR4TO.xml", "hash-encoding/O/V/OVZWK4RR.xml", "hash-encoding/M/J/MJXXSNA.xml", "hash-encoding/M/5/M5UXE3BV.xml", "hash-encoding/M/V/MVQXAOA.xml", "hash-encoding/N/J/NJRG643TGY.xml", "hash-encoding/N/F/NFSGK3TUNF2HSMY.xml", "hash-charset/M/F/MFWGSY3F.xml", "hash-charset/M/J/MJXWE.xml", "hash-charset/M/N/MNQW2ZLSN5XA.xml", "level-4/O/B/S/X/OBSXE43PNYZA.xml", "level-4/O/5/U/W/O5UWYZDGNR4TO.xml", "level-4/O/V/Z/W/OVZWK4RR.xml", "level-4/M/J/X/X/MJXXSNA.xml", "level-4/M/5/U/X/M5UXE3BV.xml", "level-4/M/V/Q/X/MVQXAOA.xml", "level-4/N/J/R/G/NJRG643TGY.xml", "level-4/N/F/S/G/NFSGK3TUNF2HSMY.xml"};
         for (String file: files) {
             if(!fileExists("target/test-classes/filesystem-encrypt/fs-encrypted-realms/"+file)){
                 throw new FileNotFoundException("Missing file from Bulk Descriptor File: " + file);
             }
         }
+    }
+
+    @Test
+    public void testBulkWithoutNames() throws Exception {
+        String descriptorFileLocation = "./target/test-classes/bulk-encryption-conversion-desc-without-names";
+        runCommand(descriptorFileLocation, 0);
     }
 
     @Test
@@ -155,13 +182,23 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
     }
 
     @Test
+    public void testSingleUserWithRolesAndIntegrity() throws Exception {
+        String inputLocation = RELATIVE_BASE_DIR + "fs-unencrypted-realms/single-user-with-roles-and-integrity";
+        String outputLocation = RELATIVE_BASE_DIR + "fs-encrypted-realms";
+        String fileSystemRealmName = "single-user-with-roles-and-integrity";
+        String keyStoreLocation = RELATIVE_BASE_DIR + "mykeystore.pfx";
+        String keyPairAlias = "integrity-key";
+        String keyStorePassword = "Guk]i%Aua4-wB";
+        runCommand(inputLocation, outputLocation, fileSystemRealmName, keyStoreLocation, keyPairAlias, keyStorePassword, 2, true, 0);
+    }
+
+    @Test
     public void testSingleUserWithRolesAndKey() throws Exception {
         String inputLocation = RELATIVE_BASE_DIR + "fs-unencrypted-realms/single-user-with-key/";
         String outputLocation = RELATIVE_BASE_DIR + "fs-encrypted-realms";
         String fileSystemRealmName = "single-user-with-key";
-        String credentialStore = RELATIVE_BASE_DIR + "mycredstore.cs";
         String key = "key";
-        runCommand(inputLocation, outputLocation, fileSystemRealmName, credentialStore, key, "false", false, 0);
+        runCommand(inputLocation, outputLocation, fileSystemRealmName, CREDENTIAL_STORE_PATH, key, "false", false, 0);
         String file = "target/test-classes/filesystem-encrypt/fs-encrypted-realms/single-user-with-key/O/N/ONSWG4TFORYGK4TTN5XA.xml";
         if(!fileExists(file)){
             throw new FileNotFoundException("Encrypted Identity/Identities Missing: " + file);
@@ -173,7 +210,7 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
         String inputLocation = RELATIVE_BASE_DIR + "fs-unencrypted-realms/single-user/";
         String outputLocation = RELATIVE_BASE_DIR + "fs-encrypted-realms";
         String fileSystemRealmName = "verify";
-        String credentialStoreLocation = RELATIVE_BASE_DIR + "mycredstore.cs";
+        String credentialStoreLocation = CREDENTIAL_STORE_PATH;
         String keyAlias = "key";
         runCommand(inputLocation, outputLocation, fileSystemRealmName, credentialStoreLocation, keyAlias, "false", false, 0);
 
@@ -187,13 +224,25 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
         FileSystemSecurityRealm securityRealm = FileSystemSecurityRealm.builder()
                 .setRoot(Paths.get(outputLocation, fileSystemRealmName))
                 .setLevels(2)
-                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
+                .setProviders(ELYTRON_KS_PASS_PROVIDERS)
                 .setSecretKey(key)
             .build();
         ModifiableRealmIdentity existingIdentity = securityRealm.getRealmIdentityForUpdate(new NamePrincipal("hello"));
         assertTrue(existingIdentity.exists());
         assertTrue(existingIdentity.verifyEvidence(new PasswordGuessEvidence("password!4".toCharArray())));
         existingIdentity.dispose();
+    }
+
+    @AfterClass
+    public static void cleanup() throws Exception {
+        //cleanup after testBulkWithoutNames test
+        Path bulkWithoutNamesFolderPath = Paths.get(RELATIVE_BASE_DIR + "fs-encrypted-realms/bulk-encryption-conversion-desc-without-names");
+        if (bulkWithoutNamesFolderPath.toFile().exists()) {
+            Files.walk(bulkWithoutNamesFolderPath)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        }
     }
 
     private boolean fileExists(String path) {

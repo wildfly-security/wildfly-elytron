@@ -18,11 +18,11 @@
 
 package org.wildfly.security.http.oidc;
 
-import static org.wildfly.security.http.HttpConstants.OPTIONS;
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_CLIENT_CONTEXT_KEY;
 import static org.wildfly.security.http.oidc.Oidc.AuthOutcome;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_NAME;
+import static org.wildfly.security.http.oidc.Oidc.OPTIONS;
 
 import java.util.Map;
 

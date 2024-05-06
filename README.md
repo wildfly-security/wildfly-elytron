@@ -29,15 +29,20 @@ $ mvn clean install
 Issue Tracking
 --------------
 
-Bugs and features are tracked within the Elytron Jira project at https://issues.jboss.org/browse/ELY
+Bugs and features are tracked within the Elytron Jira project at https://issues.redhat.com/browse/ELY
 
 Contributions
 -------------
 
-All new features and enhancements should be submitted to 1.x branch only.
-Our [contribution guide](https://github.com/wildfly-security/wildfly-elytron/blob/1.x/CONTRIBUTING.md) will guide you through the steps for getting started on the WildFly Elytron project and will go through how to format and submit your first PR.
+All new features and enhancements should be submitted to 2.x branch only.
+Our [contribution guide](https://github.com/wildfly-security/wildfly-elytron/blob/2.x/CONTRIBUTING.md) will guide you through the steps for getting started on the WildFly Elytron project and will go through how to format and submit your first PR.
  
 For more details, check out our [getting started guide](https://wildfly-security.github.io/wildfly-elytron/getting-started-for-developers/) for developers.
+
+Example Feature Demos
+---------------------
+
+Our [elytron-examples](https://github.com/wildfly-security-incubator/elytron-examples) repository contains example demos of WildFly Elytron features.
 
 Get Help
 --------

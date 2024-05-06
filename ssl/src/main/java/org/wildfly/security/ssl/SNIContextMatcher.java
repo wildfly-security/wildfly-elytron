@@ -26,6 +26,9 @@ import javax.net.ssl.SNIMatcher;
 import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLContext;
 
+/**
+ * A class which returns a matching SSL context based on the SNI server list provided.
+ */
 public class SNIContextMatcher {
 
     private final SSLContext defaultContext;
@@ -38,6 +41,10 @@ public class SNIContextMatcher {
         this.exacts = exacts;
     }
 
+    /**
+     * Used for finding the matching servers from the server list.
+     * Firstly, the exacts are matched, if not found, wildcards are tried.
+    */
     public SSLContext getContext(List<SNIServerName> servers) {
         for (Map.Entry<SNIMatcher, SSLContext> entry : exacts.entrySet()) {
             for (SNIServerName server : servers) {
@@ -60,6 +67,9 @@ public class SNIContextMatcher {
         return defaultContext;
     }
 
+    /**
+     * A class which allows building and configuration SNIContextMatcher. The builder, at minimum requres a default SSLContext.
+     */
     public static class Builder {
 
         private SSLContext defaultContext;

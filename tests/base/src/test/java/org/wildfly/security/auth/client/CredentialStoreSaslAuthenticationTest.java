@@ -20,6 +20,7 @@ package org.wildfly.security.auth.client;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.net.URI;
@@ -29,6 +30,7 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
 import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -111,4 +113,31 @@ public class CredentialStoreSaslAuthenticationTest {
 
     }
 
+    @Test
+    public void testUnsuccessfulSaslAuthenticationWithCredentialStore() throws Exception {
+        SaslServer server = new SaslServerBuilder(PlainSaslServerFactory.class, PLAIN)
+                .setProviderSupplier(() -> providers)
+                .setUserName(USERNAME)
+                .setPassword((USERNAME + PASSWORD).toCharArray())
+                .build();
+
+        // Create SASL client from XML configuration file
+        // XML configuration file specifies PASSWORD instead of USERNAME + PASSWORD
+        // Server configuration is specified as USERNAME + PASSWORD to create a mismatch
+        AuthenticationContext context = AuthenticationContext.getContextManager().get();
+
+        AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
+        SaslClient client = contextConfigurationClient.createSaslClient(new URI(CREDENTIAL_CONFIG_FILE), context.authRules.getConfiguration(), Arrays.asList(new String[]{PLAIN}));
+
+        assertTrue(client.hasInitialResponse());
+        byte[] message = client.evaluateChallenge(new byte[0]);
+        assertEquals("\0"+USERNAME+"\0" + PASSWORD,new String(message, StandardCharsets.UTF_8));
+
+        try {
+            server.evaluateResponse(message);
+            fail("Expected exception but no exception thrown");
+        } catch (SaslException e) {
+            // ignored because an authentication exception is expected
+        }
+    }
 }

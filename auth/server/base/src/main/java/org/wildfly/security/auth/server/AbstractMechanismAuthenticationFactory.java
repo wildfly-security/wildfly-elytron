@@ -42,6 +42,10 @@ public abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exc
         this.factory = factory;
     }
 
+    public MechanismConfigurationSelector getMechanismConfigurationSelector() {
+        return mechanismConfigurationSelector;
+    }
+
     public SecurityDomain getSecurityDomain() {
         return securityDomain;
     }
@@ -72,11 +76,30 @@ public abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exc
      */
     protected abstract boolean usesCredentials(String mechName);
 
+    /**
+     * Determine whether the given mechanism name is known to WildFly Elytron.
+     *
+     * If it is not known we can't filter it out as we can not rely upon the other methods being able to
+     * return accurate responses about the mechanisms requirements.
+     *
+     * As this is a new method and other implementations may not know to override this has a default
+     * implementation to match the current behaviour i.e. assume we know about all mechanisms.
+     *
+     * @param mechName the mechanism name
+     * @return {@code true} if the mechanism is known to WildFly Elytron, {@code false} if it is not
+     */
+    protected boolean isKnownMechanism(String mechName) {
+        return true;
+    };
+
     public Collection<String> getMechanismNames() {
         final Collection<String> names = new LinkedHashSet<>();
         top: for (String mechName : getAllSupportedMechNames()) {
-            // if the mech doesn't need credentials, then we support it for sure
-            if (! usesCredentials(mechName)) {
+            // If we don't know about the mech we have to support it as it is likely
+            // a custom mechanism so our filtering rules will not be correct.
+            if ((! isKnownMechanism(mechName)) ||
+                 // if the mech doesn't need credentials, then we support it for sure
+                 (! usesCredentials(mechName))) {
                 names.add(mechName);
                 continue;
             }

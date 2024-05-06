@@ -20,10 +20,12 @@ package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
 
-import java.util.Map;
+import java.util.HashMap;
 
 import org.jose4j.jwt.JwtClaims;
 
@@ -164,7 +166,13 @@ public class IDToken extends JsonWebToken {
         if (! (addressValueAsJson instanceof JsonObject)) {
             throw log.invalidTokenClaimValue();
         }
-        return new AddressClaimSet((Map<String, String>) addressValueAsJson);
+        HashMap<String, String> result;
+        try {
+            result = new ObjectMapper().readValue(addressValueAsJson.toString(), HashMap.class);
+        } catch (JsonProcessingException e) {
+            throw log.invalidTokenClaimValue();
+        }
+        return new AddressClaimSet(result);
     }
 
     /**

@@ -77,7 +77,6 @@ import org.wildfly.security.sasl.util.AvailableRealmsSaslServerFactory;
 import org.wildfly.security.sasl.util.ChannelBindingSaslServerFactory;
 import org.wildfly.security.sasl.util.CredentialSaslServerFactory;
 import org.wildfly.security.sasl.util.KeyManagerCredentialSaslServerFactory;
-import org.wildfly.security.sasl.util.PropertiesSaslServerFactory;
 import org.wildfly.security.sasl.util.ProtocolSaslServerFactory;
 import org.wildfly.security.sasl.util.SecurityProviderSaslServerFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslServerFactory;
@@ -377,11 +376,8 @@ public class SaslServerBuilder {
         if (factory == null && providerSupplier != null) {
             factory = new SecurityProviderSaslServerFactory(providerSupplier);
         }
-        if (properties != null && properties.size() > 0) {
-            if (properties.containsKey(WildFlySasl.REALM_LIST)) {
-                factory = new AvailableRealmsSaslServerFactory(factory);
-            }
-            factory = new PropertiesSaslServerFactory(factory, properties);
+        if (properties != null && properties.size() > 0 && properties.containsKey(WildFlySasl.REALM_LIST)) {
+            factory = new AvailableRealmsSaslServerFactory(factory);
         }
         if (bindingTypeAndData != null) {
             factory = new ChannelBindingSaslServerFactory(factory, bindingTypeAndData.key, bindingTypeAndData.value);
@@ -403,6 +399,9 @@ public class SaslServerBuilder {
         }
         final SaslAuthenticationFactory.Builder builder = SaslAuthenticationFactory.builder();
         builder.setFactory(factory);
+        if (properties != null && properties.size() > 0) {
+            builder.setProperties(properties);
+        }
         builder.setSecurityDomain(securityDomain);
         if (scheduledExecutorService != null) {
             builder.setScheduledExecutorService(scheduledExecutorService);

@@ -41,6 +41,7 @@ import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractDelegatingSaslServerFactory;
 import org.wildfly.security.sasl.util.AuthenticationCompleteCallbackSaslServerFactory;
 import org.wildfly.security.sasl.util.AuthenticationTimeoutSaslServerFactory;
+import org.wildfly.security.sasl.util.PropertiesSaslServerFactory;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SecurityIdentitySaslServerFactory;
 import org.wildfly.security.sasl.util.SetMechanismInformationSaslServerFactory;
@@ -99,6 +100,11 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
         return SaslMechanismInformation.needsServerCredentials(mechName);
     }
 
+    @Override
+    protected boolean isKnownMechanism(String mechName) {
+        return SaslMechanismInformation.isKnownMechanism(mechName);
+    }
+
     static final Map<String, String> QUERY_ALL = Collections.singletonMap(WildFlySasl.MECHANISM_QUERY_ALL, "true");
 
     /**
@@ -116,6 +122,7 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
     public static final class Builder extends AbstractMechanismAuthenticationFactory.Builder<SaslServer, SaslServerFactory, SaslException> {
 
          private ScheduledExecutorService scheduledExecutorService;
+        private Map<String, Object> properties;
 
         /**
          * Construct a new instance.
@@ -135,6 +142,11 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
 
         public Builder setFactory(final SaslServerFactory factory) {
             super.setFactory(factory);
+            return this;
+        }
+
+        public Builder setProperties(final Map<String, Object> properties) {
+            this.properties = properties;
             return this;
         }
 
@@ -168,6 +180,10 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
                this.scheduledExecutorService = SecurityDomain.getScheduledExecutorService();
             }
             factory = new AuthenticationTimeoutSaslServerFactory(factory, this.scheduledExecutorService);
+
+            if (this.properties != null && this.properties.size() > 0) {
+                factory = new PropertiesSaslServerFactory(factory, properties);
+            }
 
             return new SaslAuthenticationFactory(getSecurityDomain(), getMechanismConfigurationSelector(), factory);
         }

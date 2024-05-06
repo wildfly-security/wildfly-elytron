@@ -19,6 +19,7 @@
 package org.wildfly.security.sasl.test;
 
 import static java.security.AccessController.doPrivileged;
+import static org.wildfly.security.sasl.WildFlySasl.AUTHENTICATION_TIMEOUT;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -26,7 +27,7 @@ import java.security.PrivilegedAction;
 import java.security.Provider;
 import java.security.Security;
 import java.util.Collections;
-import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 
@@ -53,11 +54,7 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.digest.DigestServerFactory;
 import org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider;
-import org.wildfly.security.sasl.util.AuthenticationTimeoutSaslServerFactory;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-
-import mockit.Mock;
-import mockit.MockUp;
 
 /**
  * Tests a successful authentication timeout for a custom executor service and the default executor service.
@@ -75,28 +72,8 @@ public class SaslAuthenticationTimeoutTest {
             WildFlyElytronPasswordProvider.getInstance()
     };
 
-    /*
-     * Unable to set custom AUTHENTICATION_TIMEOUT using a property SaslServer factory (see ELY-1815), so using mock
-     * function to avoid using default timeout of 150 sec
-     */
-    private static void mockGetTimeout() {
-        Class<?> classToMock;
-        try {
-            classToMock = Class.forName("org.wildfly.security.sasl.util.AuthenticationTimeoutSaslServerFactory", true, AuthenticationTimeoutSaslServerFactory.class.getClassLoader());
-        } catch (ClassNotFoundException e) {
-            throw new NoClassDefFoundError(e.getMessage());
-        }
-        new MockUp<Object>(classToMock) {
-            @Mock
-            private long getTimeout(final Map<String, ?> props) {
-                return 3;
-            }
-        };
-    }
-
     @BeforeClass
     public static void registerPasswordProvider() {
-        mockGetTimeout();
         for (Provider provider : providers) {
             Security.insertProviderAt(provider, 1);
         }
@@ -121,12 +98,14 @@ public class SaslAuthenticationTimeoutTest {
         INSTANCE.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
 
         try {
-
+            HashMap<String, Object> properties = new HashMap<>();
+            properties.put(AUTHENTICATION_TIMEOUT, "3");
             SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
                     .setUserName("George")
                     .setPassword("gpwd".toCharArray())
                     .setProtocol("TestProtocol")
                     .setServerName("TestServer")
+                    .setProperties(properties)
                     .setScheduledExecutorService(INSTANCE)
                     .addMechanismRealm("TestRealm")
                     .build();
@@ -153,12 +132,14 @@ public class SaslAuthenticationTimeoutTest {
     public void testSuccessfulTimeout_DefaultExecuterService() throws Exception {
 
         try {
-
+            HashMap<String, Object> properties = new HashMap<>();
+            properties.put(AUTHENTICATION_TIMEOUT, "3");
             SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
                     .setUserName("George")
                     .setPassword("gpwd".toCharArray())
                     .setProtocol("TestProtocol")
                     .setServerName("TestServer")
+                    .setProperties(properties)
                     .addMechanismRealm("TestRealm")
                     .build();
 

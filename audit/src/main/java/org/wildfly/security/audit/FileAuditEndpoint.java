@@ -21,13 +21,14 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.audit.ElytronMessages.audit;
 
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -44,7 +45,7 @@ import java.util.function.Supplier;
  */
 public class FileAuditEndpoint implements AuditEndpoint {
 
-    private static final byte[] LINE_TERMINATOR = System.lineSeparator().getBytes(StandardCharsets.UTF_8);
+    private static final String LINE_TERMINATOR = System.lineSeparator();
 
     private volatile boolean accepting = true;
 
@@ -54,7 +55,8 @@ public class FileAuditEndpoint implements AuditEndpoint {
 
     private File file;
     private FileDescriptor fileDescriptor;
-    private OutputStream outputStream;
+    private Writer writer;
+    private Charset charset;
     /**  Clock providing access to current time. */
     protected final Clock clock;
 
@@ -63,26 +65,27 @@ public class FileAuditEndpoint implements AuditEndpoint {
         this.syncOnAccept = builder.syncOnAccept;
         this.flushOnAccept = builder.flushOnAccept;
         this.clock = builder.clock;
+        this.charset = builder.charset != null ? builder.charset : StandardCharsets.UTF_8;
         setFile(builder.location.toFile());
     }
 
     void setFile(final File file) throws IOException {
-        boolean ok = false;
+        boolean isFileSet = false;
         final FileOutputStream fos = new FileOutputStream(file, true);
         try {
-            final OutputStream bos = new BufferedOutputStream(fos);
+            final Writer writer = new OutputStreamWriter(new BufferedOutputStream(fos), this.charset);
             try {
                 this.fileDescriptor = fos.getFD();
-                this.outputStream = bos;
+                this.writer = writer;
                 this.file = file;
-                ok = true;
+                isFileSet = true;
             } finally {
-                if (! ok) {
-                    safeClose(bos);
+                if (! isFileSet) {
+                    safeClose(writer);
                 }
             }
         } finally {
-            if (! ok) {
+            if (! isFileSet) {
                 safeClose(fos);
             }
         }
@@ -101,16 +104,16 @@ public class FileAuditEndpoint implements AuditEndpoint {
     }
 
     /**
-     * Method called to write given byte array to the target local file.
+     * Method called to write given String to the target local file.
      * This method can be overridden by subclasses to modify data written into file (to encrypt them for example),
      * or just for counting amount of written bytes for needs of log rotation and similar.
      *
      * This method can be invoked only in synchronization block surrounding one log message processing.
      *
-     * @param bytes the data to be written into the target local file
+     * @param toWrite the String to be written into the target local file
      */
-    void write(byte[] bytes) throws IOException {
-        outputStream.write(bytes);
+    void write(String toWrite) throws IOException {
+        writer.write(toWrite);
     }
 
     /**
@@ -138,14 +141,14 @@ public class FileAuditEndpoint implements AuditEndpoint {
         if (!accepting) return;
         Instant instant = clock.instant();
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        baos.write(dateTimeFormatterSupplier.get().format(instant).getBytes(StandardCharsets.UTF_8));
-        baos.write(',');
-        baos.write(priority.toString().getBytes(StandardCharsets.UTF_8));
-        baos.write(',');
-        baos.write(message.getBytes(StandardCharsets.UTF_8));
-        baos.write(LINE_TERMINATOR);
-        byte[] toWrite = baos.toByteArray();
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(dateTimeFormatterSupplier.get().format(instant));
+        buffer.append(',');
+        buffer.append(priority.toString());
+        buffer.append(',');
+        buffer.append(message);
+        buffer.append(LINE_TERMINATOR);
+        String toWrite = buffer.toString();
 
         synchronized(this) {
             if (!accepting) return; // We may have been waiting to get in here.
@@ -153,7 +156,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
             preWrite(instant);
             write(toWrite);
 
-            if (flushOnAccept) outputStream.flush();
+            if (flushOnAccept) writer.flush();
             if (syncOnAccept) fileDescriptor.sync();
         }
     }
@@ -172,9 +175,9 @@ public class FileAuditEndpoint implements AuditEndpoint {
      * Must be called in synchronized block together with reopening using {@code setFile()}.
      */
     void closeStreams() throws IOException {
-        outputStream.flush();
+        writer.flush();
         fileDescriptor.sync();
-        outputStream.close();
+        writer.close();
     }
 
     /**
@@ -197,6 +200,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
         private boolean syncOnAccept = true;
         private boolean flushOnAccept = true;
         private boolean flushSet = false;
+        private Charset charset;
 
         Builder() {
         }
@@ -264,6 +268,18 @@ public class FileAuditEndpoint implements AuditEndpoint {
          */
         Builder setClock(Clock clock) {
             this.clock = clock;
+
+            return this;
+        }
+
+        /**
+         * Set the file's character set.
+         *
+         * @param charset the character set
+         * @return this builder.
+         */
+        public Builder setCharset(Charset charset) {
+            this.charset = charset;
 
             return this;
         }

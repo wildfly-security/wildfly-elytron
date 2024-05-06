@@ -20,6 +20,7 @@ package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.wildfly.security.http.oidc.IDToken.AT_HASH;
+import static org.wildfly.security.http.oidc.Oidc.DISABLE_TYP_CLAIM_VALIDATION_PROPERTY_NAME;
 import static org.wildfly.security.http.oidc.Oidc.INVALID_AT_HASH_CLAIM;
 import static org.wildfly.security.http.oidc.Oidc.INVALID_ISSUED_FOR_CLAIM;
 import static org.wildfly.security.http.oidc.Oidc.INVALID_TYPE_CLAIM;
@@ -27,8 +28,10 @@ import static org.wildfly.security.http.oidc.Oidc.getJavaAlgorithmForHash;
 import static org.wildfly.security.jose.jwk.JWKUtil.BASE64_URL;
 
 import java.nio.charset.StandardCharsets;
+import java.security.AccessController;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivilegedAction;
 import java.util.Arrays;
 
 import javax.crypto.SecretKey;
@@ -51,6 +54,17 @@ import org.wildfly.common.iteration.ByteIterator;
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
 public class TokenValidator {
+
+    static final boolean DISABLE_TYP_CLAIM_VALIDATION_PROPERTY;
+
+    static {
+        DISABLE_TYP_CLAIM_VALIDATION_PROPERTY = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+            @Override
+            public Boolean run() {
+                return Boolean.parseBoolean(System.getProperty(DISABLE_TYP_CLAIM_VALIDATION_PROPERTY_NAME, "false"));
+            }
+        });
+    }
 
     private static final int HEADER_INDEX = 0;
     private JwtConsumerBuilder jwtConsumerBuilder;
@@ -107,7 +121,9 @@ public class TokenValidator {
         try {
             JwtContext jwtContext = setVerificationKey(bearerToken, jwtConsumerBuilder);
             jwtConsumerBuilder.setRequireSubject();
-            jwtConsumerBuilder.registerValidator(new TypeValidator(tokenType));
+            if (! DISABLE_TYP_CLAIM_VALIDATION_PROPERTY) {
+                jwtConsumerBuilder.registerValidator(new TypeValidator(tokenType));
+            }
             if (clientConfiguration.isVerifyTokenAudience()) {
                 jwtConsumerBuilder.setExpectedAudience(clientConfiguration.getResourceName());
             } else {
@@ -282,6 +298,18 @@ public class TokenValidator {
             }
             return null;
         }
+
+        private static String getAccessTokenHash(String accessTokenString, String jwsAlgorithm) throws NoSuchAlgorithmException {
+            byte[] inputBytes = accessTokenString.getBytes(StandardCharsets.UTF_8);
+            String javaAlgName = getJavaAlgorithmForHash(jwsAlgorithm);
+            MessageDigest md = MessageDigest.getInstance(javaAlgName);
+            md.update(inputBytes);
+            byte[] hash = md.digest();
+            int hashLength = hash.length / 2;
+            byte[] hashInput = Arrays.copyOf(hash, hashLength); // leftmost half of the hash
+            return ByteIterator.ofBytes(hashInput).base64Encode(BASE64_URL, false).drainToString();
+        }
+
     }
 
     private static class TypeValidator implements ErrorCodeValidator {
@@ -303,17 +331,6 @@ public class TokenValidator {
             }
             return null;
         }
-    }
-
-    private static String getAccessTokenHash(String accessTokenString, String jwsAlgorithm) throws NoSuchAlgorithmException {
-        byte[] inputBytes = accessTokenString.getBytes(StandardCharsets.UTF_8);
-        String javaAlgName = getJavaAlgorithmForHash(jwsAlgorithm);
-        MessageDigest md = MessageDigest.getInstance(javaAlgName);
-        md.update(inputBytes);
-        byte[] hash = md.digest();
-        int hashLength = hash.length / 2;
-        byte[] hashInput = Arrays.copyOf(hash, hashLength); // leftmost half of the hash
-        return ByteIterator.ofBytes(hashInput).base64Encode(BASE64_URL, false).drainToString();
     }
 
     public static class VerifiedTokens {

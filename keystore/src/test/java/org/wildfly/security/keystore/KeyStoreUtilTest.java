@@ -102,122 +102,32 @@ public class KeyStoreUtilTest {
 
     @Test
     public void testJKS() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException {
-        System.out.println("Testing JKS...");
-        Certificate jkscert = generateCertificate();
-        String filename = "testks.jks";
-        String alias = "alias";
-        char[] password = "password".toCharArray();
-
-        generateKeyStoreWithKey(filename, "jks", alias, password, jkscert);
-
-        KeyStore loadedStore = KeyStoreUtil.loadKeyStore(providerSupplier, null, new FileInputStream(new File(workingDir, filename)), filename, password);
-        Assert.assertNotNull(loadedStore);
-        Certificate loadedCert = loadedStore.getCertificate(alias);
-
-        Assert.assertEquals(jkscert, loadedCert);
+        testKeyStore("testks.jks", "jks", false);
     }
 
     @Test
     public void testJCEKS() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException {
-        System.out.println("Testing JCEKS...");
-        Certificate jkscert = generateCertificate();
-        String filename = "testks.pkcs12";
-        String alias = "alias";
-        char[] password = "password".toCharArray();
-
-        generateKeyStoreWithKey(filename, "jceks", alias, password, jkscert);
-
-        KeyStore loadedStore = KeyStoreUtil.loadKeyStore(providerSupplier, null, new FileInputStream(new File(workingDir, filename)), filename, password);
-        Assert.assertNotNull(loadedStore);
-        Certificate loadedCert = loadedStore.getCertificate(alias);
-
-        Assert.assertEquals(jkscert, loadedCert);
+        testKeyStore("testks.pkcs12", "jceks", false);
     }
 
     @Test
     public void testPKCS12() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException {
-        System.out.println("Testing PKCS12...");
-        Certificate jkscert = generateCertificate();
-        String filename = "testks.asdf";
-        String alias = "alias";
-        char[] password = "password".toCharArray();
-
-        generateKeyStoreWithKey(filename, "pkcs12", alias, password, jkscert);
-
-        KeyStore loadedStore = KeyStoreUtil.loadKeyStore(providerSupplier, null, new FileInputStream(new File(workingDir, filename)), filename, password);
-        Assert.assertNotNull(loadedStore);
-        Certificate loadedCert = loadedStore.getCertificate(alias);
-
-        Assert.assertEquals(jkscert, loadedCert);
+        testKeyStore("testks.asdf", "pkcs12", false);
     }
 
     @Test
-    public void testBKS() throws CertificateException, KeyStoreException, IOException {
-        System.out.println("Testing BKS...");
-        Certificate jkscert = generateCertificate();
-        String filename = "testks.bks";
-        String alias = "alias";
-        char[] password = "password".toCharArray();
-        boolean bcfailed = false;
-        try {
-            generateKeyStoreWithKey(filename, "bks", alias, password, jkscert);
-        } catch (Exception e) {
-            bcfailed = true;
-        }
-
-        Assume.assumeFalse("BC elytronProvider not found, skipping BC keystore recognition", bcfailed);
-
-        KeyStore loadedStore = KeyStoreUtil.loadKeyStore(providerSupplier, null, new FileInputStream(new File(workingDir, filename)), filename, password);
-        Assert.assertNotNull(loadedStore);
-        Certificate loadedCert = loadedStore.getCertificate(alias);
-
-        Assert.assertEquals(jkscert, loadedCert);
+    public void testBKS() throws CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException {
+        testKeyStore("testks.asdf", "bks", true);
     }
 
     @Test
-    public void testUBER() throws CertificateException, KeyStoreException, IOException {
-        System.out.println("Testing UBER...");
-        Certificate jkscert = generateCertificate();
-        String filename = "testks.ubr";
-        String alias = "alias";
-        char[] password = "password".toCharArray();
-        boolean bcfailed = false;
-        try {
-            generateKeyStoreWithKey(filename, "uber", alias, password, jkscert);
-        } catch (Exception e) {
-            bcfailed = true;
-        }
-
-        Assume.assumeFalse("BC elytronProvider not found, skipping BC keystore recognition", bcfailed);
-
-        KeyStore loadedStore = KeyStoreUtil.loadKeyStore(providerSupplier, null, new FileInputStream(new File(workingDir, filename)), filename, password);
-        Assert.assertNotNull(loadedStore);
-        Certificate loadedCert = loadedStore.getCertificate(alias);
-
-        Assert.assertEquals(jkscert, loadedCert);
+    public void testUBER() throws CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException {
+        testKeyStore("testks.asdf", "uber", true);
     }
 
     @Test
-    public void testBCFKS() throws CertificateException, KeyStoreException, IOException {
-        System.out.println("Testing BCFKS...");
-        Certificate jkscert = generateCertificate();
-        String filename = "testks.bcfks";
-        String alias = "alias";
-        char[] password = "password".toCharArray();
-        boolean bcfailed = false;
-        try {
-            generateKeyStoreWithKey(filename, "bcfks", alias, password, jkscert);
-        } catch (Exception e) {
-            bcfailed = true;
-        }
-
-        Assume.assumeFalse("BC elytronProvider not found, skipping BC keystore recognition", bcfailed);
-
-        KeyStore loadedStore = KeyStoreUtil.loadKeyStore(providerSupplier, null, new FileInputStream(new File(workingDir, filename)), filename, password);
-        Assert.assertNotNull(loadedStore);
-        Certificate loadedCert = loadedStore.getCertificate(alias);
-
-        Assert.assertEquals(jkscert, loadedCert);
+    public void testBCFKS() throws CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException {
+        testKeyStore("testks.asdf", "bcfks", true);
     }
 
     @Test
@@ -301,5 +211,30 @@ public class KeyStoreUtilTest {
             workingDir.mkdirs();
         }
         return workingDir;
+    }
+
+    private void testKeyStore(String filename, String keystoreType, boolean testBCKeyStore) throws CertificateException, KeyStoreException, NoSuchAlgorithmException, IOException {
+        System.out.println("Testing " + keystoreType.toUpperCase() + "...");
+        Certificate jkscert = generateCertificate();
+        String alias = "alias";
+        char[] password = "password".toCharArray();
+
+        if (testBCKeyStore) {
+            boolean bcfailed = false;
+            try {
+                generateKeyStoreWithKey(filename, keystoreType, alias, password, jkscert);
+            } catch (Exception e) {
+                bcfailed = true;
+            }
+            Assume.assumeFalse("BC elytronProvider not found, skipping BC keystore recognition", bcfailed);
+        } else {
+            generateKeyStoreWithKey(filename, keystoreType, alias, password, jkscert);
+        }
+
+        KeyStore loadedStore = KeyStoreUtil.loadKeyStore(providerSupplier, null, new FileInputStream(new File(workingDir, filename)), filename, password);
+        Assert.assertNotNull(loadedStore);
+        Certificate loadedCert = loadedStore.getCertificate(alias);
+
+        Assert.assertEquals(jkscert, loadedCert);
     }
 }

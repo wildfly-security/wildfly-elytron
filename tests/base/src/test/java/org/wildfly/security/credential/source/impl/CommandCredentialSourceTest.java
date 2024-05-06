@@ -18,7 +18,8 @@
 
 package org.wildfly.security.credential.source.impl;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +44,7 @@ public class CommandCredentialSourceTest {
         assertNotNull(password);
         final ClearPassword clearPassword = password.castAs(ClearPassword.class, ClearPassword.ALGORITHM_CLEAR);
         assertNotNull(clearPassword);
-        assertEquals(new String(clearPassword.getPassword()), "secret_key_THREE");
+        assertEquals("secret_key_THREE", new String(clearPassword.getPassword()));
     }
 
     private static CommandCredentialSource.Builder getBuilder() {

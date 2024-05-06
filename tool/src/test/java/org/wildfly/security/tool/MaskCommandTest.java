@@ -17,7 +17,9 @@
  */
 package org.wildfly.security.tool;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.tool.Params.LINE_SEPARATOR;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
@@ -49,8 +51,8 @@ public class MaskCommandTest extends AbstractCommandTest {
         String[] args = {"--iteration", "123", "--salt", "ASDF1234", "--secret", secret};
 
         String retVal = executeCommandAndCheckStatusAndGetOutput(args);
-        String retValNoNewLine = retVal.substring(0, retVal.indexOf(System.getProperty("line.separator")));
-        assertTrue("output has to be the as pre-generated one", ("MASK-" + pbGenerated + ";" + "ASDF1234" + ";" + 123).equals(retValNoNewLine));
+        String retValNoNewLine = retVal.substring(0, retVal.indexOf(LINE_SEPARATOR));
+        assertEquals("output has to be the as pre-generated one", "MASK-" + pbGenerated + ";" + "ASDF1234" + ";" + 123, retValNoNewLine);
     }
 
     @Test
@@ -60,10 +62,10 @@ public class MaskCommandTest extends AbstractCommandTest {
         String[] args = { "--secret", "super_secret" };
 
         String retVal = executeCommandAndCheckStatusAndGetOutput(args);
-        String[] retValLines = retVal.split(System.getProperty("line.separator"));
+        String[] retValLines = retVal.split(LINE_SEPARATOR);
 
         assertTrue("Message about invalid salt parameter must be present", retValLines[0].contains("Invalid \"salt\" parameter. Generated value"));
-        assertTrue("Message about invalid iteration parameter must be present", ("Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.").equals(retValLines[1]));
+        assertEquals("Message about invalid iteration parameter must be present", "Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.", retValLines[1]);
         assertTrue("Message about invalid salt parameter must be present", retValLines[2].contains("MASK-"));
     }
 
@@ -77,10 +79,11 @@ public class MaskCommandTest extends AbstractCommandTest {
         String[] args = { "--secret", secret, "--salt", salt };
 
         String retVal = executeCommandAndCheckStatusAndGetOutput(args);
-        String[] retValLines = retVal.split(System.getProperty("line.separator"));
+        String[] retValLines = retVal.split(LINE_SEPARATOR);
 
-        assertTrue("Message about invalid iteration parameter must be present", ("Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.").equals(retValLines[0]));
-        assertTrue("Output has to be the as pre-generated one", ("MASK-" + pregenerated + ";" + salt + ";" + defaultIteration).equals(retValLines[1]));
+        assertEquals("Message about invalid iteration parameter must be present", "Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.",
+                retValLines[0]);
+        assertEquals("Output has to be the as pre-generated one", "MASK-" + pregenerated + ";" + salt + ";" + defaultIteration, retValLines[1]);
     }
 
     @Test
@@ -89,7 +92,7 @@ public class MaskCommandTest extends AbstractCommandTest {
         String[] args = { "--secret", "super_secret", "--iteration", "123" };
 
         String retVal = executeCommandAndCheckStatusAndGetOutput(args);
-        String[] retValLines = retVal.split(System.getProperty("line.separator"));
+        String[] retValLines = retVal.split(LINE_SEPARATOR);
 
         assertTrue("Message about invalid salt parameter must be present", retValLines[0].contains("Invalid \"salt\" parameter. Generated value"));
         assertTrue("Message about invalid salt parameter must be present", retValLines[1].contains("MASK-"));
@@ -123,12 +126,13 @@ public class MaskCommandTest extends AbstractCommandTest {
 
         String[] args = { "--secret", secret, "--salt", salt, "--iteration", "abcd" };
 
-        String retVal = executeCommandAndCheckStatusAndGetOutput(args);
-        String[] retValLines = retVal.split(System.getProperty("line.separator"));
 
-        assertTrue("IllegalArgumentException must be present", ("java.lang.IllegalArgumentException: ELYTOOL00007: Invalid \"iteration\" value. Must be an integer between 1 and 2147483647, inclusive").equals(retValLines[0]));
-        assertTrue("Message about invalid iteration parameter must be present", ("Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.").equals(retValLines[1]));
-        assertTrue("Output has to be the as pre-generated one", ("MASK-" + pregenerated + ";" + salt + ";" + defaultIteration).equals(retValLines[2]));
+        String retVal = executeCommandAndCheckStatusAndGetOutput(args);
+        String[] retValLines = retVal.split(LINE_SEPARATOR);
+
+        assertEquals("IllegalArgumentException must be present", "java.lang.IllegalArgumentException: ELYTOOL00007: Invalid \"iteration\" value. Must be an integer between 1 and 2147483647, inclusive", retValLines[0]);
+        assertEquals("Message about invalid iteration parameter must be present", "Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.", retValLines[1]);
+        assertEquals("Output has to be the as pre-generated one", "MASK-" + pregenerated + ";" + salt + ";" + defaultIteration, retValLines[2]);
     }
 
     @Test
@@ -141,11 +145,11 @@ public class MaskCommandTest extends AbstractCommandTest {
         String[] args = { "--secret", secret, "--salt", salt, "--iteration", String.valueOf(Long.MAX_VALUE) };
 
         String retVal = executeCommandAndCheckStatusAndGetOutput(args);
-        String[] retValLines = retVal.split(System.getProperty("line.separator"));
+        String[] retValLines = retVal.split(LINE_SEPARATOR);
 
-        assertTrue("IllegalArgumentException must be present", ("java.lang.IllegalArgumentException: ELYTOOL00007: Invalid \"iteration\" value. Must be an integer between 1 and 2147483647, inclusive").equals(retValLines[0]));
-        assertTrue("Message about invalid iteration parameter must be present", ("Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.").equals(retValLines[1]));
-        assertTrue("Output has to be the as pre-generated one", ("MASK-" + pregenerated + ";" + salt + ";" + defaultIteration).equals(retValLines[2]));
+        assertEquals("IllegalArgumentException must be present", "java.lang.IllegalArgumentException: ELYTOOL00007: Invalid \"iteration\" value. Must be an integer between 1 and 2147483647, inclusive", retValLines[0]);
+        assertEquals("Message about invalid iteration parameter must be present", "Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.", retValLines[1]);
+        assertEquals("Output has to be the as pre-generated one", "MASK-" + pregenerated + ";" + salt + ";" + defaultIteration, retValLines[2]);
     }
 
     @Test
@@ -158,11 +162,11 @@ public class MaskCommandTest extends AbstractCommandTest {
         String[] args = { "--secret", secret, "--salt", salt, "--iteration", "-123" };
 
         String retVal = executeCommandAndCheckStatusAndGetOutput(args);
-        String[] retValLines = retVal.split(System.getProperty("line.separator"));
+        String[] retValLines = retVal.split(LINE_SEPARATOR);
 
-        assertTrue("IllegalArgumentException must be present", ("java.lang.IllegalArgumentException: ELYTOOL00007: Invalid \"iteration\" value. Must be an integer between 1 and 2147483647, inclusive").equals(retValLines[0]));
-        assertTrue("Message about invalid iteration parameter must be present", ("Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.").equals(retValLines[1]));
-        assertTrue("Output has to be the as pre-generated one", ("MASK-" + pregenerated + ";" + salt + ";" + defaultIteration).equals(retValLines[2]));
+        assertEquals("IllegalArgumentException must be present", "java.lang.IllegalArgumentException: ELYTOOL00007: Invalid \"iteration\" value. Must be an integer between 1 and 2147483647, inclusive",retValLines[0]);
+        assertEquals("Message about invalid iteration parameter must be present", "Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.",retValLines[1]);
+        assertEquals("Output has to be the as pre-generated one", "MASK-" + pregenerated + ";" + salt + ";" + defaultIteration, retValLines[2]);
     }
 
     @Test
@@ -185,4 +189,18 @@ public class MaskCommandTest extends AbstractCommandTest {
         Assert.assertTrue(output.contains("Option \"secret\" specified more than once. Only the first occurrence will be used."));
         Assert.assertFalse(output.contains("Option \"iteration\" specified more than once. Only the first occurrence will be used"));
     }
+
+    @Test
+    public void testDecryptMasked() throws Exception {
+        final String originalSecret = "super_secret";
+        final String salt = "ASDF1234";
+        final int iterationCount = 123;
+        final String preGeneratedMaskedPassword = "MASK-088WUKotOwu7VOS8xRj.Rr;ASDF1234;123";
+
+        char[] decryptedSecret = MaskCommand.decryptMasked(preGeneratedMaskedPassword);
+
+        Assert.assertNotNull("Decrypted secret should not be null", decryptedSecret);
+        Assert.assertEquals("Decrypted secret should match the original secret", originalSecret, new String(decryptedSecret));
+    }
+
 }

@@ -176,10 +176,8 @@ class X509EvidenceVerifier implements EvidenceVerifier {
 
                 for (int i = 0; i < size; i++) {
                     Object attrDigest = attribute.get(i);
-                    if (attrDigest != null){
-                        if (digest.equalsIgnoreCase((String) attrDigest)) {
-                            return true;
-                        }
+                    if (attrDigest != null && digest.equalsIgnoreCase((String) attrDigest)){
+                        return true;
                     }
                 }
             } catch (NoSuchAlgorithmException | CertificateEncodingException e) {
@@ -217,10 +215,9 @@ class X509EvidenceVerifier implements EvidenceVerifier {
             try {
                 for (int i = 0; i < size; i++) {
                     Object attrCertificate = attribute.get(i);
-                    if (attrCertificate != null){
-                        if (MessageDigest.isEqual(certificate.getEncoded(), (byte[]) attrCertificate)) {
-                            return true;
-                        }
+                    if (attrCertificate != null
+                            && MessageDigest.isEqual(certificate.getEncoded(), (byte[]) attrCertificate)) {
+                        return true;
                     }
                 }
             } catch (CertificateEncodingException e) {

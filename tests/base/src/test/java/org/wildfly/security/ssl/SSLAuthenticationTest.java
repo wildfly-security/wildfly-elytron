@@ -17,12 +17,12 @@
  */
 package org.wildfly.security.ssl;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.wildfly.security.ssl.test.util.CAGenerationTool.SIGNATURE_ALGORTHM;
 import static org.wildfly.security.x500.X500.OID_AD_OCSP;
 import static org.wildfly.security.x500.X500.OID_KP_OCSP_SIGNING;
@@ -103,7 +103,6 @@ import org.wildfly.security.x500.cert.ExtendedKeyUsageExtension;
 // has dependency on wildfly-elytron-client, wildfly-elytron-x500-cert, wildfly-elytron-realm, wildly-elytron-x500-deprecated
 public class SSLAuthenticationTest {
 
-    private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
     private static final int OCSP_PORT = 4854;
     private final int TESTING_PORT = 18201;
     private static final char[] PASSWORD = "Elytron".toCharArray();
@@ -132,7 +131,7 @@ public class SSLAuthenticationTest {
      * @return the initialised key manager.
      */
     private static X509ExtendedKeyManager getKeyManager(final String keystorePath) throws Exception {
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(IS_IBM ? "IbmX509" : "SunX509");
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
         keyManagerFactory.init(createKeyStore(keystorePath), PASSWORD);
 
         for (KeyManager current : keyManagerFactory.getKeyManagers()) {
@@ -795,6 +794,32 @@ public class SSLAuthenticationTest {
         }
     }
 
+    @Test
+    public void testWantClientAuthWithCorrectCertificate() throws Throwable {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .setTrustManager(getCATrustManager())
+                .setWantClientAuth(true)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Scarab",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Ladybird", false);
+    }
+
+    @Test
+    public void testWantClientAuthWithIncorrectCertificate() throws Throwable {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .setTrustManager(getCATrustManager())
+                .setWantClientAuth(true)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-one-way.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Scarab",
+                null, true);
+    }
+
     private void performConnectionTest(SSLContext serverContext, String clientUri, boolean expectValid, String expectedServerPrincipal, String expectedClientPrincipal, boolean oneWay) throws Throwable {
         System.setProperty("wildfly.config.url", SSLAuthenticationTest.class.getResource("wildfly-ssl-test-config-v1_7.xml").toExternalForm());
         AccessController.doPrivileged((PrivilegedAction<Integer>) () -> Security.insertProviderAt(WildFlyElytronPasswordProvider.getInstance(), 1));
@@ -864,10 +889,10 @@ public class SSLAuthenticationTest {
                 }
 
                 if (oneWay) {
-                    assertFalse(clientSocket.getSession().getProtocol().equals("TLSv1.3")); // since TLS 1.3 is not enabled by default (ELY-1917)
+                    assertNotEquals("TLSv1.3", clientSocket.getSession().getProtocol());// since TLS 1.3 is not enabled by default (ELY-1917)
                 } else {
-                    assertFalse(serverSocket.getSession().getProtocol().equals("TLSv1.3")); // since TLS 1.3 is not enabled by default
-                    assertFalse(clientSocket.getSession().getProtocol().equals("TLSv1.3")); // since TLS 1.3 is not enabled by default
+                    assertNotEquals("TLSv1.3", serverSocket.getSession().getProtocol()); // since TLS 1.3 is not enabled by default
+                    assertNotEquals("TLSv1.3", clientSocket.getSession().getProtocol()); // since TLS 1.3 is not enabled by default
                 }
                 return received;
             } catch (Exception e) {
