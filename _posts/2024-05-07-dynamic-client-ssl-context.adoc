@@ -1,0 +1,128 @@
+---
+layout: post
+title: 'Dynamic client SSL context that automatically delegates to different SSLContexts based on the host and port of the peer'
+date: 2024-05-07
+tags: ssl tls context dynamic authentication reverse proxy
+synopsis: Dynamic SSL context that automatically delegates to different SSLContexts based on the host and port of the peer
+author: dvilkola
+---
+
+:toc: macro
+:toc-title:
+
+WildFly 32 running at a https://docs.wildfly.org/32/Admin_Guide.html#Feature_stability_levels[community stability level] or lower includes the ability to configure the dynamic SSL context. This dynamic SSL context delegates to other instances of SSL contexts that are selected based on the host and port of the peer.
+
+toc::[]
+
+== Prerequisites
+
+To follow along with this guide, you will need:
+
+* Roughly 15 minutes
+
+* WildFly 32 or newer
+
+== New dynamic-client-ssl-context resource
+
+WildFly 32 has added a new `dynamic-client-ssl-context` resource to the elytron subsystem. This new resource has a single attribute `authentication-context`, which points to the configured `authentication-context` resource. It can have multiple ssl-contexts configured for different hosts and/or ports. The dynamic client SSL context dynamically delegates to the specific client SSL context that is configured for the host and/or port of the connection.
+
+== Example configuration on the server side
+
+```
+/subsystem=elytron/authentication-context=ac:add(match-rules=[{match-port=8443,ssl-context=client1-ssl-context},{match-host="www.example.org",ssl-context=client2-ssl-context}, {match-host="www.myhost.org", match-port=443, ssl-context=client3-ssl-context}])
+
+/subsystem=elytron/dynamic-client-ssl-context=dynamicClientSSLContext:add(authentication-context=ac)
+```
+
+The dynamic client SSL context will dynamically switch between different configurations based on the host and port of the peer. In the above configuration, if the hostname of the peer connection is `"www.example.org"`, then the `client2-ssl-context` will be used. If another request is made to port `8443`, then `client1-ssl-context` will be used. Note that the first matching rule from the given authentication context is always preferred.
+If the destination does not match any of the rules, the configured default SSLContext will be used. If it is not configured, then `SSLContext.getDefault()` will be used.
+
+It is also possible to configure this dynamic SSL context to be a `default SSL context` on the server:
+
+```
+/subsystem=elytron:write-attribute(name=default-ssl-context,value=dynamicClientSSLContext)
+reload
+```
+
+If this is the case, standalone clients in a deployed applications that use the `SSLContext.getDefault()` will use this dynamic SSL context for their requests.
+
+== Example use on the client side
+
+To use the dynamic client SSL context with the standalone clients, make sure you have the elytron module `wildfly-elytron-dynamic-ssl` on your classpath. You can then instantiate the `org.wildfly.security.dynamic.ssl.DynamicSSLContext` as shown below:
+
+```
+DynamicSSLContext dynamicSSLContext = new DynamicSSLContext();
+```
+
+The DynamicSSLContext instance loads the authentication context from the classpath as is described in the https://docs.wildfly.org/32/WildFly_Elytron_Security.html#the-default-configuration-approach[elytron client documentation].
+
+You can also pass an existing `AuthenticationContext` instance to the `org.wildfly.security.dynamic.ssl.DynamicSSLContextImpl` class and use it directly with the DynamicSSLContext: `new DynamicSSLContext(new DynamicSSLContextImpl(myAuthenticationContextInstance));`
+
+Same as on the server side, the client configuration can also specify different rules for different SSL contexts. These rules are used by the DynamicSSLContext to select an SSLContext to delegate to.
+
+As always, you can use either the programmatic approach to provide the authentication context or the configuration file approach. Below is an example of SSL context rules in the configuration file:
+
+```
+<ssl-context-rules>
+    <rule use-ssl-context="client-context1">
+        <match-host name="www.example.org"/>
+        <match-port number="443"/>
+    </rule>
+    <rule use-ssl-context="client-context2">
+        <match-host name="localhost"/>
+        <match-port number="8443"/>
+    </rule>
+    <rule use-ssl-context="client-context3">
+        <match-port number="9443"/>
+    </rule>
+        <rule use-ssl-context="default-context">
+    </rule>
+</ssl-context-rules>
+```
+
+Note: Since the `org.wildfly.security.dynamic.ssl.DynamicSSLContextSPI` is an SPI, you can use your own implementation to provide SSL context selection instead of relying on the elytron client.
+
+== Example using reverse proxies
+
+We will use a simple example consisting of a https://github.com/wildfly-security-incubator/elytron-examples/blob/main/dynamic-ssl-reverse-proxies/configure.cli[configure.cli] file. This file configures 2 ports secured with TLS and 2 reverse proxies connecting to these ports.
+
+To get the `configure.cli` file, clone the elytron-examples repository to your local machine:
+
+```
+git clone git@github.com:wildfly-security-incubator/elytron-examples.git
+```
+
+and navigate to the `dynamic-ssl-reverse-proxies` directory.
+
+Since the community is the default stability, you can start the WildFly server with the following:
+
+```
+$WILDFLY_HOME/bin/standalone.sh
+```
+
+Examine the commands in the `configure.cli` file of the `dynamic-ssl-reverse-proxies` example. This file configures ports 9443 and 10443 to require a different certificate and truststore to connect. The URL http://localhost:8080/proxy has been configured as a reverse proxy, forwarding requests to port 9443, where there is a WildFly welcome page. Similarly, the URL http://localhost:8080/proxy2 forwards requests to port 10443. Finally, the `authentication-context` and `dynamic-client-ssl-context` have been configured to associate the ports with the appropriate `client-ssl-context` resource.
+
+Run the `configure.cli` file to apply the changes to your running WildFly server:
+
+```
+$WILDFLY_HOME/bin/jboss-cli.sh --connect  --file=configure.cli
+```
+
+==== Testing the example
+
+Try accessing the reverse proxy http://localhost:8080/proxy and the http://localhost:8080/proxy2 with your browser. Both of these URLs will successfully return the `Welcome to WildFly` page.
+
+When you accessed the http://localhost:8080/proxy the reverse proxy forwarded your request to the https://localhost:9443/ URL. This URL requires you to provide a client certificate and to accept the server's certificate. The request was successful because the dynamic client SSL context delegated to an appropriate client SSL context that has a requested certificate and truststore configured. If you tried to access the https://localhost:9443/ directly instead, the browser will require you to accept the server's certificate and provide a client certificate.
+
+Similarly, when you accessed the http://localhost:8080/proxy2, the reverse proxy redirected your request to https://localhost:10443/ and dynamic client SSL context delegated to a client SSL context that was configured specifically for the requested port.
+
+== Summary
+
+This blog post explained why and how to configure the dynamic SSL context in both a standalone client and in a WildFly server. See the resources and WildFly documentation for more information.
+
+== Resources
+
+* https://docs.wildfly.org/32/WildFly_Elytron_Security.html#dynamic-client-sslcontext[Elytron dynamic client SSL context documentation]
+* https://docs.wildfly.org/32/WildFly_Elytron_Security.html#the-default-configuration-approach[Elytron client discovery]
+* https://docs.wildfly.org/32/WildFly_Elytron_Security.html#Client_Authentication_with_Elytron_Client[Elytron client authentication documentation]
+* https://docs.wildfly.org/32/WildFly_Elytron_Security.html#ssl-components[Elytron SSL component summary]
