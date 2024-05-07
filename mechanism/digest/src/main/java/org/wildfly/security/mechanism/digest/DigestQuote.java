@@ -21,7 +21,7 @@ package org.wildfly.security.mechanism.digest;
 import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
- * Utility class used to convert string to quoted strings
+ * Utility class used to convert string to quoted strings.
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  *
@@ -33,6 +33,12 @@ public class DigestQuote {
     private DigestQuote() {
     }
 
+    /**
+     * Checks if a given character needs to be quoted.
+     *
+     * @param ch the character to check.
+     * @return {@code true} if the character needs to be quoted, {@code false} otherwise.
+     */
     private static boolean quoteNeeded(char ch) {
         return
                 ch == '"' || // escape char
@@ -46,8 +52,8 @@ public class DigestQuote {
     /**
      * Creates new String quoted by SASL rules.
      *
-     * @param inputStr String to be quoted
-     * @return
+     * @param inputStr String to be quoted.
+     * @return new String with quoted characters.
      */
     public static String quote(String inputStr) {
         int len = inputStr.length();
@@ -64,6 +70,12 @@ public class DigestQuote {
         return sb.toString();
     }
 
+    /**
+     * Creates new Array quoted by SASL rules.
+     *
+     * @param input Byte array to be quoted.
+     * @return new byte array with quoted bytes.
+     */
     public static byte[] quote(byte[] input) {
         ByteStringBuilder bsb = new ByteStringBuilder();
         for (int i = 0; i < input.length; i++) {
