@@ -730,6 +730,40 @@ public class SSLAuthenticationTest {
     }
 
     @Test
+    public void testOcspRevoked() throws Throwable {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .setTrustManager(X509RevocationTrustManager.builder()
+                        .setTrustManagerFactory(getTrustManagerFactory())
+                        .setTrustStore(createKeyStore("/jks/ca.truststore"))
+                        .setOcspResponderCert(ocspResponderCertificate)
+                        .build())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way-ocsp-revoked.org", false, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Scarab",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedRevoked", false);
+    }
+
+    @Test
+    public void testOcspUnknown() throws Throwable {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .setTrustManager(X509RevocationTrustManager.builder()
+                        .setTrustManagerFactory(getTrustManagerFactory())
+                        .setTrustStore(createKeyStore("/jks/ca.truststore"))
+                        .setOcspResponderCert(ocspResponderCertificate)
+                        .build())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way-ocsp-unknown.org", false, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Scarab",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedUnknown", false);
+    }
+
+    @Test
     public void testOcspMaxCertPathNeg1() throws Throwable {
         ocspMaxCertPathCommon(-1, false);
     }
