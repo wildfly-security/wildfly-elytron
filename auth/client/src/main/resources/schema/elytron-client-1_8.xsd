@@ -100,6 +100,13 @@
             <xsd:element name="certificate-revocation-list" type="certificate-revocation-list-type" minOccurs="0" />
             <xsd:element name="certificate-revocation-lists" type="certificate-revocation-lists-type" minOccurs="0" />
             <xsd:element name="ocsp" type="ocsp-type" minOccurs="0"/>
+            <xsd:element name="accept-ocsp-stapling" type="accept-ocsp-stapling-type" minOccurs="0" default="false">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Indicated whether the client will accept OCSP stapled responses from the server.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
         </xsd:all>
         <xsd:attribute name="name" type="xsd:string" use="required">
             <xsd:annotation>
@@ -119,6 +126,38 @@
         <xsd:sequence minOccurs="0" maxOccurs="unbounded">
             <xsd:element name="rule" type="ssl-context-rule-type" minOccurs="1" maxOccurs="1"/>
         </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="accept-ocsp-stapling-type">
+        <xsd:attribute name="accept-ocsp" type="xsd:boolean" use="optional" default="false">
+            <xsd:annotation>
+                <xsd:documentation>
+                    Indicates whether the client accepts ocsp stapled requests from the server.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="soft-fail" type="xsd:boolean" use="optional" default="true">
+            <xsd:annotation>
+                <xsd:documentation>
+                    Determines the client's behaviour upon receiving a certificate with unknown
+                    revocation status from the server.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="responder-certificate" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    Alias of OCSP Responder certificate.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="responder-keystore" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    Keystore for OCSP Responder certificate. trust-manager keystore is used by default and responder-certificate has to be defined.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
     </xsd:complexType>
 
     <xsd:complexType name="abstract-match-rule-type" abstract="true">
