@@ -194,6 +194,14 @@ public class ElytronXmlParserTest {
         checkSSLContext(authContext, "http://names-only.org");
     }
 
+    @Test
+    public void checkSSLContextWithOCSPStapling() throws Exception {
+        URL config = getClass().getResource("test-wildfly-config-v1_8.xml");
+        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
+        Assert.assertNotNull(authContext);
+        Assert.assertNotNull(authContext.create().getSslRules());
+    }
+
     private void checkSSLContext(SecurityFactory<AuthenticationContext> authContext, String uri) throws Exception {
         RuleNode<SecurityFactory<SSLContext>> node = authContext.create().sslRuleMatching(new URI(uri), null, null);
         Assert.assertNotNull(node);
