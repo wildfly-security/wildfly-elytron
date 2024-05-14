@@ -59,19 +59,24 @@ public class ExternalAuthenticationMechanism implements HttpServerAuthentication
 
         String remoteUser = request.getRemoteUser();
         if (remoteUser == null) {
+            httpExternal.trace("The remote-user was not obtained from the request");
             request.noAuthenticationInProgress();
             return;
         }
 
         if (authorize(remoteUser)) {
+            httpExternal.tracef("Authorization of user [%s] succeed", remoteUser);
             succeed(request);
         } else {
+            httpExternal.tracef("Authorization of user [%s] failed", remoteUser);
             fail(request);
         }
 
     }
 
     private boolean authorize(String username) throws HttpAuthenticationException {
+        httpExternal.tracef("Authorizing username: [%s]",username);
+
         AuthorizeCallback authorizeCallback = new AuthorizeCallback(username, username);
         try {
             MechanismUtil.handleCallbacks(httpExternal, callbackHandler, authorizeCallback);
@@ -88,6 +93,7 @@ public class ExternalAuthenticationMechanism implements HttpServerAuthentication
             MechanismUtil.handleCallbacks(httpExternal, callbackHandler, AuthenticationCompleteCallback.SUCCEEDED);
             request.authenticationComplete();
         } catch (AuthenticationMechanismException e) {
+            httpExternal.trace("Failed to complete successful authentication", e);
             throw e.toHttpAuthenticationException();
         } catch (UnsupportedCallbackException e) {
             throw httpExternal.mechCallbackHandlerFailedForUnknownReason(e).toHttpAuthenticationException();
@@ -99,6 +105,7 @@ public class ExternalAuthenticationMechanism implements HttpServerAuthentication
             MechanismUtil.handleCallbacks(httpExternal, callbackHandler, AuthenticationCompleteCallback.FAILED);
             request.authenticationFailed(httpExternal.authenticationFailed(), response -> response.setStatusCode(FORBIDDEN));
         } catch (AuthenticationMechanismException e) {
+            httpExternal.trace("Failed authentication not completed", e);
             throw e.toHttpAuthenticationException();
         } catch (UnsupportedCallbackException e) {
             throw httpExternal.mechCallbackHandlerFailedForUnknownReason(e).toHttpAuthenticationException();
