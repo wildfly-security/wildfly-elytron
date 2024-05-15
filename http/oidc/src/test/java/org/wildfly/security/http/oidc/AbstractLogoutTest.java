@@ -54,6 +54,8 @@ public abstract class AbstractLogoutTest extends OidcBaseTest {
 
     private ElytronDispatcher dispatcher;
     private OidcClientConfiguration clientConfig;
+    static boolean IS_BACK_CHANNEL_TEST = false;
+    static final String BACK_CHANNEL_LOGOUT_URL = "/logout/callback";
 
     @BeforeClass
     public static void onBeforeClass() {
@@ -171,7 +173,11 @@ public abstract class AbstractLogoutTest extends OidcBaseTest {
             MockResponse mockResponse = new MockResponse();
 
             try {
-                currentRequest = new TestingHttpServerRequest(serverRequest, sessionScope);
+                if (IS_BACK_CHANNEL_TEST && serverRequest.getRequestUrl().toString().endsWith(BACK_CHANNEL_LOGOUT_URL)) {
+                    currentRequest = new TestingHttpServerRequest(serverRequest, null);
+                } else {
+                    currentRequest = new TestingHttpServerRequest(serverRequest, sessionScope);
+                }
 
                 mechanism.evaluateRequest(currentRequest);
 
