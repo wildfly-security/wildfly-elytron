@@ -29,10 +29,16 @@ import java.util.List;
 import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import org.apache.http.HttpStatus;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.keycloak.representations.idm.ClientRepresentation;
 
 public class BackChannelLogoutTest extends AbstractLogoutTest {
+
+    @BeforeClass
+    public static void setUp() {
+        IS_BACK_CHANNEL_TEST = true;
+    }
 
     @Override
     protected void doConfigureClient(ClientRepresentation client) {
@@ -41,7 +47,7 @@ public class BackChannelLogoutTest extends AbstractLogoutTest {
 
         client.setFrontchannelLogout(false);
         client.getAttributes().put("backchannel.logout.session.required", "true");
-        client.getAttributes().put("backchannel.logout.url", rewriteHost(redirectUri) + "/logout/callback");
+        client.getAttributes().put("backchannel.logout.url", rewriteHost(redirectUri) + BACK_CHANNEL_LOGOUT_URL);
     }
 
     private static String rewriteHost(String redirectUri) {
