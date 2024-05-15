@@ -80,10 +80,30 @@ final class LogoutHandler {
         }
 
         if (isLogoutCallbackUri(facade)) {
-            handleLogoutRequest(facade);
-            return true;
+            if (isFrontChannel(facade)) {
+                handleFrontChannelLogoutRequest(facade);
+                return true;
+            } else {
+                // we have an active session, should have received a GET logout request
+                facade.getResponse().setStatus(HttpStatus.SC_METHOD_NOT_ALLOWED);
+                facade.authenticationFailed();
+            }
         }
 
+        return false;
+    }
+
+    boolean tryBackChannelLogout(OidcHttpFacade facade) {
+        if (isLogoutCallbackUri(facade)) {
+            if (isBackChannel(facade)) {
+                handleBackChannelLogoutRequest(facade);
+                return true;
+            } else {
+                // no active session, should have received a POST logout request
+                facade.getResponse().setStatus(HttpStatus.SC_METHOD_NOT_ALLOWED);
+                facade.authenticationFailed();
+            }
+        }
         return false;
     }
 
@@ -122,22 +142,9 @@ final class LogoutHandler {
         facade.getResponse().setHeader(HttpConstants.LOCATION, logoutUri);
     }
 
-    private void handleLogoutRequest(OidcHttpFacade facade) {
-        if (isFrontChannel(facade)) {
-            handleFrontChannelLogoutRequest(facade);
-        } else if (isBackChannel(facade)) {
-            handleBackChannelLogoutRequest(facade);
-        } else {
-            // logout requests should arrive either as a HTTP GET or POST
-            facade.getResponse().setStatus(HttpStatus.SC_METHOD_NOT_ALLOWED);
-            facade.authenticationFailed();
-        }
-    }
-
     private void handleBackChannelLogoutRequest(OidcHttpFacade facade) {
-        RefreshableOidcSecurityContext securityContext = getSecurityContext(facade);
         String logoutToken = facade.getRequest().getFirstParam(LOGOUT_TOKEN_PARAM);
-        TokenValidator tokenValidator = TokenValidator.builder(securityContext.getOidcClientConfiguration())
+        TokenValidator tokenValidator = TokenValidator.builder(facade.getOidcClientConfiguration())
                 .setSkipExpirationValidator()
                 .setTokenType(LOGOUT_TOKEN_TYPE)
                 .build();
@@ -168,7 +175,7 @@ final class LogoutHandler {
         }
 
         log.debug("Marking session for invalidation during back-channel logout");
-        sessionsMarkedForInvalidation.put(sessionId, securityContext.getOidcClientConfiguration());
+        sessionsMarkedForInvalidation.put(sessionId, facade.getOidcClientConfiguration());
     }
 
     private void handleFrontChannelLogoutRequest(OidcHttpFacade facade) {
@@ -224,17 +231,7 @@ final class LogoutHandler {
     }
 
     private boolean isSessionRequiredOnLogout(OidcHttpFacade facade) {
-        return getOidcClientConfiguration(facade).isSessionRequiredOnLogout();
-    }
-
-    private OidcClientConfiguration getOidcClientConfiguration(OidcHttpFacade facade) {
-        RefreshableOidcSecurityContext securityContext = getSecurityContext(facade);
-
-        if (securityContext == null) {
-            return null;
-        }
-
-        return securityContext.getOidcClientConfiguration();
+        return facade.getOidcClientConfiguration().isSessionRequiredOnLogout();
     }
 
     private RefreshableOidcSecurityContext getSecurityContext(OidcHttpFacade facade) {
@@ -250,11 +247,11 @@ final class LogoutHandler {
     }
 
     private String getLogoutUri(OidcHttpFacade facade) {
-        return getOidcClientConfiguration(facade).getLogoutUrl();
+        return facade.getOidcClientConfiguration().getLogoutUrl();
     }
 
     private String getLogoutCallbackUri(OidcHttpFacade facade) {
-        return getOidcClientConfiguration(facade).getLogoutCallbackUrl();
+        return facade.getOidcClientConfiguration().getLogoutCallbackUrl();
     }
 
     private boolean isBackChannel(OidcHttpFacade facade) {
