@@ -77,6 +77,7 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     public static final String CLIENT_SECRET = "secret";
     public static KeycloakContainer KEYCLOAK_CONTAINER;
     public static final String TEST_REALM = "WildFly";
+    public static final String TEST_REALM_WITH_SCOPES = "WildFlyScopes";
     public static final String TENANT1_REALM = "tenant1";
     public static final String TENANT2_REALM = "tenant2";
     public static final String KEYCLOAK_USERNAME = "username";
@@ -131,15 +132,26 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
         }
     }
     protected CallbackHandler getCallbackHandler() {
-       return getCallbackHandler(false, null);
+       return getCallbackHandler(false, null, null);
+    }
+
+    protected CallbackHandler getCallbackHandler(String expectedPrincipal) {
+        return getCallbackHandler(false, null, expectedPrincipal);
     }
 
     protected CallbackHandler getCallbackHandler(boolean checkScope, String expectedScopes) {
+        return getCallbackHandler(checkScope, expectedScopes, null);
+    }
+
+    protected CallbackHandler getCallbackHandler(boolean checkScope, String expectedScopes, String expectedPrincipal) {
         return callbacks -> {
             for(Callback callback : callbacks) {
                 if (callback instanceof EvidenceVerifyCallback) {
                     Evidence evidence = ((EvidenceVerifyCallback) callback).getEvidence();
                     ((EvidenceVerifyCallback) callback).setVerified(evidence.getDecodedPrincipal() != null);
+                    if (expectedPrincipal != null) {
+                        assertEquals(expectedPrincipal, evidence.getDecodedPrincipal().getName());
+                    }
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     // NO-OP
                 } else if (callback instanceof IdentityCredentialCallback) {

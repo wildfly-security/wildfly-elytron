@@ -234,5 +234,9 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 23056, value = "No message entity")
     IOException noMessageEntity();
 
+    @LogMessage(level = DEBUG)
+    @Message(id = 23057, value = "principal-attribute '%s' claim does not exist, falling back to 'sub'")
+    void principalAttributeClaimDoesNotExist(String principalAttributeClaim);
+
 }
 

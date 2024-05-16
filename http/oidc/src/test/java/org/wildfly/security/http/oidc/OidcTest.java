@@ -40,6 +40,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.security.auth.callback.CallbackHandler;
+
 import org.apache.http.HttpStatus;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -70,7 +72,8 @@ public class OidcTest extends OidcBaseTest {
         assumeTrue("Docker isn't available, OIDC tests will be skipped", isDockerAvailable());
         KEYCLOAK_CONTAINER = new KeycloakContainer();
         KEYCLOAK_CONTAINER.start();
-        sendRealmCreationRequest(KeycloakConfiguration.getRealmRepresentation(TEST_REALM, CLIENT_ID, CLIENT_SECRET, CLIENT_HOST_NAME, CLIENT_PORT, CLIENT_APP, CONFIGURE_CLIENT_SCOPES));
+        sendRealmCreationRequest(KeycloakConfiguration.getRealmRepresentation(TEST_REALM, CLIENT_ID, CLIENT_SECRET, CLIENT_HOST_NAME, CLIENT_PORT, CLIENT_APP, false));
+        sendRealmCreationRequest(KeycloakConfiguration.getRealmRepresentation(TEST_REALM_WITH_SCOPES, CLIENT_ID, CLIENT_SECRET, CLIENT_HOST_NAME, CLIENT_PORT, CLIENT_APP, CONFIGURE_CLIENT_SCOPES));
         sendRealmCreationRequest(KeycloakConfiguration.getRealmRepresentation(TENANT1_REALM, CLIENT_ID, CLIENT_SECRET, CLIENT_HOST_NAME, CLIENT_PORT, CLIENT_APP, ACCESS_TOKEN_LIFESPAN, SESSION_MAX_LIFESPAN, false, true));
         sendRealmCreationRequest(KeycloakConfiguration.getRealmRepresentation(TENANT2_REALM, CLIENT_ID, CLIENT_SECRET, CLIENT_HOST_NAME, CLIENT_PORT, CLIENT_APP, ACCESS_TOKEN_LIFESPAN, SESSION_MAX_LIFESPAN, false, true));
         client = new MockWebServer();
@@ -85,6 +88,11 @@ public class OidcTest extends OidcBaseTest {
                     .auth().oauth2(KeycloakConfiguration.getAdminAccessToken(KEYCLOAK_CONTAINER.getAuthServerUrl()))
                     .when()
                     .delete(KEYCLOAK_CONTAINER.getAuthServerUrl() + "/admin/realms/" + TEST_REALM).then().statusCode(204);
+            RestAssured
+                    .given()
+                    .auth().oauth2(KeycloakConfiguration.getAdminAccessToken(KEYCLOAK_CONTAINER.getAuthServerUrl()))
+                    .when()
+                    .delete(KEYCLOAK_CONTAINER.getAuthServerUrl() + "/admin/realms/" + TEST_REALM_WITH_SCOPES).then().statusCode(204);
             RestAssured
                     .given()
                     .auth().oauth2(KeycloakConfiguration.getAdminAccessToken(KEYCLOAK_CONTAINER.getAuthServerUrl()))
@@ -233,6 +241,31 @@ public class OidcTest extends OidcBaseTest {
     private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
                                        int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
         performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, expectedLocation, clientPageText, null, false);
+    }
+
+    private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText,
+                                       CallbackHandler callbackHandler) throws Exception {
+        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, expectedLocation,
+                clientPageText, null, false, callbackHandler);
+    }
+
+    @Test
+    public void testPrincipalAttribute() throws Exception {
+        // custom principal-attribute
+        performAuthentication(getOidcConfigurationInputStreamWithPrincipalAttribute("aud"), KeycloakConfiguration.ALICE,
+                KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT,
+                getCallbackHandler( "test-webapp"));
+
+        // standard principal-attribute
+        performAuthentication(getOidcConfigurationInputStreamWithPrincipalAttribute("given_name"), KeycloakConfiguration.ALICE,
+                KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT,
+                getCallbackHandler("Alice"));
+
+        // invalid principal-attribute, logging in should still succeed
+        performAuthentication(getOidcConfigurationInputStreamWithPrincipalAttribute("invalid_claim"), KeycloakConfiguration.ALICE,
+                KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT,
+                getCallbackHandler());
     }
 
     /*****************************************************************************************************************************************
@@ -411,7 +444,8 @@ public class OidcTest extends OidcBaseTest {
     }
 
     private void loginToAppMultiTenancy(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
-                                        int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
+                                        int expectedDispatcherStatusCode, String expectedLocation, String clientPageText,
+                                        CallbackHandler callbackHandler) throws Exception {
         try {
             Map<String, Object> props = new HashMap<>();
             OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(oidcConfig);
@@ -419,8 +453,8 @@ public class OidcTest extends OidcBaseTest {
 
             OidcClientContext oidcClientContext = new OidcClientContext(oidcClientConfiguration);
             oidcFactory = new OidcMechanismFactory(oidcClientContext);
-            HttpServerAuthenticationMechanism mechanism;
-            mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, getCallbackHandler());
+
+            HttpServerAuthenticationMechanism mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, callbackHandler);
 
             URI requestUri = new URI(getClientUrl());
             TestingHttpServerRequest request = new TestingHttpServerRequest(null, requestUri);
@@ -494,7 +528,17 @@ public class OidcTest extends OidcBaseTest {
     }
 
     private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
-                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText, String expectedScope, boolean checkInvalidScopeError) throws Exception {
+                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText,
+                                       String expectedScope, boolean checkInvalidScopeError) throws Exception {
+        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, expectedLocation,
+                clientPageText, expectedScope, checkInvalidScopeError, getCallbackHandler(checkInvalidScopeError,
+                        expectedScope, null));
+    }
+
+    private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText,
+                                       String expectedScope, boolean checkInvalidScopeError,
+                                       CallbackHandler callbackHandler) throws Exception {
         try {
             Map<String, Object> props = new HashMap<>();
             OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(oidcConfig);
@@ -502,12 +546,7 @@ public class OidcTest extends OidcBaseTest {
 
             OidcClientContext oidcClientContext = new OidcClientContext(oidcClientConfiguration);
             oidcFactory = new OidcMechanismFactory(oidcClientContext);
-            HttpServerAuthenticationMechanism mechanism;
-            if (expectedScope == null) {
-                mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, getCallbackHandler());
-            } else {
-                mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, getCallbackHandler(true, expectedScope));
-            }
+            HttpServerAuthenticationMechanism mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, callbackHandler);
 
             URI requestUri = new URI(getClientUrl());
             TestingHttpServerRequest request = new TestingHttpServerRequest(null, requestUri);
@@ -640,9 +679,23 @@ public class OidcTest extends OidcBaseTest {
     private InputStream getOidcConfigurationInputStreamWithScope(String scopeValue){
         String oidcConfig = "{\n" +
                 "    \"client-id\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "/" + "\",\n" +
+                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM_WITH_SCOPES + "/" + "\",\n" +
                 "    \"public-client\" : \"false\",\n" +
                 "    \"scope\" : \"" + scopeValue + "\",\n" +
+                "    \"ssl-required\" : \"EXTERNAL\",\n" +
+                "    \"credentials\" : {\n" +
+                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    }\n" +
+                "}";
+        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private InputStream getOidcConfigurationInputStreamWithPrincipalAttribute(String principalAttributeValue) {
+        String oidcConfig = "{\n" +
+                "    \"principal-attribute\" : \"" + principalAttributeValue + "\",\n" +
+                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"public-client\" : \"false\",\n" +
+                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
                 "    \"ssl-required\" : \"EXTERNAL\",\n" +
                 "    \"credentials\" : {\n" +
                 "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
