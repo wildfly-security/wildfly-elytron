@@ -125,7 +125,7 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SecurityProviderSaslClientFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
 import org.wildfly.security.ssl.SSLConnection;
-import org.wildfly.security.ssl.SSLUtils;
+import org.wildfly.security.ssl.builder.SSLUtils;
 import org.wildfly.security.x500.TrustedAuthority;
 
 /**

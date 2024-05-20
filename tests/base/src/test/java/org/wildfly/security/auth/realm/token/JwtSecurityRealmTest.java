@@ -71,7 +71,7 @@ import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.realm.token.test.util.RsaJwk;
-import org.wildfly.security.ssl.SSLContextBuilder;
+import org.wildfly.security.ssl.builder.SSLContextBuilder;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 
 import static org.junit.Assert.assertEquals;

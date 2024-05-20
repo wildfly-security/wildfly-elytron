@@ -42,7 +42,7 @@ import org.wildfly.security.auth.callback.EvidenceDecodePrincipalCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
-import org.wildfly.security.ssl.SSLUtils;
+import org.wildfly.security.ssl.builder.SSLUtils;
 import org.wildfly.security.x500.TrustedAuthority;
 import org.wildfly.security.x500.TrustedAuthority.CertificateTrustedAuthority;
 

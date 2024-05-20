@@ -21,7 +21,7 @@ import javax.net.ssl.SSLContext;
 
 import org.junit.Test;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.ssl.SSLContextBuilder;
+import org.wildfly.security.ssl.builder.SSLContextBuilder;
 
 /**
  * @author <a href="mailto:olukas@redhat.com">Ondrej Lukas</a>
