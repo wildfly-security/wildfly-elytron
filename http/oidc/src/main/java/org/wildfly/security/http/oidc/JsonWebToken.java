@@ -297,7 +297,14 @@ public class JsonWebToken {
             case NICKNAME:
                 return getNickName();
             default:
-                return getSubject();
+                String claimValue = getClaimValueAsString(attr);
+                if (claimValue != null) {
+                    return claimValue;
+                } else {
+                    // fall back to sub claim
+                    log.principalAttributeClaimDoesNotExist(attr);
+                    return getSubject();
+                }
         }
     }
 

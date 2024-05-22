@@ -188,6 +188,24 @@ public class OidcTest extends OidcBaseTest {
                 true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
     }
 
+    @Test
+    public void testPrincipalAttribute() throws Exception {
+        // custom principal-attribute
+        performAuthentication(getOidcConfigurationInputStreamWithPrincipalAttribute("aud"), KeycloakConfiguration.ALICE,
+                KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT,
+                getCallbackHandler("test-webapp"));
+
+        // standard principal-attribute
+        performAuthentication(getOidcConfigurationInputStreamWithPrincipalAttribute("given_name"), KeycloakConfiguration.ALICE,
+                KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT,
+                getCallbackHandler("Alice"));
+
+        // invalid principal-attribute, logging in should still succeed
+        performAuthentication(getOidcConfigurationInputStreamWithPrincipalAttribute("invalid_claim"), KeycloakConfiguration.ALICE,
+                KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT,
+                getCallbackHandler());
+    }
+
     /*****************************************************************************************************************************************
      * Tests for multi-tenancy.
      *
@@ -492,6 +510,20 @@ public class OidcTest extends OidcBaseTest {
     private InputStream getOidcConfigurationInputStreamWithTokenSignatureAlgorithm() {
         String oidcConfig = "{\n" +
                 "    \"token-signature-algorithm\" : \"RS256\",\n" +
+                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"public-client\" : \"false\",\n" +
+                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
+                "    \"ssl-required\" : \"EXTERNAL\",\n" +
+                "    \"credentials\" : {\n" +
+                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    }\n" +
+                "}";
+        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private InputStream getOidcConfigurationInputStreamWithPrincipalAttribute(String principalAttributeValue) {
+        String oidcConfig = "{\n" +
+                "    \"principal-attribute\" : \"" + principalAttributeValue + "\",\n" +
                 "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
                 "    \"public-client\" : \"false\",\n" +
                 "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
