@@ -488,7 +488,7 @@ public class BearerTest extends OidcBaseTest {
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
     }
 
-    private InputStream getOidcConfigurationInputStreamWithProviderUrl() {
+    protected InputStream getOidcConfigurationInputStreamWithProviderUrl() {
         String oidcConfig = "{\n" +
                 "    \"client-id\" : \"" + BEARER_ONLY_CLIENT_ID + "\",\n" +
                 "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +

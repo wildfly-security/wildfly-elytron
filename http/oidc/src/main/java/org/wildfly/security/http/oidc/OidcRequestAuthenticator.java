@@ -19,10 +19,12 @@
 package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
+import static org.wildfly.security.http.oidc.Oidc.ALLOW_QUERY_PARAMS_PROPERTY_NAME;
 import static org.wildfly.security.http.oidc.Oidc.CLIENT_ID;
 import static org.wildfly.security.http.oidc.Oidc.CODE;
 import static org.wildfly.security.http.oidc.Oidc.DOMAIN_HINT;
 import static org.wildfly.security.http.oidc.Oidc.ERROR;
+import static org.wildfly.security.http.oidc.Oidc.ISSUER;
 import static org.wildfly.security.http.oidc.Oidc.KC_IDP_HINT;
 import static org.wildfly.security.http.oidc.Oidc.LOGIN_HINT;
 import static org.wildfly.security.http.oidc.Oidc.MAX_AGE;
@@ -43,6 +45,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -71,6 +75,17 @@ public class OidcRequestAuthenticator {
     protected AuthChallenge challenge;
     protected String refreshToken;
     protected String strippedOauthParametersRequestUri;
+
+    static final boolean ALLOW_QUERY_PARAMS_PROPERTY;
+
+    static {
+        ALLOW_QUERY_PARAMS_PROPERTY = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+            @Override
+            public Boolean run() {
+                return Boolean.parseBoolean(System.getProperty(ALLOW_QUERY_PARAMS_PROPERTY_NAME, "false"));
+            }
+        });
+    }
 
     public OidcRequestAuthenticator(RequestAuthenticator requestAuthenticator, OidcHttpFacade facade, OidcClientConfiguration deployment, int sslRedirectPort, OidcTokenStore tokenStore) {
         this.reqAuthenticator = requestAuthenticator;
@@ -369,11 +384,15 @@ public class OidcRequestAuthenticator {
     private static String stripOauthParametersFromRedirect(String uri) {
         uri = stripQueryParam(uri, CODE);
         uri = stripQueryParam(uri, STATE);
-        return stripQueryParam(uri, SESSION_STATE);
+        uri = stripQueryParam(uri, SESSION_STATE);
+        return stripQueryParam(uri, ISSUER);
     }
 
     private String rewrittenRedirectUri(String originalUri) {
         Map<String, String> rewriteRules = deployment.getRedirectRewriteRules();
+        if (ALLOW_QUERY_PARAMS_PROPERTY && (rewriteRules == null || rewriteRules.isEmpty())) {
+            return originalUri;
+        }
         try {
             URL url = new URL(originalUri);
             Map.Entry<String, String> rule = null;

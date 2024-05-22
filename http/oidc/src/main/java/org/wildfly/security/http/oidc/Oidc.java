@@ -65,6 +65,7 @@ public class Oidc {
     public static final String FACES_REQUEST = "Faces-Request";
     public static final String GRANT_TYPE = "grant_type";
     public static final String INVALID_TOKEN = "invalid_token";
+    public static final String ISSUER = "iss";
     public static final String LOGIN_HINT = "login_hint";
     public static final String DOMAIN_HINT = "domain_hint";
     public static final String MAX_AGE = "max_age";
@@ -113,6 +114,7 @@ public class Oidc {
     static final String KEYCLOAK_QUERY_BEARER_TOKEN = "k_query_bearer_token";
     static final String DEFAULT_TOKEN_SIGNATURE_ALGORITHM = "RS256";
     public static final String DISABLE_TYP_CLAIM_VALIDATION_PROPERTY_NAME = "wildfly.elytron.oidc.disable.typ.claim.validation";
+    public static final String ALLOW_QUERY_PARAMS_PROPERTY_NAME = "wildfly.elytron.oidc.allow.query.params";
     public static final String X_REQUESTED_WITH = "X-Requested-With";
     public static final String XML_HTTP_REQUEST = "XMLHttpRequest";
 
