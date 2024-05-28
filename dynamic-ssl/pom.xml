@@ -40,6 +40,11 @@
             <artifactId>wildfly-elytron-client</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-tests-common</artifactId>
+            <type>test-jar</type>
+        </dependency>
+        <dependency>
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
             <scope>provided</scope>
