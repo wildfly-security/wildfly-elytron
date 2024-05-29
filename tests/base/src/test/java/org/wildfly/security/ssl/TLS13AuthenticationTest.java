@@ -49,7 +49,6 @@ import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.junit.AfterClass;
-import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
@@ -79,8 +78,6 @@ public class TLS13AuthenticationTest {
 
     @BeforeClass
     public static void setUp() throws Exception{
-        Assume.assumeTrue("Skipping TLS13AuthenticationTest suite, tests are not being run on JDK 11.",
-                System.getProperty("java.specification.version").equals("11"));
 
         caGenerationTool = CAGenerationTool.builder()
                 .setBaseDir(CA_JKS_LOCATION)
