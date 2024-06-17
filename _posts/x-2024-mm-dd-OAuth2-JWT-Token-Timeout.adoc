@@ -1,0 +1,41 @@
+---
+layout: post
+title: 'OAuth2 and JWT token timeout properties added to WildFly'
+date: 2024-mm-dd
+tags: OAuth2 JWT token timeout connection-timeout read-timeout
+synopsis: Bearer token timeout properties, connection-timeout and read-timeout, have be added to WildFly's Elytron subsystem.
+author: rsearls
+---
+
+:toc: macro
+:toc-title:
+
+toc::[]
+
+Elytron in WildFly 32+ preview version supports two new
+optional attributes, `connection-timeout` and `read-timeout`.
+These attributes allow the user to control the timeout period
+placed on the URL used in obtaining the public key from the OAuth2 and JWT
+provider.  Both are defined on the token-realm element in the Elytron subsystem.
+
+WildFly uses a default value of 2000 milliseconds for both these
+properties.  The user need not set these token-realm attributes if
+that value is sufficient.
+
+Both parameters are datatype int.  The value is in milliseonds.
+Only zero or positive integers are allowed. Zero means infinite time.
+If the connection time and/or read time expires during
+public key retrieval a warning message is logged and null is returned as
+the public key to Elyton's process code.
+
+== Summary
+
+WildFly uses a default value of 2000 milliseconds (i.e. 2 seconds)
+when waiting on a connection to an OAuth2 and JWT provider, and
+2000 milliseconds when reading the public key.  The user can
+fine tune the wait times via the two attributes, `connection-timeout`
+and `read-timeout` on the Elytron's token-realm element.
+
+== Resources
+* https://docs.wildfly.org/32/wildscribe/subsystem/elytron/token-realm/index.html[token realm]
+* https://docs.wildfly.org/32/WildFly_Elytron_Security.html#realms[Elytron security realms]
