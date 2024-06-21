@@ -52,7 +52,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  * A credential source which acquires a credential from the command line.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @deprecated Use {@link org.wildfly.security.credential.source.impl.CommandCredentialSource} instead
+ * @deprecated Use {@link org.wildfly.security.credential.source.impl.CommandCredentialSource org.wildfly.security.credential.source.impl.CommandCredentialSource} instead
  */
 @Deprecated
 public final class CommandCredentialSource implements CredentialSource {

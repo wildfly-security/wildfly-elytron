@@ -37,7 +37,7 @@ import org.wildfly.security.password.PasswordFactory;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  *
- * @deprecated Should not be part of public API. Moved into internal {@link org.wildfly.security.mechanism._private.MechanismUtil}.
+ * @deprecated Should not be part of public API. Moved into internal {@link org.wildfly.security.mechanism._private.MechanismUtil org.wildfly.security.mechanism._private.MechanismUtil}.
  */
 @Deprecated
 public final class MechanismUtil {

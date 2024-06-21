@@ -52,7 +52,7 @@ import org.wildfly.security.x500.X500;
  * Extension to the {@link X509TrustManager} interface to support CRL verification.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
- * @deprecated use {@link X509RevocationTrustManager} instead
+ * @deprecated use {@link org.wildfly.security.ssl.X509RevocationTrustManager org.wildfly.security.ssl.X509RevocationTrustManager} instead
  */
 @Deprecated
 public final class X509CRLExtendedTrustManager extends X509ExtendedTrustManager {

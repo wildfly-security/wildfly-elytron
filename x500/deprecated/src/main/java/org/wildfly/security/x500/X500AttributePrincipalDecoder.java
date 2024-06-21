@@ -31,7 +31,7 @@ import org.wildfly.security.x500.util.X500PrincipalUtil;
  * A principal decoder which decodes an attribute from an X.500 principal.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @deprecated Use {@link org.wildfly.security.x500.principal.X500AttributePrincipalDecoder} instead
+ * @deprecated Use {@link org.wildfly.security.x500.principal.X500AttributePrincipalDecoder org.wildfly.security.x500.principal.X500AttributePrincipalDecoder} instead
  */
 @Deprecated
 public final class X500AttributePrincipalDecoder implements PrincipalDecoder {

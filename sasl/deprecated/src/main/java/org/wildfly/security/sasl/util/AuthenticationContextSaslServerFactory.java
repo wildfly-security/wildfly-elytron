@@ -32,7 +32,7 @@ import org.wildfly.security.auth.client.AuthenticationContext;
  * of the authentication process.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @deprecated Use {@link org.wildfly.security.sasl.auth.util.AuthenticationContextSaslServerFactory} instead.
+ * @deprecated Use {@link org.wildfly.security.sasl.auth.util.AuthenticationContextSaslServerFactory org.wildfly.security.sasl.auth.util.AuthenticationContextSaslServerFactory} instead.
  */
 @Deprecated
 public final class AuthenticationContextSaslServerFactory extends AbstractDelegatingSaslServerFactory {

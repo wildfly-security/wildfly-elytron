@@ -40,7 +40,7 @@ import static org.wildfly.security.credential.source.ElytronMessages.log;
  *
  * Successful obtaining from cache requires set system property {@code javax.security.auth.useSubjectCredsOnly} to {@code false}.
  *
- * @deprecated Kerberos based authentication mechanism obtains credential himself, see {@link org.wildfly.security.credential.source.impl.LocalKerberosCredentialSource} to use with the new wildfly-elytron-credential-source-impl module
+ * @deprecated Kerberos based authentication mechanism obtains credential himself, see {@link org.wildfly.security.credential.source.impl.LocalKerberosCredentialSource org.wildfly.security.credential.source.impl.LocalKerberosCredentialSource} to use with the new wildfly-elytron-credential-source-impl module
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */

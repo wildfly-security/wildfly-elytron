@@ -34,7 +34,7 @@ import org.wildfly.common.iteration.ByteIterator;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  *
- * @deprecated Use {@link org.wildfly.security.password.PasswordFactory} instead.
+ * @deprecated Use {@link org.wildfly.security.password.PasswordFactory org.wildfly.security.password.PasswordFactory} instead.
  */
 @Deprecated
 public class UsernamePasswordHashUtil {

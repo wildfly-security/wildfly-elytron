@@ -41,7 +41,7 @@ import org.wildfly.security.http.HttpServerRequest;
  * the callback handler is returned instead.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
- * @deprecated Use {@link org.wildfly.security.auth.server.http.SecurityIdentityServerMechanismFactory} instead
+ * @deprecated Use {@link org.wildfly.security.auth.server.http.SecurityIdentityServerMechanismFactory org.wildfly.security.auth.server.http.SecurityIdentityServerMechanismFactory} instead
  */
 @Deprecated
 class SecurityIdentityServerMechanismFactory implements HttpServerAuthenticationMechanismFactory {

@@ -38,7 +38,7 @@ import java.util.Iterator;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  *
- * @deprecated Use one of the abstract permission classes like {@link AbstractActionSetPermission} instead.
+ * @deprecated Use one of the abstract permission classes like {@link org.wildfly.security.permission.AbstractActionSetPermission org.wildfly.security.permission.AbstractActionSetPermission} instead.
  */
 @Deprecated
 public final class PermissionActions {
