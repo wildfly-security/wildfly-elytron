@@ -25,12 +25,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URI;
 import java.security.AccessController;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.PrivilegedAction;
 import java.security.Security;
 import java.util.Locale;
@@ -38,17 +36,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509ExtendedKeyManager;
-import javax.net.ssl.X509TrustManager;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -63,6 +55,8 @@ import org.wildfly.security.ssl.SSLContextBuilder;
 import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.ssl.test.util.CAGenerationTool;
 import org.wildfly.security.ssl.test.util.CAGenerationTool.Identity;
+import org.wildfly.security.ssl.test.util.DefinedCAIdentity;
+import org.wildfly.security.ssl.test.util.DefinedIdentity;
 import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
 
 /**
@@ -72,64 +66,13 @@ import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
  */
 
 public class MaskedPasswordSSLAuthenticationTest {
-    private static final char[] PASSWORD = "Elytron".toCharArray();
+
     private static final String JKS_LOCATION = "./target/test-classes/jks";
 
     private static CAGenerationTool caGenerationTool;
 
-    /**
-     * Get the key manager backed by the specified key store.
-     *
-     * @param keystorePath the path to the keystore with X509 private key
-     * @return the initialised key manager.
-     */
-    private static X509ExtendedKeyManager getKeyManager(final String keystorePath) throws Exception {
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-        keyManagerFactory.init(createKeyStore(keystorePath), PASSWORD);
-
-        for (KeyManager current : keyManagerFactory.getKeyManagers()) {
-            if (current instanceof X509ExtendedKeyManager) {
-                return (X509ExtendedKeyManager) current;
-            }
-        }
-
-        throw new IllegalStateException("Unable to obtain X509ExtendedKeyManager.");
-    }
-
-    private static TrustManagerFactory getTrustManagerFactory() throws Exception {
-        return TrustManagerFactory.getInstance("PKIX");
-    }
-
-    /**
-     * Get the trust manager that trusts all certificates signed by the certificate authority.
-     *
-     * @return the trust manager that trusts all certificates signed by the certificate authority.
-     * @throws KeyStoreException
-     */
-    private static X509TrustManager getCATrustManager() throws Exception {
-        TrustManagerFactory trustManagerFactory = getTrustManagerFactory();
-        trustManagerFactory.init(createKeyStore("/jks/ca.truststore"));
-
-        for (TrustManager current : trustManagerFactory.getTrustManagers()) {
-            if (current instanceof X509TrustManager) {
-                return (X509TrustManager) current;
-            }
-        }
-
-        throw new IllegalStateException("Unable to obtain X509TrustManager.");
-    }
-
-    private static KeyStore createKeyStore(final String path) throws Exception {
-        KeyStore keyStore = KeyStore.getInstance("jks");
-        try (InputStream caTrustStoreFile = MaskedPasswordSSLAuthenticationTest.class.getResourceAsStream(path)) {
-            keyStore.load(caTrustStoreFile, PASSWORD);
-        }
-
-        return keyStore;
-    }
-
-    private static SecurityDomain getKeyStoreBackedSecurityDomain(String keyStorePath) throws Exception {
-        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(createKeyStore(keyStorePath));
+    private static SecurityDomain getKeyStoreBackedSecurityDomain(KeyStore keyStore) throws Exception {
+        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(keyStore);
 
         return SecurityDomain.builder()
                 .addRealm("KeystoreRealm", securityRealm)
@@ -156,10 +99,13 @@ public class MaskedPasswordSSLAuthenticationTest {
 
     @Test
     public void testTwoWay() throws Exception {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
+
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
-                .setTrustManager(getCATrustManager())
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(scarab.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
                 .setNeedClientAuth(true)
                 .build().create();
 
