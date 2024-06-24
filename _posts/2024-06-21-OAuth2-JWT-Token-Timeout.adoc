@@ -15,7 +15,7 @@ toc::[]
 Elytron in WildFly 32+ preview version supports two new
 optional attributes, `connection-timeout` and `read-timeout`.
 These attributes allow the user to control the timeout period
-placed on the URL used in obtaining the public key from the OAuth2 and JWT
+placed on the URL used in obtaining the public key from the OAuth2 or JWT
 provider.  Both are defined on the token-realm element in the Elytron subsystem.
 
 WildFly uses a default value of 2000 milliseconds for both these
@@ -24,9 +24,18 @@ that value is sufficient.
 
 Both parameters are datatype int.  The value is in milliseonds.
 Only zero or positive integers are allowed. Zero means infinite time.
-If the connection time and/or read time expires during
+If the connection time or read time expires during
 public key retrieval a warning message is logged and null is returned as
-the public key to Elyton's process code.
+the public key to Elyton's processing code.
+
+=== Example Server Configuration
+
+=== Quickstart example
+
+==== Prerequisites
+
+==== Run the test
+
 
 == Summary
 
