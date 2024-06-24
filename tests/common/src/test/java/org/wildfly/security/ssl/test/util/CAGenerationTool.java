@@ -79,6 +79,8 @@ public class CAGenerationTool implements Closeable {
 
     private final File workingDir;
 
+    private volatile boolean closed = false;
+
     protected CAGenerationTool(Builder builder) throws Exception {
         // Ensure we have the directory created to hold the resulting KeyStores
         workingDir = new File(builder.baseDir);
@@ -108,10 +110,45 @@ public class CAGenerationTool implements Closeable {
         }
     }
 
+    public DefinedIdentity getDefinedIdentity(final Identity identity) {
+        if (identity.isCertificateAuthority()) {
+            return getDefinedCAIdentity(identity);
+        }
+
+        if (!certificateMap.containsKey(identity)) {
+            throw new IllegalStateException(String.format("Identity %s has not been created.", identity.toString()));
+        }
+
+        X509Certificate certificate = certificateMap.get(identity);
+
+        return new DefinedIdentity(this, identity, certificate);
+    }
+
+    public DefinedCAIdentity getDefinedCAIdentity(final Identity identity) {
+        if (!identity.isCertificateAuthority()) {
+            throw new IllegalStateException(String.format("Identity %s is not a CertificateAuthority", identity.toString()));
+        }
+
+        if (!caMap.containsKey(identity)) {
+            throw new IllegalStateException(String.format("Identity %s has not been created.", identity.toString()));
+        }
+
+        CAState caState = caMap.get(identity);
+        return new DefinedCAIdentity(this, identity, caState.issuerCertificate, caState.signingKey);
+    }
+
+    /**
+     * @deprecated Use {@link CAIdentity#getCertificate()} instead.
+     */
+    @Deprecated()
     public X509Certificate getCertificate(final Identity identity) {
         return certificateMap.get(identity);
     }
 
+    /**
+     * @deprecated Use {@link CAIdentity#getPrivateKey()} instead.
+     */
+    @Deprecated()
     public PrivateKey getPrivateKey(final Identity identity) {
         if (!identity.isCertificateAuthority()) {
             throw new IllegalStateException(String.format("Identity %s if not a CertificateAuthority", identity.toString()));
@@ -175,6 +212,10 @@ public class CAGenerationTool implements Closeable {
         return caState;
     }
 
+    /**
+     * @deprecated Use {@link #createIdentity(String, X500Principal, String, X509CertificateExtension...)} instead.
+     */
+    @Deprecated
     public X509Certificate createIdentity(final String alias, final X500Principal principal, final String keyStoreName,
             final Identity ca, final X509CertificateExtension... extensions) {
         KeyPair keyPair = keyPairGenerator.generateKeyPair();
@@ -220,7 +261,7 @@ public class CAGenerationTool implements Closeable {
         }
     }
 
-    public X509Certificate createSelfSignedIdentity(final String alias, final X500Principal principal, final String keyStoreName) {
+    private X509Certificate createSelfSignedIdentity(final String alias, final X500Principal principal, final String keyStoreName) {
         SelfSignedX509CertificateAndSigningKey selfSignedIdentity = SelfSignedX509CertificateAndSigningKey.builder()
                 .setDn(principal)
                 .setKeyAlgorithmName(KEY_ALGORITHM)
@@ -275,8 +316,15 @@ public class CAGenerationTool implements Closeable {
         }
     }
 
+    void assertNotClosed() {
+        if (closed) {
+            throw new IllegalStateException("The CAGenerationTool is closed.");
+        }
+    }
+
     @Override
     public void close() throws IOException {
+        closed = true;
         workingDir.delete();
     }
 

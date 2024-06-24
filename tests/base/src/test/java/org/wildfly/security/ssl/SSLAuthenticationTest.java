@@ -88,6 +88,7 @@ import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.permission.PermissionVerifier;
 import org.wildfly.security.ssl.test.util.CAGenerationTool;
+import org.wildfly.security.ssl.test.util.DefinedCAIdentity;
 import org.wildfly.security.ssl.test.util.CAGenerationTool.Identity;
 import org.wildfly.security.x500.GeneralName;
 import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
@@ -222,32 +223,36 @@ public class SSLAuthenticationTest {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
         // Generates certificate and keystore for OCSP responder
-        ocspResponderCertificate = caGenerationTool.createIdentity("ocspResponder",
+        DefinedCAIdentity caIdentity = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedCAIdentity intermediateCAIdentity = caGenerationTool.getDefinedCAIdentity(Identity.INTERMEDIATE);
+        ocspResponderCertificate = caIdentity.createIdentity("ocspResponder",
                 new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=OcspResponder"),
-                "ocsp-responder.keystore", Identity.CA, new ExtendedKeyUsageExtension(false, Collections.singletonList(OID_KP_OCSP_SIGNING)));
+                "ocsp-responder.keystore", new ExtendedKeyUsageExtension(false, Collections.singletonList(OID_KP_OCSP_SIGNING)));
 
         // Generates GOOD certificate referencing the OCSP responder
-        X509Certificate ocspCheckedGoodCertificate = caGenerationTool.createIdentity("checked",
+        X509Certificate ocspCheckedGoodCertificate = intermediateCAIdentity.createIdentity("checked",
                 new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedGood"),
-                "ocsp-checked-good.keystore", Identity.INTERMEDIATE, new AuthorityInformationAccessExtension(Collections.singletonList(
+                "ocsp-checked-good.keystore", new AuthorityInformationAccessExtension(Collections.singletonList(
                         new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
                 )));
 
         // Generates REVOKED certificate referencing the OCSP responder
-        X509Certificate ocspCheckedRevokedCertificate = caGenerationTool.createIdentity("checked",
+        X509Certificate ocspCheckedRevokedCertificate = caIdentity.createIdentity("checked",
                 new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedRevoked"),
-                "ocsp-checked-revoked.keystore", Identity.CA, (new AuthorityInformationAccessExtension(Collections.singletonList(
+                "ocsp-checked-revoked.keystore", (new AuthorityInformationAccessExtension(Collections.singletonList(
                         new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
                 ))));
 
         // Generates UNKNOWN certificate referencing the OCSP responder
-        X509Certificate ocspCheckedUnknownCertificate = caGenerationTool.createIdentity("checked",
+        X509Certificate ocspCheckedUnknownCertificate = caIdentity.createIdentity("checked",
                 new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedUnknown"),
-                "ocsp-checked-unknown.keystore", Identity.CA, new AuthorityInformationAccessExtension(Collections.singletonList(
+                "ocsp-checked-unknown.keystore", new AuthorityInformationAccessExtension(Collections.singletonList(
                         new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
                 )));
 
-        X509Certificate greenJuneCertificate = caGenerationTool.getCertificate(Identity.GREENJUNE);
+        X509Certificate greenJuneCertificate = caGenerationTool
+                                                .getDefinedIdentity(Identity.GREENJUNE)
+                                                .getCertificate();
 
         KeyStore beetlesKeyStore = createKeyStore("/jks/beetles.keystore");
         beetlesKeyStore.setCertificateEntry("ocspResponder", ocspResponderCertificate);
@@ -259,7 +264,7 @@ public class SSLAuthenticationTest {
 
         // Adds trusted cert for shortwinged
         KeyStore shortwingedKeyStore = createKeyStore();
-        shortwingedKeyStore.setCertificateEntry("rove", caGenerationTool.getCertificate(Identity.ROVE));
+        shortwingedKeyStore.setCertificateEntry("rove", caGenerationTool.getDefinedIdentity(Identity.ROVE).getCertificate());
         createTemporaryKeyStoreFile(shortwingedKeyStore, SHORTWINGED_FILE, PASSWORD);
 
         // Used for all CRLs
@@ -273,52 +278,53 @@ public class SSLAuthenticationTest {
 
         // Creates the CRL for ca/crl/blank.pem
         X509v2CRLBuilder caBlankCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.CA).getSubjectDN()),
+                convertSunStyleToBCStyle(caIdentity.getCertificate().getSubjectDN()),
                 currentDate
         );
         X509CRLHolder caBlankCrlHolder = caBlankCrlBuilder.setNextUpdate(nextYear).build(
                 new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                         .setProvider("BC")
-                        .build(caGenerationTool.getPrivateKey(Identity.CA))
+                        .build(caIdentity.getPrivateKey())
         );
 
         // Creates the CRL for ica/crl/blank.pem
         X509v2CRLBuilder icaBlankCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.INTERMEDIATE).getSubjectDN()),
+                convertSunStyleToBCStyle(intermediateCAIdentity.getCertificate().getSubjectDN()),
                 currentDate
         );
         X509CRLHolder icaBlankCrlHolder = icaBlankCrlBuilder.setNextUpdate(nextYear).build(
                 new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                         .setProvider("BC")
-                        .build(caGenerationTool.getPrivateKey(Identity.INTERMEDIATE))
+                        .build(intermediateCAIdentity.getPrivateKey())
         );
 
         // Creates the CRL for firefly-revoked.pem
         X509v2CRLBuilder fireflyRevokedCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.CA).getSubjectDN()),
+                convertSunStyleToBCStyle(caIdentity.getCertificate().getSubjectDN()),
                 currentDate
         );
 
         fireflyRevokedCrlBuilder.addCRLEntry(
-                caGenerationTool.getCertificate(Identity.FIREFLY).getSerialNumber(),
+                caGenerationTool.getDefinedIdentity(Identity.FIREFLY).getCertificate().getSerialNumber(),
                 revokeDate,
                 CRLReason.unspecified
         );
         X509CRLHolder fireflyRevokedCrlHolder = fireflyRevokedCrlBuilder.setNextUpdate(nextYear).build(
                 new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                         .setProvider("BC")
-                        .build(caGenerationTool.getPrivateKey(Identity.CA))
+                        .build(caIdentity.getPrivateKey())
         );
 
+        DefinedCAIdentity secondCAIdentity = caGenerationTool.getDefinedCAIdentity(Identity.SECOND_CA);
         // Creates the CRL for ladybug-revoked.pem
         X509v2CRLBuilder ladybugRevokedCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.SECOND_CA).getSubjectDN()),
+                convertSunStyleToBCStyle(secondCAIdentity.getCertificate().getSubjectDN()),
                 currentDate
         );
 
         // revokes the certificate with serial number #2
         ladybugRevokedCrlBuilder.addCRLEntry(
-                caGenerationTool.getCertificate(Identity.LADYBUG).getSerialNumber(),
+                caGenerationTool.getDefinedIdentity(Identity.LADYBUG).getCertificate().getSerialNumber(),
                 revokeDate,
                 CRLReason.unspecified
         );
@@ -326,35 +332,35 @@ public class SSLAuthenticationTest {
         X509CRLHolder ladybugRevokedCrlHolder = ladybugRevokedCrlBuilder.setNextUpdate(nextYear).build(
                 new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                 .setProvider("BC")
-                .build(caGenerationTool.getPrivateKey(Identity.SECOND_CA))
+                .build(secondCAIdentity.getPrivateKey())
         );
 
         // Creates the CRL for ica-revoked.pem
         X509v2CRLBuilder icaRevokedCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.CA).getSubjectDN()),
+                convertSunStyleToBCStyle(caIdentity.getCertificate().getSubjectDN()),
                 currentDate
         );
         icaRevokedCrlBuilder.addCRLEntry(
-                caGenerationTool.getCertificate(Identity.INTERMEDIATE).getSerialNumber(),
+                intermediateCAIdentity.getCertificate().getSerialNumber(),
                 revokeDate,
                 CRLReason.unspecified
         );
         X509CRLHolder icaRevokedCrlHolder = icaRevokedCrlBuilder.setNextUpdate(nextYear).build(
                 new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                         .setProvider("BC")
-                        .build(caGenerationTool.getPrivateKey(Identity.CA))
+                        .build(caIdentity.getPrivateKey())
         );
 
         // Creates the CRL for rove-revoked.pem
         X509v2CRLBuilder roveRevokedCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.INTERMEDIATE).getSubjectDN()),
+                convertSunStyleToBCStyle(intermediateCAIdentity.getCertificate().getSubjectDN()),
                 currentDate
         );
 
         X509CRLHolder roveRevokedCrlHolder = roveRevokedCrlBuilder.setNextUpdate(nextYear).build(
                 new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                 .setProvider("BC")
-                .build(caGenerationTool.getPrivateKey(Identity.INTERMEDIATE))
+                .build(intermediateCAIdentity.getPrivateKey())
         );
 
         PemWriter caBlankCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(CA_BLANK_PEM_CRL)));
@@ -385,9 +391,9 @@ public class SSLAuthenticationTest {
         roveRevokedCrlOutput.close();
 
         ocspServer = new TestingOcspServer(OCSP_PORT);
-        ocspServer.createIssuer(1, caGenerationTool.getCertificate(Identity.CA));
-        ocspServer.createIssuer(2, caGenerationTool.getCertificate(Identity.INTERMEDIATE));
-        ocspServer.createCertificate(1, 1, caGenerationTool.getCertificate(Identity.INTERMEDIATE));
+        ocspServer.createIssuer(1, caIdentity.getCertificate());
+        ocspServer.createIssuer(2, intermediateCAIdentity.getCertificate());
+        ocspServer.createCertificate(1, 1, intermediateCAIdentity.getCertificate());
         ocspServer.createCertificate(2, 2, ocspCheckedGoodCertificate);
         ocspServer.createCertificate(3, 1, ocspCheckedRevokedCertificate);
         ocspServer.revokeCertificate(3, 4);
