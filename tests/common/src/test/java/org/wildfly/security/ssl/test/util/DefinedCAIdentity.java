@@ -16,9 +16,14 @@
 
 package org.wildfly.security.ssl.test.util;
 
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.security.ssl.test.util.CAGenerationTool.Identity;
@@ -34,11 +39,11 @@ public class DefinedCAIdentity extends DefinedIdentity {
         this.privateKey = privateKey;
     }
 
-    public X509Certificate createIdentity(final String alias, final X500Principal principal,
+    public CustomIdentity createIdentity(final String alias, final X500Principal principal,
         final String keyStoreName, final X509CertificateExtension... extensions) {
         caGenerationTool.assertNotClosed();
 
-        return caGenerationTool.createIdentity(alias, principal, keyStoreName, identity, extensions);
+        return caGenerationTool.createCustomIdentity(alias, principal, keyStoreName, identity, extensions);
      }
 
 
@@ -46,5 +51,24 @@ public class DefinedCAIdentity extends DefinedIdentity {
         caGenerationTool.assertNotClosed();
 
         return privateKey;
+    }
+
+    public X509TrustManager createTrustManager() {
+        caGenerationTool.assertNotClosed();
+
+        try {
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
+            trustManagerFactory.init(caGenerationTool.loadKeyStore(identity));
+
+            for (TrustManager current : trustManagerFactory.getTrustManagers()) {
+                if (current instanceof X509TrustManager) {
+                    return (X509TrustManager) current;
+                }
+            }
+        } catch (NoSuchAlgorithmException | KeyStoreException e) {
+            throw new IllegalStateException("Unable to obtain X509TrustManager.", e);
+        }
+
+        throw new IllegalStateException("Unable to obtain X509TrustManager.");
     }
 }

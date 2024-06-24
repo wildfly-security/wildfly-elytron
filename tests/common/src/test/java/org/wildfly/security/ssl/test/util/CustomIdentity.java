@@ -16,26 +16,22 @@
 
 package org.wildfly.security.ssl.test.util;
 
+import java.io.File;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 
-import org.wildfly.security.ssl.test.util.CAGenerationTool.Identity;
+public class CustomIdentity extends CommonIdentity {
 
-public class DefinedIdentity extends CommonIdentity {
+    private final File keyStoreFile;
 
-    protected final Identity identity;
-
-    DefinedIdentity(CAGenerationTool caGenerationTool,
-                    Identity identity,
-                    X509Certificate certificate) {
+    CustomIdentity(CAGenerationTool caGenerationTool, X509Certificate certificate, File keyStoreFile) {
         super(caGenerationTool, certificate);
-        this.identity = identity;
+        this.keyStoreFile = keyStoreFile;
     }
 
+    @Override
     public KeyStore loadKeyStore() {
-        caGenerationTool.assertNotClosed();
-
-        return caGenerationTool.loadKeyStore(identity);
+        return CAGenerationTool.loadKeyStore(keyStoreFile);
     }
 
 }
