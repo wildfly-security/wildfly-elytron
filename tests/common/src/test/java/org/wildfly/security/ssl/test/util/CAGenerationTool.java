@@ -66,7 +66,7 @@ public class CAGenerationTool implements Closeable {
 
     private static final String BEETLES_STORE = "beetles.keystore";
     private static final String KEY_ALGORITHM = "RSA";
-    private static final String KEYSTORE_TYPE = "JKS"; // TODO Switch to PKCS#12
+    private static final String KEYSTORE_TYPE = "PKCS12";
     private static final int OCSP_PORT = 4854;
     static final char[] PASSWORD = "Elytron".toCharArray();
 

@@ -63,7 +63,7 @@ import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
  */
 public class TLS13AuthenticationTest {
 
-    private static final String CA_JKS_LOCATION = "./target/test-classes/jks";
+    private static final String CA_JKS_LOCATION = "./target/test-classes/pkcs12";
 
     private static CAGenerationTool caGenerationTool = null;
     private static SecurityDomain securityDomain = null;

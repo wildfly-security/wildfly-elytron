@@ -104,7 +104,7 @@ public class SSLAuthenticationTest {
     private final int TESTING_PORT = 18201;
     private static final char[] PASSWORD = "Elytron".toCharArray();
 
-    private static final String JKS_LOCATION = "./target/test-classes/jks";
+    private static final String JKS_LOCATION = "./target/test-classes/pkcs12";
     private static final String CA_CRL_LOCATION = "./target/test-classes/ca/crl";
     private static final String ICA_CRL_LOCATION = "./target/test-classes/ica/crl";
     private static final File WORKING_DIR_CACRL = new File(CA_CRL_LOCATION);
@@ -129,7 +129,7 @@ public class SSLAuthenticationTest {
     }
 
     private static KeyStore createKeyStore() throws Exception {
-        KeyStore ks = KeyStore.getInstance("JKS");
+        KeyStore ks = KeyStore.getInstance("PKCS12");
         ks.load(null, null);
         return ks;
     }

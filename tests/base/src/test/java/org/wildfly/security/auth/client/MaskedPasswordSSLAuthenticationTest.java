@@ -137,11 +137,11 @@ public class MaskedPasswordSSLAuthenticationTest {
                 SSLSocket sslSocket = (SSLSocket) clientContext.getSocketFactory().createSocket(InetAddress.getLoopbackAddress(), 1111);
                 sslSocket.getSession();
 
+                System.out.println("Client connected");
                 return sslSocket;
             } catch (Exception e) {
+                System.out.println("Client Connection Failed");
                 throw new RuntimeException(e);
-            } finally {
-                System.out.println("Client connected");
             }
         });
 
