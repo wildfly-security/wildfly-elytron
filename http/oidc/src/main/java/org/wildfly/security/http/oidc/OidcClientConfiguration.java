@@ -30,9 +30,11 @@ import static org.wildfly.security.http.oidc.Oidc.KEYCLOAK_REALMS_PATH;
 import static org.wildfly.security.http.oidc.Oidc.SLASH;
 import static org.wildfly.security.http.oidc.Oidc.SSLRequired;
 import static org.wildfly.security.http.oidc.Oidc.TokenStore;
+import static org.wildfly.security.jose.util.JsonSerialization.readValue;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -41,7 +43,6 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
-import org.wildfly.security.jose.util.JsonSerialization;
 
 /**
  * The OpenID Connect (OIDC) configuration for a client application. This class is based on
@@ -81,6 +82,11 @@ public class OidcClientConfiguration {
     protected String jwksUrl;
     protected String issuerUrl;
     protected String principalAttribute = "sub";
+    protected List<String> requestObjectSigningAlgValuesSupported;
+    protected List<String> requestObjectEncryptionEncValuesSupported;
+    protected List<String> requestObjectEncryptionAlgValuesSupported;
+    protected boolean requestParameterSupported;
+    protected boolean requestUriParameterSupported;
 
     protected String resource;
     protected String clientId;
@@ -126,6 +132,17 @@ public class OidcClientConfiguration {
     protected boolean verifyTokenAudience = false;
 
     protected String tokenSignatureAlgorithm = DEFAULT_TOKEN_SIGNATURE_ALGORITHM;
+    protected String authenticationRequestFormat;
+    protected String requestObjectSigningAlgorithm;
+    protected String requestObjectEncryptionAlgValue;
+    protected String requestObjectEncryptionEncValue;
+    protected String pushedAuthorizationRequestEndpoint;
+    protected String requestObjectSigningKeyStoreFile;
+    protected String requestObjectSigningKeyStorePassword;
+    protected String requestObjectSigningKeyPassword;
+    protected String requestObjectSigningKeyAlias;
+    protected String requestObjectSigningKeyStoreType;
+    protected JWKEncPublicKeyLocator encryptionPublicKeyLocator;
 
     public OidcClientConfiguration() {
     }
@@ -223,6 +240,13 @@ public class OidcClientConfiguration {
                     tokenUrl = config.getTokenEndpoint();
                     logoutUrl = config.getLogoutEndpoint();
                     jwksUrl = config.getJwksUri();
+                    requestParameterSupported = config.getRequestParameterSupported();
+                    requestObjectSigningAlgValuesSupported = config.getRequestObjectSigningAlgValuesSupported();
+                    requestObjectEncryptionEncValuesSupported = config.getRequestObjectEncryptionEncValuesSupported();
+                    requestObjectEncryptionAlgValuesSupported = config.getRequestObjectEncryptionAlgValuesSupported();
+                    requestUriParameterSupported = config.getRequestUriParameterSupported();
+                    pushedAuthorizationRequestEndpoint = config.getPushedAuthorizationRequestEndpoint();
+
                     if (authServerBaseUrl != null) {
                         // keycloak-specific properties
                         accountUrl = getUrl(issuerUrl, ACCOUNT_PATH);
@@ -246,7 +270,7 @@ public class OidcClientConfiguration {
                 EntityUtils.consumeQuietly(response.getEntity());
                 throw new Exception(response.getStatusLine().getReasonPhrase());
             }
-            return JsonSerialization.readValue(response.getEntity().getContent(), OidcProviderMetadata.class);
+            return readValue(response.getEntity().getContent(), OidcProviderMetadata.class);
         } finally {
             request.releaseConnection();
         }
@@ -327,6 +351,26 @@ public class OidcClientConfiguration {
     public String getIssuerUrl() {
         resolveUrls();
         return issuerUrl;
+    }
+
+    public List<String> getRequestObjectSigningAlgValuesSupported() {
+        return requestObjectSigningAlgValuesSupported;
+    }
+
+    public List<String> getRequestObjectEncryptionAlgValuesSupported() {
+        return requestObjectEncryptionAlgValuesSupported;
+    }
+
+    public List<String> getRequestObjectEncryptionEncValuesSupported() {
+        return requestObjectEncryptionEncValuesSupported;
+    }
+
+    public boolean getRequestParameterSupported() {
+        return requestParameterSupported;
+    }
+
+    public boolean getRequestUriParameterSupported() {
+        return requestUriParameterSupported;
     }
 
     public void setResource(String resource) {
@@ -648,4 +692,91 @@ public class OidcClientConfiguration {
         return tokenSignatureAlgorithm;
     }
 
+    public String getAuthenticationRequestFormat() {
+        return authenticationRequestFormat;
+    }
+
+    public void setAuthenticationRequestFormat(String authenticationRequestFormat) {
+        this.authenticationRequestFormat = authenticationRequestFormat;
+    }
+
+    public String getRequestObjectSigningAlgorithm() {
+        return requestObjectSigningAlgorithm;
+    }
+
+    public void setRequestObjectSigningAlgorithm(String requestObjectSigningAlgorithm) {
+        this.requestObjectSigningAlgorithm = requestObjectSigningAlgorithm;
+    }
+
+    public String getRequestObjectEncryptionAlgValue() {
+        return requestObjectEncryptionAlgValue;
+    }
+
+    public void setRequestObjectEncryptionAlgValue(String requestObjectEncryptionAlgValue) {
+        this.requestObjectEncryptionAlgValue = requestObjectEncryptionAlgValue;
+    }
+
+    public String getRequestObjectEncryptionEncValue() {
+        return requestObjectEncryptionEncValue;
+    }
+
+    public void setRequestObjectEncryptionEncValue(String requestObjectEncryptionEncValue) {
+        this.requestObjectEncryptionEncValue = requestObjectEncryptionEncValue;
+    }
+
+    public String getRequestObjectSigningKeyStoreFile() {
+        return requestObjectSigningKeyStoreFile;
+    }
+
+    public void setRequestObjectSigningKeyStoreFile(String keyStoreFile) {
+        this.requestObjectSigningKeyStoreFile = keyStoreFile;
+    }
+
+    public String getRequestObjectSigningKeyStorePassword() {
+        return requestObjectSigningKeyStorePassword;
+    }
+
+    public void setRequestObjectSigningKeyStorePassword(String requestObjectSigningKeyStorePassword) {
+        this.requestObjectSigningKeyStorePassword = requestObjectSigningKeyStorePassword;
+    }
+
+    public String getRequestObjectSigningKeyPassword() {
+        return requestObjectSigningKeyPassword;
+    }
+
+    public void setRequestObjectSigningKeyPassword(String requestObjectSigningKeyPassword) {
+        this.requestObjectSigningKeyPassword = requestObjectSigningKeyPassword;
+    }
+
+    public String getRequestObjectSigningKeyStoreType() {
+        return requestObjectSigningKeyStoreType;
+    }
+
+    public void setRequestObjectSigningKeyStoreType(String requestObjectSigningKeyStoreType) {
+        this.requestObjectSigningKeyStoreType = requestObjectSigningKeyStoreType;
+    }
+
+    public String getRequestObjectSigningKeyAlias() {
+        return requestObjectSigningKeyAlias;
+    }
+
+    public void setRequestObjectSigningKeyAlias(String requestObjectSigningKeyAlias) {
+        this.requestObjectSigningKeyAlias = requestObjectSigningKeyAlias;
+    }
+
+    public String getPushedAuthorizationRequestEndpoint() {
+        return pushedAuthorizationRequestEndpoint;
+    }
+
+    public void setPushedAuthorizationRequestEndpoint(String pushedAuthorizationRequestEndpoint) {
+        this.pushedAuthorizationRequestEndpoint = pushedAuthorizationRequestEndpoint;
+    }
+
+    public void setEncryptionPublicKeyLocator(JWKEncPublicKeyLocator publicKeySetExtractor) {
+        this.encryptionPublicKeyLocator = publicKeySetExtractor;
+    }
+
+    public JWKEncPublicKeyLocator getEncryptionPublicKeyLocator() {
+        return this.encryptionPublicKeyLocator;
+    }
 }

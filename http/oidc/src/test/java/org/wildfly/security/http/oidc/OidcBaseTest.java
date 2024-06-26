@@ -81,7 +81,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 public class OidcBaseTest extends AbstractBaseHttpTest {
 
     public static final String CLIENT_ID = "test-webapp";
-    public static final String CLIENT_SECRET = "secret";
+    public static final String CLIENT_SECRET = "longerclientsecretthatisstleast256bitslong";
     public static KeycloakContainer KEYCLOAK_CONTAINER;
     public static final String TEST_REALM = "WildFly";
     public static final String TEST_REALM_WITH_SCOPES = "WildFlyScopes";
@@ -99,6 +99,13 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     public static final String TENANT1_ENDPOINT = "tenant1";
     public static final String TENANT2_ENDPOINT = "tenant2";
     protected HttpServerAuthenticationMechanismFactory oidcFactory;
+
+    public enum RequestObjectErrorType {
+        INVALID_ALGORITHM,
+        MISSING_CLIENT_SECRET,
+        INVALID_REQUEST_FORMAT,
+        MISSING_ENC_VALUE
+    }
 
     @AfterClass
     public static void generalCleanup() throws Exception {

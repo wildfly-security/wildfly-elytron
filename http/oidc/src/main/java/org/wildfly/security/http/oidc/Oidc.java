@@ -45,6 +45,7 @@ import org.wildfly.security.jose.util.JsonSerialization;
 public class Oidc {
 
     public static final String ACCEPT = "Accept";
+    public static final String AUTHENTICATION_REQUEST_FORMAT = "authentication-request-format";
     public static final String OIDC_NAME = "OIDC";
     public static final String JSON_CONTENT_TYPE = "application/json";
     public static final String HTML_CONTENT_TYPE = "text/html";
@@ -74,6 +75,8 @@ public class Oidc {
     public static final String PARTIAL = "partial/";
     public static final String PASSWORD = "password";
     public static final String PROMPT = "prompt";
+    public static final String REQUEST = "request";
+    public static final String REQUEST_URI = "request_uri";
     public static final String SCOPE = "scope";
     public static final String UI_LOCALES = "ui_locales";
     public static final String USERNAME = "username";
@@ -199,6 +202,27 @@ public class Oidc {
     public enum TokenStore {
         SESSION,
         COOKIE
+    }
+
+    public enum AuthenticationRequestFormat {
+        OAUTH2("oauth2"),
+        REQUEST("request"),
+        REQUEST_URI("request_uri");
+
+        private final String value;
+
+        AuthenticationRequestFormat(String value) {
+            this.value = value;
+        }
+
+        /**
+         * Get the string value for this authentication format.
+         *
+         * @return the string value for this authentication format
+         */
+        public String getValue() {
+            return value;
+        }
     }
 
     public enum ClientCredentialsProviderType {
