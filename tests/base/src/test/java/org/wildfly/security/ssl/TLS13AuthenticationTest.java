@@ -70,6 +70,7 @@ import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
  */
 public class TLS13AuthenticationTest {
 
+    private static final String CLIENT_CONFIG = "tls13-authentication-config.xml";
     private static final char[] PASSWORD = "Elytron".toCharArray();
     private static final String CA_JKS_LOCATION = "./target/test-classes/jks";
 
@@ -113,7 +114,7 @@ public class TLS13AuthenticationTest {
                 .setNeedClientAuth(true)
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-two-way-tls13.org", "wildfly-ssl-test-config-v1_5.xml", CIPHER_SUITE, true);
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-two-way-tls13.org", CLIENT_CONFIG, CIPHER_SUITE, true);
         assertNotNull(identity);
         assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
     }
@@ -132,7 +133,7 @@ public class TLS13AuthenticationTest {
                 .setNeedClientAuth(true)
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-different-preferred-tls13-suites.org", "wildfly-ssl-test-config-v1_5.xml", REQUIRED_CIPHER_SUITE, true);
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-different-preferred-tls13-suites.org", CLIENT_CONFIG, REQUIRED_CIPHER_SUITE, true);
         assertNotNull(identity);
         assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
     }
@@ -153,7 +154,7 @@ public class TLS13AuthenticationTest {
                 .setNeedClientAuth(true)
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-client-tls12-only.org", "wildfly-ssl-test-config-v1_5.xml", TLS12_CIPHER_SUITE, false);
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-client-tls12-only.org", CLIENT_CONFIG, TLS12_CIPHER_SUITE, false);
         assertNotNull(identity);
         assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
     }
@@ -170,7 +171,7 @@ public class TLS13AuthenticationTest {
                 .setNeedClientAuth(true)
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-server-tls12-only.org", "wildfly-ssl-test-config-v1_5.xml", SERVER_CIPHER_SUITE, false);
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-server-tls12-only.org", CLIENT_CONFIG, SERVER_CIPHER_SUITE, false);
         assertNotNull(identity);
         assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
     }
@@ -184,7 +185,7 @@ public class TLS13AuthenticationTest {
                 .setKeyManager(getKeyManager("/jks/scarab.keystore"))
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-one-way-tls13.org", "wildfly-ssl-test-config-v1_5.xml", CIPHER_SUITE, true);
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-one-way-tls13.org", CLIENT_CONFIG, CIPHER_SUITE, true);
         assertNull(identity);
     }
 

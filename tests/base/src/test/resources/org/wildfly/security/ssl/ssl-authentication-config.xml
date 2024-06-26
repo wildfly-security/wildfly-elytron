@@ -17,6 +17,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
+
+<!-- Configuration for the SSLAuthenticationTest -->
 <configuration>
     <authentication-client xmlns="urn:elytron:client:1.7">
         <key-stores>
