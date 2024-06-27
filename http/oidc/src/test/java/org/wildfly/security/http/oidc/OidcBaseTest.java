@@ -413,12 +413,12 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
 
     protected InputStream getOidcConfigurationInputStreamWithProviderUrl() {
         String oidcConfig = "{\n" +
-                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    \"" + Oidc.RESOURCE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + Oidc.PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + Oidc.PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
+                "    \"" + Oidc.SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + Oidc.CREDENTIALS + "\" : {\n" +
+                "        \"" + Oidc.ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
