@@ -18,10 +18,10 @@
 
 package org.wildfly.security.http.oidc;
 
+import static org.jboss.logging.annotations.Message.NONE;
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
-import static org.jboss.logging.annotations.Message.NONE;
 
 import java.io.IOException;
 
@@ -238,5 +238,45 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 23057, value = "principal-attribute '%s' claim does not exist, falling back to 'sub'")
     void principalAttributeClaimDoesNotExist(String principalAttributeClaim);
 
+    @Message(id = 23058, value = "Invalid keystore configuration for signing Request Objects.")
+    IOException invalidKeyStoreConfiguration();
+
+    @Message(id = 23059, value = "The signature algorithm specified is not supported by the OpenID Provider.")
+    IOException invalidRequestObjectSignatureAlgorithm();
+
+    @Message(id = 23060, value = "The encryption algorithm specified is not supported by the OpenID Provider.")
+    IOException invalidRequestObjectEncryptionAlgorithm();
+
+    @Message(id = 23061, value = "The content encryption algorithm (enc value) specified is not supported by the OpenID Provider.")
+    IOException invalidRequestObjectEncryptionEncValue();
+
+    @LogMessage(level = WARN)
+    @Message(id = 23062, value = "The OpenID provider does not support request parameters. Sending the request using OAuth2 format.")
+    void requestParameterNotSupported();
+
+    @Message(id = 23063, value = "Both request object encryption algorithm and request object content encryption algorithm must be configured to encrypt the request object.")
+    IllegalArgumentException invalidRequestObjectEncryptionAlgorithmConfiguration();
+
+    @Message(id = 23064, value = "Failed to create the authentication request using the request parameter.")
+    RuntimeException unableToCreateRequestWithRequestParameter(@Cause Exception cause);
+
+    @Message(id = 23065, value = "Failed to create the authentication request using the request_uri parameter.")
+    RuntimeException unableToCreateRequestUriWithRequestParameter(@Cause Exception cause);
+
+    @Message (id = 23066, value = "Failed to send a request to the OpenID provider's Pushed Authorization Request endpoint.")
+    RuntimeException failedToSendPushedAuthorizationRequest(@Cause Exception cause);
+
+    @Message(id = 23067, value = "Cannot retrieve the request_uri as the pushed authorization request endpoint is not available for the OpenID provider.")
+    RuntimeException pushedAuthorizationRequestEndpointNotAvailable();
+
+    @LogMessage(level = WARN)
+    @Message(id = 23068, value = "The request object will be unsigned. This should not be used in a production environment. To sign the request object, for use in a production environment, please specify the request object signing algorithm.")
+    void unsignedRequestObjectIsUsed();
+
+    @Message(id = 23069, value = "The client secret has not been configured. Unable to sign the request object using the client secret.")
+    RuntimeException clientSecretNotConfigured();
+
+    @Message(id = 23070, value = "Authentication request format must be one of the following: oauth2, request, request_uri.")
+    RuntimeException invalidAuthenticationRequestFormat();
 }
 
