@@ -144,6 +144,10 @@ public class CAGenerationTool implements Closeable {
         return loadKeyStore(new File(workingDir, BEETLES_STORE));
     }
 
+    public String getKeyStoreType() {
+        return KEYSTORE_TYPE;
+    }
+
     /**
      * @deprecated Use {@link CommonIdentity#getCertificate()} instead.
      */
@@ -364,8 +368,12 @@ public class CAGenerationTool implements Closeable {
         }
     }
 
+    File getKeyStoreFile(Identity identity) {
+        return new File(workingDir, identity.getKeyStoreName());
+    }
+
     KeyStore loadKeyStore(final Identity identity) {
-        return loadKeyStore(new File(workingDir, identity.getKeyStoreName()));
+        return loadKeyStore(getKeyStoreFile(identity));
     }
 
     static KeyStore loadKeyStore(final File location) {

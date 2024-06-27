@@ -16,6 +16,7 @@
 
 package org.wildfly.security.ssl.test.util;
 
+import java.io.File;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 
@@ -36,6 +37,11 @@ public class DefinedIdentity extends CommonIdentity {
         caGenerationTool.assertNotClosed();
 
         return caGenerationTool.loadKeyStore(identity);
+    }
+
+    @Override
+    public File getKeyStoreFile() {
+        return caGenerationTool.getKeyStoreFile(identity);
     }
 
 }
