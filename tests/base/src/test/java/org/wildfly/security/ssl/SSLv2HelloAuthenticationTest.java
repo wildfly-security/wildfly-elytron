@@ -89,7 +89,7 @@ import org.wildfly.security.x500.cert.X509CertificateBuilder;
 public class SSLv2HelloAuthenticationTest {
 
     private static final char[] PASSWORD = "Elytron".toCharArray();
-    private static final String CA_JKS_LOCATION = "./target/test-classes/ca/jks";
+    private static final String CA_JKS_LOCATION = "./target/test-classes/ca/pkcs12";
     private static File ladybirdFile = null;
     private static File scarabFile = null;
     private static File beetlesFile = null;
@@ -119,7 +119,7 @@ public class SSLv2HelloAuthenticationTest {
 
         createKeyStores(ladybirdFile, scarabFile, beetlesFile, trustFile);
 
-        securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/ca/jks/beetles.keystore"));
+        securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/ca/pkcs12/beetles.keystore"));
 
         securityDomain = SecurityDomain.builder()
                 .addRealm("KeystoreRealm", securityRealm)
@@ -162,7 +162,7 @@ public class SSLv2HelloAuthenticationTest {
 
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(securityDomain)
-                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                .setKeyManager(getKeyManager("/ca/pkcs12/scarab.keystore"))
                 .setProtocolSelector(ProtocolSelector.empty().add(EnumSet.copyOf(list)))
                 .build().create();
 
@@ -187,7 +187,7 @@ public class SSLv2HelloAuthenticationTest {
 
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(securityDomain)
-                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                .setKeyManager(getKeyManager("/ca/pkcs12/scarab.keystore"))
                 .setTrustManager(getCATrustManager())
                 .setNeedClientAuth(true)
                 .setProtocolSelector(ProtocolSelector.empty().add(EnumSet.copyOf(list)))
@@ -214,7 +214,7 @@ public class SSLv2HelloAuthenticationTest {
     public void testTwoWaySSLv2HelloNotEnabled() throws Exception {
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(securityDomain)
-                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                .setKeyManager(getKeyManager("/ca/pkcs12/scarab.keystore"))
                 .setTrustManager(getCATrustManager())
                 .setNeedClientAuth(true)
                 .build().create();
@@ -243,7 +243,7 @@ public class SSLv2HelloAuthenticationTest {
 
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(securityDomain)
-                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                .setKeyManager(getKeyManager("/ca/pkcs12/scarab.keystore"))
                 .setTrustManager(getCATrustManager())
                 .setNeedClientAuth(true)
                 .setProtocolSelector(ProtocolSelector.empty().add(EnumSet.copyOf(list)))
@@ -273,7 +273,7 @@ public class SSLv2HelloAuthenticationTest {
 
             SSLContext serverContext = new SSLContextBuilder()
                     .setSecurityDomain(securityDomain)
-                    .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                    .setKeyManager(getKeyManager("/ca/pkcs12/scarab.keystore"))
                     .setTrustManager(getCATrustManager())
                     .setNeedClientAuth(true)
                     .setProtocolSelector(ProtocolSelector.empty().add(EnumSet.copyOf(list)))
@@ -376,7 +376,7 @@ public class SSLv2HelloAuthenticationTest {
      */
     private static X509TrustManager getCATrustManager() throws Exception {
         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
-        trustManagerFactory.init(loadKeyStore("/ca/jks/ca.truststore"));
+        trustManagerFactory.init(loadKeyStore("/ca/pkcs12/ca.truststore"));
 
         for (TrustManager current : trustManagerFactory.getTrustManagers()) {
             if (current instanceof X509TrustManager) {
@@ -388,13 +388,13 @@ public class SSLv2HelloAuthenticationTest {
     }
 
     private static KeyStore loadKeyStore() throws Exception{
-        KeyStore ks = KeyStore.getInstance("JKS");
+        KeyStore ks = KeyStore.getInstance("PKCS12");
         ks.load(null,null);
         return ks;
     }
 
     private static KeyStore loadKeyStore(final String path) throws Exception {
-        KeyStore keyStore = KeyStore.getInstance("jks");
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
         try (InputStream caTrustStoreFile = SSLAuthenticationTest.class.getResourceAsStream(path)) {
             keyStore.load(caTrustStoreFile, PASSWORD);
         }
