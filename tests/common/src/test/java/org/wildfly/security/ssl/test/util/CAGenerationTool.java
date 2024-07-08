@@ -66,7 +66,7 @@ public class CAGenerationTool implements Closeable {
 
     private static final String BEETLES_STORE = "beetles.keystore";
     private static final String KEY_ALGORITHM = "RSA";
-    private static final String KEYSTORE_TYPE = "JKS"; // TODO Switch to PKCS#12
+    private static final String KEYSTORE_TYPE = "PKCS12";
     private static final int OCSP_PORT = 4854;
     static final char[] PASSWORD = "Elytron".toCharArray();
 
@@ -142,6 +142,10 @@ public class CAGenerationTool implements Closeable {
 
     public KeyStore getBeetlesKeyStore() {
         return loadKeyStore(new File(workingDir, BEETLES_STORE));
+    }
+
+    public String getKeyStoreType() {
+        return KEYSTORE_TYPE;
     }
 
     /**
@@ -364,8 +368,12 @@ public class CAGenerationTool implements Closeable {
         }
     }
 
+    File getKeyStoreFile(Identity identity) {
+        return new File(workingDir, identity.getKeyStoreName());
+    }
+
     KeyStore loadKeyStore(final Identity identity) {
-        return loadKeyStore(new File(workingDir, identity.getKeyStoreName()));
+        return loadKeyStore(getKeyStoreFile(identity));
     }
 
     static KeyStore loadKeyStore(final File location) {

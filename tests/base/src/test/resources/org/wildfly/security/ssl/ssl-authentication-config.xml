@@ -22,41 +22,44 @@
 <configuration>
     <authentication-client xmlns="urn:elytron:client:1.7">
         <key-stores>
-            <key-store name="ca" type="JKS">
-                <file name="target/test-classes/jks/ca.truststore"/>
-            </key-store>
-            <key-store name="ca2" type="JKS">
-                <file name="target/test-classes/jks/ca.truststore2" />
-            </key-store>
-            <key-store name="scarab" type="JKS">
-                <file name="target/test-classes/jks/scarab.keystore"/>
-            </key-store>
-            <key-store name="ladybird" type="JKS">
-                <file name="target/test-classes/jks/ladybird.keystore"/>
+            <key-store name="ca" type="PKCS12" provider="SUN">
+                <file name="target/test-classes/pkcs12/ca.truststore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
-            <key-store name="rove" type="JKS">
-                <file name="target/test-classes/jks/rove.keystore"/>
+            <key-store name="ca2" type="PKCS12" provider="SUN">
+                <file name="target/test-classes/pkcs12/ca.truststore2" />
                 <key-store-clear-password password="Elytron"/>
             </key-store>
-            <key-store name="ocsp-checked-good" type="JKS">
-                <file name="target/test-classes/jks/ocsp-checked-good.keystore"/>
+            <key-store name="scarab" type="PKCS12" provider="SUN">
+                <file name="target/test-classes/pkcs12/scarab.keystore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
-            <key-store name="ocsp-checked-revoked" type="JKS">
-                <file name="target/test-classes/jks/ocsp-checked-revoked.keystore"/>
+            <key-store name="ladybird" type="PKCS12" provider="SUN">
+                <file name="target/test-classes/pkcs12/ladybird.keystore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
-            <key-store name="ocsp-checked-unknown" type="JKS">
-                <file name="target/test-classes/jks/ocsp-checked-unknown.keystore"/>
+            <key-store name="rove" type="PKCS12" provider="SUN">
+                <file name="target/test-classes/pkcs12/rove.keystore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
-            <key-store name="ladybug" type="JKS">
-                <file name="target/test-classes/jks/ladybug.keystore" />
+            <key-store name="ocsp-checked-good" type="PKCS12" provider="SUN">
+                <file name="target/test-classes/pkcs12/ocsp-checked-good.keystore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
-            <key-store name="greenjune" type="JKS">
-                <file name="target/test-classes/jks/greenjune.keystore" />
+            <key-store name="ocsp-checked-revoked" type="PKCS12" provider="SUN">
+                <file name="target/test-classes/pkcs12/ocsp-checked-revoked.keystore"/>
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
+            <key-store name="ocsp-checked-unknown" type="PKCS12" provider="SUN">
+                <file name="target/test-classes/pkcs12/ocsp-checked-unknown.keystore"/>
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
+            <key-store name="ladybug" type="PKCS12" provider="SUN">
+                <file name="target/test-classes/pkcs12/ladybug.keystore" />
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
+            <key-store name="greenjune" type="PKCS12" provider="SUN">
+                <file name="target/test-classes/pkcs12/greenjune.keystore" />
                 <key-store-clear-password password="Elytron"/>
             </key-store>
         </key-stores>

@@ -16,6 +16,7 @@
 
 package org.wildfly.security.ssl.test.util;
 
+import java.io.File;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -42,7 +43,13 @@ public abstract class CommonIdentity {
         return certificate;
     }
 
+    public String getKeyStoreType() {
+        return caGenerationTool.getKeyStoreType();
+    }
+
     public abstract KeyStore loadKeyStore();
+
+    public abstract File getKeyStoreFile();
 
     public X509ExtendedKeyManager createKeyManager() {
         caGenerationTool.assertNotClosed();

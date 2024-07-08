@@ -65,7 +65,7 @@ public class TLS13AuthenticationTest {
 
     private static final String CLIENT_CONFIG = "tls13-authentication-config.xml";
     private static final char[] PASSWORD = "Elytron".toCharArray();
-    private static final String CA_JKS_LOCATION = "./target/test-classes/jks";
+    private static final String CA_JKS_LOCATION = "./target/test-classes/pkcs12";
 
     private static CAGenerationTool caGenerationTool = null;
     private static SecurityDomain securityDomain = null;

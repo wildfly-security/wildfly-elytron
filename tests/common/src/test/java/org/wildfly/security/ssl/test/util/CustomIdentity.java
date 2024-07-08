@@ -34,4 +34,9 @@ public class CustomIdentity extends CommonIdentity {
         return CAGenerationTool.loadKeyStore(keyStoreFile);
     }
 
+    @Override
+    public File getKeyStoreFile() {
+        return keyStoreFile;
+    }
+
 }
