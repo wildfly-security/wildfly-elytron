@@ -816,7 +816,7 @@ public class SSLAuthenticationTest {
     }
 
     private void performConnectionTest(SSLContext serverContext, String clientUri, boolean expectValid, String expectedServerPrincipal, String expectedClientPrincipal, boolean oneWay) throws Throwable {
-        System.setProperty("wildfly.config.url", SSLAuthenticationTest.class.getResource("wildfly-ssl-test-config-v1_7.xml").toExternalForm());
+        System.setProperty("wildfly.config.url", SSLAuthenticationTest.class.getResource("ssl-authentication-config.xml").toExternalForm());
         AccessController.doPrivileged((PrivilegedAction<Integer>) () -> Security.insertProviderAt(WildFlyElytronPasswordProvider.getInstance(), 1));
 
         AuthenticationContext context = AuthenticationContext.getContextManager().get();

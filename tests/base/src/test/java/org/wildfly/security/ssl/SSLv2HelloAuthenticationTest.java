@@ -88,6 +88,7 @@ import org.wildfly.security.x500.cert.X509CertificateBuilder;
  */
 public class SSLv2HelloAuthenticationTest {
 
+    private static final String CLIENT_CONFIG = "sslv2-hello-authentication-config.xml";
     private static final char[] PASSWORD = "Elytron".toCharArray();
     private static final String CA_JKS_LOCATION = "./target/test-classes/ca/pkcs12";
     private static File ladybirdFile = null;
@@ -170,7 +171,7 @@ public class SSLv2HelloAuthenticationTest {
 
         SecurityIdentity identity = performConnectionTest(serverContext,
                 "protocol://one-way-sslv2hello.org",
-                "wildfly-ssl-test-config-v1_6.xml",
+                CLIENT_CONFIG,
                 enabledProtocols, // We expect client and server socket to only have SSLv2Hello and TLSv1 enabled
                 "TLSv1"); // We expect the negotiated protocol to be TLSv1, as SSLv2Hello is a pseudo-protocol
     }
@@ -197,7 +198,7 @@ public class SSLv2HelloAuthenticationTest {
 
         SecurityIdentity identity = performConnectionTest(serverContext,
                 "protocol://test-two-way-sslv2hello.org",
-                "wildfly-ssl-test-config-v1_6.xml",
+                CLIENT_CONFIG,
                 enabledProtocols, // We expect client and server socket to only have SSLv2Hello and TLSv1 enabled
                 "TLSv1"); // We expect the negotiated protocol to be TLSv1, as SSLv2Hello is a pseudo-protocol
 
@@ -223,7 +224,7 @@ public class SSLv2HelloAuthenticationTest {
 
         SecurityIdentity identity = performConnectionTest(serverContext,
                 "protocol://two-way-no-sslv2hello.org",
-                "wildfly-ssl-test-config-v1_6.xml",
+                CLIENT_CONFIG,
                 enabledProtocols, // We expect the default protocols to be enabled i.e. SSLv2Hello should only be enabled if explicitly configured
                 "TLSv1.2"); // We expect the negotiated protocol to be the highest version protocol in common
 
@@ -254,7 +255,7 @@ public class SSLv2HelloAuthenticationTest {
 
         SecurityIdentity identity = performConnectionTest(serverContext,
                 "protocol://two-way-no-sslv2hello.org",
-                "wildfly-ssl-test-config-v1_6.xml",
+                CLIENT_CONFIG,
                 enabledClientProtocols,
                 enabledServerProtocols,
                 "TLSv1"); // We expect the negotiated protocol to be the highest version protocol in common
@@ -284,7 +285,7 @@ public class SSLv2HelloAuthenticationTest {
 
             SecurityIdentity identity = performConnectionTest(serverContext,
                     "protocol://test-two-way-sslv2hello.org",
-                    "wildfly-ssl-test-config-v1_6.xml",
+                    CLIENT_CONFIG,
                     clientEnabledProtocols,
                     serverEnabledProtocols,
                     "NONE"); // handshake is expected to fail, which in turn returns an empty SSLSession
