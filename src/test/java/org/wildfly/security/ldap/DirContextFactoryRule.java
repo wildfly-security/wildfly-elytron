@@ -80,7 +80,7 @@ public class DirContextFactoryRule implements TestRule {
             TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             trustFactory.init(keyStore);
 
-            SSLContext context = SSLContext.getInstance("TLS");
+            SSLContext context = SSLContext.getInstance("TLSv1.2");
             context.init(null, trustFactory.getTrustManagers(), null);
             socketFactory = context.getSocketFactory();
         } catch (Exception e) {
