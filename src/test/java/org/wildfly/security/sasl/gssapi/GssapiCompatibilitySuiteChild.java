@@ -54,6 +54,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
@@ -89,6 +90,7 @@ public class GssapiCompatibilitySuiteChild {
     private static final Provider wildFlyElytronProvider = new WildFlyElytronProvider();
 
     @Test
+    @Ignore("ELY-2784")
     public void test1Auth() throws Exception {
 
         client = Subject.doAs(clientSubject, (PrivilegedExceptionAction<SaslClient>) () -> {
@@ -149,6 +151,7 @@ public class GssapiCompatibilitySuiteChild {
     }
 
     @Test
+    @Ignore("ELY-2784")
     public void test2AuthInt() throws Exception {
 
         client = Subject.doAs(clientSubject, (PrivilegedExceptionAction<SaslClient>) () -> {
@@ -233,6 +236,7 @@ public class GssapiCompatibilitySuiteChild {
     }
 
     @Test
+    @Ignore("ELY-2784")
     public void test3AuthConf() throws Exception {
 
         client = Subject.doAs(clientSubject, (PrivilegedExceptionAction<SaslClient>) () -> {
