@@ -30,12 +30,46 @@ the public key to Elyton's processing code.
 
 === Example Server Configuration
 
-=== Quickstart example
-
 ==== Prerequisites
 
-==== Run the test
+To run the example you will need the following.
 
+* JDK-17
+* Wildfly 33 or newer
+* Wildfly quickstart, https://github.com/wildfly/quickstart.git
+
+==== Environment Setup
+
+* cd into `jaxrs-jwt` in the quickstart project.  Follow the directions
+in the README file upto and including executing the CLI script file,
+`configure-elytron.cli`.
+* Create file, `config-bearer-timeout.cli` in the jaxrs-jwt directory.
+Add the following commands to the file and save it.
+
+```
+    # append timeout attributes to the jwt element.
+    /subsystem=elytron/token-realm=jwt-realm:write-attribute(name=jwt.connection-timeout, valu
+   e=2)
+    # /subsystem=elytron/token-realm=jwt-realm:write-attribute(name=jwt.read-timeout, value=1)
+
+```
+
+====  Execute command
+```
+$WILDFLY_HOME/bin/jboss-cli.sh --connect --file=config-bearer-timeout.cli
+```
+
+==== Run the example
+
+* Follow the README directions to provision the Wildfly server
+
+* Follow the directions to run the Integration Tests with a provisioned server.
+The test will fail.
+
+* Check Wildfly's server.log for the message, "Unable to connect to $THE_URL"
+```
+$WILDFLY_HOME/standalone/log/server.log
+```
 
 == Summary
 
