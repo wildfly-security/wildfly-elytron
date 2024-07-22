@@ -76,8 +76,8 @@ public class OidcSecurityContext implements Serializable {
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         try {
-            token = new AccessToken(new JwtConsumerBuilder().setSkipSignatureVerification().setSkipAllValidators().build().processToClaims(tokenString));
-            idToken = new IDToken(new JwtConsumerBuilder().setSkipSignatureVerification().setSkipAllValidators().build().processToClaims(idTokenString));
+            token = tokenString == null ? null : new AccessToken(new JwtConsumerBuilder().setSkipSignatureVerification().setSkipAllValidators().build().processToClaims(tokenString));
+            idToken = idTokenString == null ? null : new IDToken(new JwtConsumerBuilder().setSkipSignatureVerification().setSkipAllValidators().build().processToClaims(idTokenString));
         } catch (InvalidJwtException e) {
             throw log.unableToParseToken();
         }
