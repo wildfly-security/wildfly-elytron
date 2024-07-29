@@ -1,0 +1,463 @@
+---
+layout: post
+title: 'Sending Request Objects as A JWT Using Request Parameters for OIDC'
+date: 2024-07-29
+tags: oidc Keycloak JWT encryption authentication
+synopsis: How to send the request object as a Json Web Token when securing a WildFly application using OIDC.
+author: prarthonapaul
+---
+
+:toc: macro
+:toc-title:
+
+WildFly 33 includes the ability to send the request object as a Json Web Token (JWT) when securing an application using OIDC.
+The feature also includes the ability to sign and/or encrypt the JWT for added security. https://openid.net/developers/how-connect-works/[OpenID Connect] is an identity layer on top of the OAuth 2.0 protocol
+that makes it possible for a client to verify a user’s identity based on authentication that’s performed by an OpenID
+provider. The OAuth 2.0 request syntax sends the Request Object in the request by adding them directly to the URL.
+However, OpenID Connect allows the Request Object to be sent as a JWT using https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests[request parameters], which can be signed and optionally
+encrypted. This adds an added layer of protection, as the parameters are no longer human-readable.
+
+toc::[]
+
+== Prerequisites 
+
+To follow along with this guide, you will need:
+
+* Roughly 20 minutes (not including the time needed for to build the pods)
+
+* Access to an OpenShift cluster (try the Red Hat Developer Sandbox for free)
+
+* https://docs.openshift.com/container-platform/4.15/cli_reference/openshift_cli/getting-started-cli.html[OpenShift CLI]
+
+* https://helm.sh/docs/intro/install/[Helm Chart]
+
+* https://github.com/wildfly-security-incubator/elytron-examples[Elytron-examples project]
+
+== Example Application
+
+We will use a simple web application in this guide that consists of a https://github.com/wildfly-security-incubator/elytron-examples/blob/main/elytron-oidc-request/src/main/java/org/wildfly/security/examples/SecuredServlet.java[single servlet]. We will secure this servlet using OIDC.
+
+We will use the example in the https://github.com/wildfly-security-incubator/elytron-examples/tree/main/elytron-oidc-request[elytron-oidc-request] directory in the `elytron-examples` repo.
+
+To obtain this example, clone the `elytron-examples` repository to your local machine:
+
+```
+git clone git@github.com:wildfly-security-incubator/elytron-examples.git
+```
+
+== Setting up the Key Pairs
+
+We need to generate a key pair to sign the JWTs. These key pairs are tokens that are communicated between the client and the server and are used to sign and encrypt JWT's.
+
+=== About Key Pairs
+
+Typically key pairs have 2 components: 
+
+* *Private Key:* This is the part of the key that must be kept secret and will be used to sign the JWT. Your OpenID provider communicates the public key of some key pair(s) to you. The public key is used by you to encrypt the JWT.
+
+* *Public Key:* This is the part of the key pair that is shared with trusted parties. Typically, the OpenID provider shared a set of public keys with us which we use to encrypt our JWT's among other things. Public keys can be extracted from certificates and are used to verify the signatures among other things. We share the certificates of key pairs we generate with the OpenID provider, and it contains the public key.
+
+Key pairs with public and private keys are known as *asymmetric* keys. Some keys are *symmetric*, meaning they only have 1 secret key that is used by both the client and the server. Each key has an algorithm that is used to generate it, such as, RSA, Elliptic Curve, etc. An example of a symmetric algorithm is HS256, where the same key is used to sign a JWT and verify the signature.
+
+=== Generating Key Pairs
+
+We can use the `keytool` tool in the cli to generate our keys and store them in a keystore file. We can generate keystore files of type `JKS` and `PKCS12` for our application. The general format for doing this is as follows:
+```
+    $ keytool -genkey pair -alias <keystore_alias> -keyalg <algorithm> -keysize <key_size> -validity <validity_in_days> -keystore <keystore_name> -dname "<distinguished_name>" -keypass <private_key_password> -storepass <keystore_password>
+```
+
+For this example, we will be using `PKCS12` keystores.
+
+==== Generating PKCS12 Keystore
+
+Let us first create a PKCS12 keystore file with 2 different keys. Let's first generate an RSA key pair: 
+```
+    $ keytool -genkey pair -alias rsaKey -keyalg RSA -keysize 2048 -validity 365 -keystore Keycloak.keystore.pkcs12 -dname "CN=client" -keypass password -storepass password
+```
+And for Elliptical Curve keys, use the following commands: 
+```
+    $ keytool -genkey pair -alias ecKey -keyalg EC -groupname secp256r1 -validity 365 -keystore Keycloak.keystore.pkcs12 -dname "CN=client" -keypass password -storepass password
+``` 
+Note that in this case, we have specified the *key size* for the RSA keys, and the *groupname* for Elliptical Curve keys.
+For the RSA keys, the same keysize can be used for RSA algorithms with different SHA values (i.e. RSA256, RSA512).
+However, this is not the case for Elliptical Curve keys. For ES256 algorithms, you need to use the groupname associated with the SHA value (i.e. for ES256, use `-groupname secp256r1` and for ES384, use `-groupname secp384r1` and so on). You can use the following commands to see the contents of the keystore: 
+```
+    $ keytool -list -v -keystore Keycloak.keystore.pkcs12 -storepass password
+```
+
+Take a note of the absolute path of the keystore file along with the key alias and the keystore password. We will be using them to set up Keycloak later. For this guide we will only be using the key pair with the alias *rsaKey*. However, if you would like to use an Elliptical Curve key to sign your JWT, you can use the *ecKey* alias when asked for a key alias.
+
+If you would like to use JKS keystore files instead, see https://docs.redhat.com/en/documentation/red_hat_jboss_data_virtualization/6.4/html/security_guide/create_a_privatepublic_key_pair_with_keytool[here] for more information.
+
+== Log Into the OpenShift Cluster
+Before we can deploy our application, we need to log into an OpenShift cluster. You can log in via the OpenShift CLI:
+```
+oc login -u myUserName
+```
+
+Alternatively, to log in using the API token, navigate to Developer Sandbox, click on your username at the top right corner, and click on Copy login command. It will redirect you to a page where you can copy your login command and paste it on your terminal. The command will be in this format:
+```
+oc login --token=myToken --server=myServerUrl
+```
+
+Once you log in, you will see a list of projects you have access to. You can switch between them to select the one where you would like to deploy your application using: 
+```
+oc project <projectname>
+```
+
+== Start Keycloak
+We will be using Keycloak as our OpenID identity provider.
+
+To start a Keycloak server in your project on OpenShift, use the following command:
+
+```
+oc process -f https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/latest/openshift/keycloak.yaml \
+    -p KEYCLOAK_ADMIN=admin \                 // <1>
+    -p KEYCLOAK_ADMIN_PASSWORD=admin \        // <2>
+    -p NAMESPACE=<PROJECT_NAME> \                // <3>
+| oc create -f -
+```
+
+<1> Replace admin with the user name you would like to use when accessing the Keycloak Administration Console.
+<2> Replace admin with the password you would like to use when accessing the Keycloak Administration Console.
+<3> Replace <PROJECT_NAME> with your project name.
+After running the above command, you should see the following output:
+
+```
+service/keycloak created
+route.route.openshift.io/keycloak created
+Warning: apps.openshift.io/v1 DeploymentConfig is deprecated in v4.14+, unavailable in v4.10000+
+deploymentconfig.apps.openshift.io/keycloak created.
+```
+It will take a few minutes for OpenShift to provision the Keycloak pod and its related resources.
+
+You can use the OpenShift CLI or the OpenShift web console, depending on your preference, to check if your Keycloak server has been provisioned.
+
+=== OpenShift CLI
+To make sure your Keycloak server has been provisioned using the OpenShift CLI, run:
+```
+oc get pods
+```
+
+After a little while, check for a message similar to the following message that indicates the pod is ready:
+```
+NAME                READY     STATUS      RESTARTS   AGE
+keycloak-1-deploy   0/1       Completed   0          1h
+keycloak-1-l9kdx    1/1       Running     0          1h
+```
+
+Once the Keycloak server has been provisioned, use the following command to find the URL for your Keycloak instance’s Admin Console:
+```
+KEYCLOAK_URL=https://$(oc get route keycloak --template='{{ .spec.host }}') &&
+echo "" &&
+echo "Keycloak Admin Console:   $KEYCLOAK_URL/admin" &&
+echo ""
+```
+
+Please take a note of the *KEYCLOAK_URL* as we will be making use of that later on.
+
+=== OpenShift Web Console
+To make sure your Keycloak server has been provisioned using the OpenShift web console, navigate to the *Topology* view in the *Developer* perspective. You can click on your *keycloak* app to check its status. Once it is running, you can click on *Open URL* and you will be taken to Keycloak’s *Administration Console* login page.
+
+== Setting up Keycloak OpenID Provider
+
+. Log into the Keycloak Admin Console using the admin username and password you specified earlier. 
+. Select the drop down menu in the upper left corner, and click on the "Create realm" button. Enter *myrealm* for *Realm name* and click on the *Create* button to create a realm called *myrealm*.
+. Next, go to the *Clients* menu and click on the *Create client* button to register a client called *myclient* as follows: 
+* *General settings*:
+** *Client type* (or *Client Protocol*, depending on your keycloak version): *OpenID Connect*
+** *Client ID*: *myclient*
+* *Capability config*:
+** *Client authentication* : *On*
+** *Authentication flow*: *Standard flow, Direct access grants*
+* *Login settings*: 
+** For the *Valid Redirect URIs*, leave it empty for now. We will come back to edit it later.
+
+. Once you hit *Save*, you should see a new tab called *Keys* appear.
+
+. Navigate to the *Keys* tab for my client from the *Client details* page, 
+* click on the *Import* button located at the bottom of the screen. 
+** Under *Archive format*, choose *PKCS12* from the dropdown. 
+** Under *Key alias*, enter the alias of the RSA key you just created. 
+** Under *Store password* enter the password of the keystore you created.
+** under *Import file*, click on the *Browse* button to import the keystore file. Note that when we created the keystore, we specified a key
+password and a keystore password. Here, we are only using the *keystore* password. While we set them both to be the same, they do not have to be.
+** Once you select the file named *Keycloak.keystore.pkcs12* from your filesystem, click *Import* and you should see a message at the top of the screen indicating that the certificate has been uploaded successfully and you will see the certificate listed in the text field in the middle of the screen.
+
+. Finally, create a user called *alice* as follows: 
+* Click *Users* in the left hand menu. 
+* Click *Add user*.
+* Fill in the form with the following values:
+ ** *Username*: *alice*.
+ ** *First name*: *Alice*.
+ ** *Last name*: *Smith*. 
+ ** Click *Create*.
+* You can find more details about creating and managing KeyCloak users https://www.keycloak.org/docs/latest/server_admin/#proc-creating-user_server_administration_guide[here].
+
+. This user needs a password to log in. To set the initial password:
+
+* Click *Credentials* at the top of the page.
+* Fill in the *Set password* form with a password.
+* Toggle *Temporary* to *Off* so that the user does not need to update this password at the first login.
+* Hit *Save*.
+
+== Create an OpenShift Secret
+
+Since WildFly will use the keystore we created earlier, we need to add it to OpenShift. We can do this by generating an OpenShift secret using the keystore file as follows: 
+```
+    $ oc create secret generic simple-webapp-secret --from-file=/PATH/TO/Keycloak.keystore.pkcs12
+```
+
+Once you have your environment set up with the required tools, we can move on to the next step to build and deploy our application on OpenShift.
+
+== Add Helm Configuration
+* Obtain the URL for Keycloak.
+```
+KEYCLOAK_URL=https://$(oc get route keycloak --template='{{ .spec.host }}') &&
+echo "" &&
+echo "Keycloak URL:   $KEYCLOAK_URL" &&
+echo ""
+```
+
+* Switch to the charts directory in the `elytron-oidc-client-scope` example.
+```
+    $ cd /PATH/TO/ELYTRON/EXAMPLES/elytron-oidc-request/charts
+```
+Notice there’s a helm.yaml file in this directory with the following content:
+```
+build:
+  uri: https://github.com/wildfly-security-incubator/elytron-examples.git
+  contextDir: elytron-oidc-request
+deploy:
+  replicas: 1
+  env:
+    - name: OIDC_PROVIDER_URL
+      value: <KEYCLOAK_URL>                         <1>
+    - name: OIDC_CLIENT_SECRET
+      value: <CLIENT_SECRET>                        <2>
+    - name: AUTH_REQUEST_FORMAT
+      value: request
+    - name: SIGNING_KEYSTORE_PATH                   
+      value: /etc/request-object-secret-volume/Keycloak.keystore.pkcs12     
+    - name: SERVER_ARGS
+      value: "--stability=preview" 
+  volumes:
+    - name: request-object-signing-keystore-volume
+      secret:
+        secretName: simple-webapp-secret
+  volumeMounts:
+    - name: request-object-signing-keystore-volume
+      mountPath: /etc/request-object-secret-volume
+      readOnly: true
+```
+<1> Replace <KEYCLOAK_URL> with the Keycloak URL obtained in the previous command.
+<2> Replace <CLIENT_SECRET> with the client secret for `myclient`. 
+
+To obtain the client secret, go to the *Client* menu on the left hand side and select *myclient* from the *Clients list*. Click on the *Credentials* tab under *Client details* page, ensure that *Client Authenticator* is set to *Client Id and Secret* and copy the value listed beside *Client Secret*.
+
+== Stability Levels for OpenShift Deployment 
+The WildFly server now includes different stability levels, that can be associated with functionality. Users can use the *--stability* argument when staring the WildFly server. Depending on the value of the stability levels, different features are available. You can learn more about stability levels https://docs.wildfly.org/33/Admin_Guide.html#Feature_stability_levels[here]. 
+
+The attributes related to request objects under the `elytron-oidc-client` subsystem are *preview* level attributes, which means in order to access their functionalities, the server's stability level must be set to *preview*. When applications are deployed to OpenShift, the WildFly Cloud Galleon Feature Pack is used to provision a server. Therefore, in order to use this feature, we need to provision the server at the *preview* stability level. This is why we have added the environment variable named *SERVER_ARGS* with a value of *--stability=preview*, which specifies that the provisioned server should be started at the *preview* stability level. For more information about the server's stability levels, please refer to https://docs.wildfly.org/33/Admin_Guide.html#Feature_stability_levels[WildFly Docs].
+
+Additionally, we have used the `stability` galleon option to specify the stability level used by the feature pack when deploying the application using the tags below: 
+```
+    <galleon-options>
+        <stability-level>preview</stability-level>
+    </galleon-options>
+```
+
+== Deploy the Example Application to WildFly on OpenShift
+If you haven’t already installed the WildFly Helm chart, install it:
+```
+helm repo add wildfly https://docs.wildfly.org/wildfly-charts/
+```
+If you have already installed the WildFly Helm Chart, be sure to update it to ensure you have the latest one:
+```
+helm repo update
+```
+We can deploy our example application to WildFly on OpenShift using the WildFly Helm Chart:
+```
+helm install oidc-app -f /PATH/TO/ELYTRON/EXAMPLES/elytron-oidc-request/charts/helm.yaml wildfly/wildfly
+```
+Notice that this command uses the file we updated, `helm.yaml`, that contains the values needed to build and deploy our application.
+
+The application will now begin to build. This will take a couple of minutes.
+
+The build can be observed using:
+```
+oc get build -w
+```
+Once complete, you can follow the deployment of the application using:
+```
+oc get deployment oidc-app -w
+```
+Alternatively, you can check status directly from the OpenShift web console.
+
+== Behind the Scenes
+While our application is building, let’s take a closer look at our application.
+
+Examine the https://github.com/wildfly-security-incubator/elytron-examples/blob/main/elytron-oidc-client-scope/pom.xml[pom.xml] file.
+
+Notice that it contains an openshift profile. A profile in Maven lets you create a set of configuration values to customize your application build for different environments. The openshift profile in this example defines a configuration that will be used by the WildFly Helm Chart when provisioning the WildFly server on OpenShift.
+
+```
+<profiles>
+    <profile>
+            <id>openshift</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.wildfly.plugins</groupId>
+                        <artifactId>wildfly-maven-plugin</artifactId>
+                        <version>${version.wildfly.maven.plugin}</version>                  <1>
+                        <configuration>
+                            <feature-packs>
+                                <feature-pack>
+                                    <location>org.wildfly:wildfly-galleon-pack:${version.wildfly}</location>
+                                </feature-pack>
+                                <feature-pack>
+                                    <location>org.wildfly.cloud:wildfly-cloud-galleon-pack:${version.wildfly.cloud.galleon.pack}</location>
+                                </feature-pack>
+                            </feature-packs>
+                            <layers>
+                                <layer>cloud-server</layer>
+                                <layer>elytron-oidc-client</layer>                      <2>
+                            </layers>
+                            <galleon-options>
+                                <stability-level>preview</stability-level>             <3>
+                            </galleon-options>
+                            <filename>simple-webapp-oidc.war</filename>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>package</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+</profiles>
+```
+<1> *wildfly-maven-plugin* provisions a WildFly server with the specified layers with our application deployed.Version *7.0.0.Beta2* or later must be used to allow for stability levels. 
+<2> *elytron-oidc-client* automatically adds the native OIDC client subsystem to our WildFly installation.
+<3> *stability-level* for the feature pack is set to *preview* since we are making use of a preview level feature. 
+
+Examine the https://github.com/wildfly-security-incubator/elytron-examples/blob/main/elytron-oidc-client-scope/src/main/webapp/WEB-INF/oidc.json[oidc.json] file, which is used to configure the OIDC client. 
+```
+{
+    "client-id" : "myclient",
+    "provider-url" : "${env.OIDC_PROVIDER_URL:http://localhost:8080}/realms/myrealm",
+    "public-client" : "false",
+    "authentication-request-format" : "${env.AUTH_REQUEST_FORMAT}",
+    "request-object-signing-algorithm" : "RS256",
+    "request-object-encryption-alg-value" : "RSA-OAEP",
+    "request-object-encryption-enc-value" : "A256GCM",
+    "request-object-signing-keystore-file" : "${env.SIGNING_KEYSTORE_PATH}",
+    "request-object-signing-keystore-password" : "password",
+    "request-object-signing-key-password" : "password",
+    "request-object-signing-key-alias" : "rsaKey",
+    "request-object-signing-keystore-type" : "PKCS12",
+    "principal-attribute" : "preferred_username",
+    "ssl-required" : "EXTERNAL",
+    "scope" : "profile email roles web-origins microprofile-jwt offline_access",
+    "credentials" : {
+    	"secret" : "${env.OIDC_CLIENT_SECRET}"
+    }
+}
+```
+
+Note that we have specified the `authentication-request-format` to be `request`, meaning, we are sending it by value. We
+have specified the signing algorithm to be *RS256*, and we are using the RSA key to sign the request object. We have also specified the *alg* and *enc* values to encrypt the request object. The request object JWT will be signed first and then encrypted
+using the public key that Keycloak shared with us. To see what this key looks like, you can either go to
+{provider-url}/protocol/openid-connect/certs or you can go to the Keycloak console and under the
+*Realm settings* tab, click on the *keys* tab. You will see that there console includes 2 other keys in addition to
+the ones on the link. These are the symmetric keys provided by Keycloak which are used by both the client and the server
+to sign/verify and encrypt/decrypt.
+
+Next, navigate to the OIDC application's `web.xml` file and look for the following command: 
+```
+<login-config>
+    <auth-method>OIDC</auth-method>
+</login-config>
+```
+
+== Get the Application URL
+Once the WildFly server has been provisioned, use the following command to find the URL for your example application:
+
+```
+    SIMPLE_WEBAPP_OIDC_URL=https://$(oc get route oidc-app --template='{{ .spec.host }}') &&
+    echo "" &&
+    echo "Application URL: $SIMPLE_WEBAPP_OIDC_URL/simple-webapp-oidc"  &&
+    echo "Valid redirect URI: $SIMPLE_WEBAPP_OIDC_URL/simple-webapp-oidc/secured/*" &&
+    echo ""
+```
+
+== Finish Configuring Keycloak
+From your *myclient* client in the Keycloak Administration Console, in the client settings, set *Valid Redirect URI* to the Valid redirect URI that was output in the previous section and then click *Save*.
+
+== Accessing the Application
+
+Now, let’s try accessing our application using the application URL.
+
+Click on *Access Secured Servlet*.
+
+Now, you’ll be redirected to Keycloak's login page. If you click on the url on the search bar, you will see the request
+value specified in the URL along with `client-id`, `response_type`, `redirect_uri` and the openid scope. These
+parameters are required to be included in the auth request according to the OAuth2 specifications. You will also notice that the additional scopes are not added to the URL.
+
+Log in with `Alice` and the password that you set when configuring Keycloak.
+
+Next, you’ll be redirected back to our application, and you should see the "Secured Servlet" page. That means that we
+were able to successfully log in to our application using the Keycloak OpenID provider!
+You will also see the claims that were retrieved using the additional scopes. They were sent through the request object. 
+
+=== Sending the JWT by Reference 
+
+Now try changing the value for *AUTH_REQUEST_FORMAT* to *request_uri* inside the helm chart and keep everything else the same. You can update the openshift deployment using the following commands: 
+```
+helm upgrade oidc-app -f /PATH/TO/ELYTRON/EXAMPLES/elytron-oidc-request/charts/helm.yaml wildfly/wildfly
+```
+
+If the builds don't start automatically, you might have to start them manually on the openshift console. Wait for the build to finish and access the application URL again in a new window. You will see the *request_uri* field appear in the
+url. The `request_uri` parameter is used to send the JWT by reference. The Elytron client sends a PAR request to the
+Pushed Authorization Request Endpoint ({provider-url}/protocol/openid-connect/ext/par/request),
+which creates the request_uri given the JWT Request Object. Once the reference has been made it is only valid for a
+certain amount of time specified in the structure returned by the PAR request. After which the request_uri needs to be
+regenerated. To learn more about the specifications of the Request Object, read the
+https://openid.net/specs/openid-connect-core-1_0.html#RequestUriParameter[OpenID documentation] on passing a Request
+Object by reference.
+
+=== Note about Keystores
+
+You can follow the same instructions to configure your server to use a PKCS12 type keystore. For Keycloak, the signing
+algorithms available are "PS384", "ES384", "RS384", "HS256", "HS512", "ES256", "RS256", "HS384", "ES512","PS256",
+"PS512", "RS512" and "none". If you use algorithms that start with "RS" and "PS" to sign the JWT, you will need to use
+an RSA key pair. For "ES" type keys, use Elliptical curve keys and as mentioned above, adjust the group name for the
+PKCS12 keystore keys to match the SHA value of the algorithms. "none" does not require a keystore and lastly, "HS" keys
+require a symmetric key, where the same secret hash is used by the client and the server to sign and verify respectively. 
+Not all algorithms are supported by all OpenID Providers. Review the documentation and/or the metadata for your OpenID provider to learn more about the supported algorithms. 
+
+== Summary
+
+This example has demonstrated how to secure a web application deployed to WildFly by sending the request parameters as a
+JWT. For more details on the `elytron-oidc-client` subsystem, please check out the
+https://docs.wildfly.org/33/Admin_Guide.html#sending-a-request-object-as-a-jwt[documentation] and for more details on OpenID Connect,
+checkout the https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests[OpenID documentation] and the
+documentation of your OpenID provider.
+
+== Resources
+
+* https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests[Passing Request Parameters as JWTs Using OIDC]
+* https://docs.wildfly.org/33/Getting_Started_on_OpenShift.html[Getting Started with WildFly on OpenShift]
+* https://docs.openshift.com/container-platform/4.15/cli_reference/openshift_cli/getting-started-cli.html[OpenShift CLI]
+* https://docs.wildfly.org/33/Getting_Started_on_OpenShift.html#helm-charts[WildFly Helm Chart]
+* https://www.keycloak.org/getting-started/getting-started-openshift[Getting started with Keycloak on OpenShift]
+* https://www.keycloak.org/docs/latest/server_admin/index.html[Keycloak Server Administration Guide]
+* https://www.keycloak.org/docs/latest/securing_apps/#_oidc[Using OpenID Connect to secure applications and services]
+* https://docs.wildfly.org/33/Admin_Guide.html#Feature_stability_levels[Feature stability levels]
+* https://docs.wildfly.org/33/Galleon_Guide.html#WildFly_Galleon_feature-packs[WildFly Galleon feature-packs]
+* https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html[Keytool documentation].
