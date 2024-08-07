@@ -54,6 +54,7 @@
 
     <properties>
         <version.org.codehaus.mojo.xml.plugin>1.0.2</version.org.codehaus.mojo.xml.plugin>
+        <version.org.glassfish.jaxb.jaxb-runtime>2.4.0-b180830.0438</version.org.glassfish.jaxb.jaxb-runtime>
     </properties>
 
     <build>
@@ -766,15 +767,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-core</artifactId>
-            <version>2.3.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
-            <version>2.3.0</version>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>${version.org.glassfish.jaxb.jaxb-runtime}</version>
             <scope>test</scope>
         </dependency>
 
@@ -800,7 +795,7 @@
             </activation>
             <properties>
                 <!-- [WFCORE-1431] remove SASL workaround -->
-                <modular.jdk.args>--add-modules java.sql --illegal-access=permit</modular.jdk.args>
+                <modular.jdk.args>--add-modules java.sql --illegal-access=permit --add-exports=jdk.security.jgss/com.sun.security.sasl.gsskerb=ALL-UNNAMED</modular.jdk.args>
                 <!-- use version of jboss-logging that works much better with JDK9 -->
                 <modular.jdk.props>-Djdk.attach.allowAttachSelf=true</modular.jdk.props>
                 <!-- 2.20.x doesn't start on JDK10-->
@@ -822,7 +817,7 @@
                     <plugin>
                         <groupId>com.github.siom79.japicmp</groupId>
                         <artifactId>japicmp-maven-plugin</artifactId>
-                        <version>0.13.0</version>
+                        <version>0.20.0</version>
                         <configuration>
                             <oldVersion>
                                 <dependency>
