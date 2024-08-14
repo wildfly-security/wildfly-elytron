@@ -8,18 +8,18 @@ title: Home
 </div-->  
 
 <div class="highlight-chip" >
-  <a href="{{site.baseurl}}/contribute/">
+  <a href="{{site.baseurl}}/OSD/">
     <button type="button" class="mdl-chip mdl-chip--contact highlight-chip highlight-chip_large">
       <img class="mdl-chip__contact" src="{{site.baseurl}}/assets/images/icon-wildfly.png" >
-      <span class="mdl-chip__text">Welcome new contributors! Click here to get started!</span>
+      <span class="mdl-chip__text">Welcome new Open Source Day participants! Click here to get started!</span>
     </button>
     <button type="button" class="mdl-chip mdl-chip--contact highlight_chip highlight-chip_small">
       <img class="mdl-chip__contact" src="{{site.baseurl}}/assets/images/icon-wildfly.png" >
-      <span class="mdl-chip__text">Tap here to learn how to start contributing!</span>
+      <span class="mdl-chip__text">Tap here to for Open Source Day!</span>
     </button>
     <button type="button" class="mdl-chip mdl-chip--contact highlight_chip highlight-chip_tiny">
       <img class="mdl-chip__contact" src="{{site.baseurl}}/assets/images/icon-wildfly.png" >
-      <span class="mdl-chip__text">Contribute!</span>
+      <span class="mdl-chip__text">Open Source Day!</span>
     </button>
   </a>
 </div>
