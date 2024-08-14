@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Mon, 29 Jul 2024 21:24:15 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 14 Aug 2024 15:25:38 +0000</lastBuildDate>
+        
+        <item>
+            <title>Using Credential Stores to Replace Clear Text Passwords in WildFly</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/credential-store-for-passwords/
+            </link>
+            <description>
+                WildFly allows the use of credential stores to keep aliases for sensitive information, such as, passwords for external services. Credential stores can be used to store different credentials under aliases and use credential-reference to specify them in server configuration. As a result, the credential is no longer visible in clear...
+            </description>
+            <pubDate>Wed, 14 Aug 2024 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/credential-store-for-passwords/
+            </guid>
+        </item>
         
         <item>
             <title>Sending Request Objects as A JWT Using Request Parameters for OIDC</title>
@@ -130,20 +144,6 @@
             <pubDate>Mon, 11 Dec 2023 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Using distributed realm ignore-unavailable-realms attribute in Elytron</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/distributed-realm-ignore-unavailable-realms/
-            </link>
-            <description>
-                A distributed-realm is made up of a list of realms. Each realm in the list is sequentially attempted until we either find the user or run out of realms. If a realm happens to be unavailable, by default search is stopped altogether. With the introduction of the ignore-unavailable-realms boolean attribute...
-            </description>
-            <pubDate>Mon, 20 Nov 2023 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/distributed-realm-ignore-unavailable-realms/
             </guid>
         </item>
         
