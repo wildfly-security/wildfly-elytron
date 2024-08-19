@@ -19,7 +19,7 @@
   -->
 
 <configuration>
-    <encryption-client xmlns="urn:encryption:client:1.0">
+    <encryption-client xmlns="urn:encryption:client:preview:1.0">
         <credential-stores>
             <credential-store name="my-credential-store" type="PropertiesCredentialStore">
                 <attributes>

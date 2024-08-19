@@ -18,15 +18,15 @@
     -->
 
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xss="http://www.w3.org/2001/XMLSchema"
-            targetNamespace="urn:encryption:client:1.0"
-            xmlns="urn:encryption:client:1.0"
+            targetNamespace="urn:encryption:client:preview:1.0"
+            xmlns="urn:encryption:client:preview:1.0"
             elementFormDefault="qualified"
             attributeFormDefault="unqualified"
             xmlns:elytron="urn:elytron:1.7"
             version="1.0">
 
     <xsd:import namespace="urn:elytron:client:1.7"
-                schemaLocation="../../auth/client/src/main/resources/schema/encryption-client-1_0.xsd"/>
+                schemaLocation="../../auth/client/src/main/resources/schema/encryption-client_preview_1_0.xsd"/>
 
     <!-- Encrypted Expression elements -->
     <xsd:element name="encryption-client" type="encryption-client-type"/>

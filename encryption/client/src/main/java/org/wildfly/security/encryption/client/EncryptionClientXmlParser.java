@@ -80,7 +80,7 @@ public class EncryptionClientXmlParser {
 
     private enum Version {
 
-        VERSION_1_0("urn:encryption:client:1.0", null);
+        VERSION_1_0_PREVIEW("urn:encryption:client:preview:1.0", null);
         final String namespace;
         final Version parent;
 
