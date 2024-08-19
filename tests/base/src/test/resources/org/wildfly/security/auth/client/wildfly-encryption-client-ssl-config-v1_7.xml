@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ JBoss, Home of Professional Open Source.
+  ~ Copyright 2019 Red Hat, Inc., and individual contributors
+  ~ as indicated by the @author tags.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<configuration>
+    <encryption-client xmlns="urn:encryption:client:preview:1.0">
+        <credential-stores>
+            <credential-store name="my-credential-store" type="PropertiesCredentialStore">
+                <attributes>
+                    <attribute name="location" value="${CREDSTORE_PATH_PROP}"/>
+                </attributes>
+            </credential-store>
+        </credential-stores>
+        <expression-resolvers default-resolver="my-resolver">
+            <expression-resolver name="my-resolver" credential-store-name="my-credential-store" alias="secretkey"/>
+        </expression-resolvers>
+    </encryption-client>
+    <authentication-client xmlns="urn:elytron:client:1.7">
+        <authentication-rules>
+            <rule use-configuration="masked-config">
+                <match-host name="masked"/>
+            </rule>
+            <rule use-configuration="oauth2-config">
+                <match-host name="oauth2"/>
+            </rule>
+        </authentication-rules>
+        <authentication-configurations>
+            <configuration name="masked-config">
+                <set-user-name name="Guest"/>
+                <credentials>
+                    <clear-password password="${enc.exp.prop}"/>
+                </credentials>
+                <sasl-mechanism-selector selector="PLAIN"/>
+            </configuration>
+            <configuration name="oauth2-config">
+                <credentials>
+                    <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token">
+                        <masked-resource-owner-credentials name="jdoe">
+                            <masked-password iteration-count="100" salt="12345678" masked-password="FMkAWSbPn9SCEejW71SvLA=="/>
+                        </masked-resource-owner-credentials>
+                        <masked-client-credentials client-id="elytron-client">
+                            <masked-client-secret iteration-count="100" salt="12345678" masked-password="FMkAWSbPn9SCEejW71SvLA=="/>
+                        </masked-client-credentials>
+                    </oauth2-bearer-token>
+                </credentials>
+            </configuration>
+        </authentication-configurations>
+    </authentication-client>
+</configuration>

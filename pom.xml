@@ -510,6 +510,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-encryption-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-credential-source-deprecated</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1393,8 +1398,9 @@
         <module>credential/source/deprecated</module>
         <module>credential/source/impl</module>
         <module>digest</module>
-        <module>encryption</module>
         <module>dynamic-ssl</module>
+        <module>encryption/base</module>
+        <module>encryption/client</module>
         <module>http/base</module>
         <module>http/basic</module>
         <module>http/bearer</module>
