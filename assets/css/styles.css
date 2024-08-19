@@ -849,6 +849,7 @@ a.mdl-navigation__link.highlight-button, a:not(.mdl-navigation__link) strong.mdl
   font-weight: 600;
   line-height: 32px;
   transition-duration: 0.2s;
+  margin-left: 20px;
   background-color: #004153;
   color: #F0AB00;
 }
@@ -865,6 +866,7 @@ a.mdl-navigation__link--current.highlight-button, a:not(.mdl-navigation__link) s
   font-weight: 600;
   line-height: 32px;
   transition-duration: 0.2s;
+  margin-left: 20px;
   background-color: #F0AB00 !important;
   color: #004153 !important;
 }
