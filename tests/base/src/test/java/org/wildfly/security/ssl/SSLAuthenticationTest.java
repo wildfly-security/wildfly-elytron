@@ -719,7 +719,7 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testOcspRevoked() throws Throwable {
-        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA, 1);
         DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
