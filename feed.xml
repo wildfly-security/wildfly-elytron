@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Wed, 14 Aug 2024 15:25:38 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 19 Aug 2024 13:58:15 +0000</lastBuildDate>
+        
+        <item>
+            <title>Credential Store For Encrypted Expressions</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/credential-store-for-encrypted-expressions/
+            </link>
+            <description>
+                de --- layout: post title: 'Using Credential Stores With Encrypted Expressions on WildFly' date: 2024-08-19 tags: credential-store encryption synopsis: How to set up encrypted expressions and use it to replace sensitive information specified as clear-text on applications deployed to WildFly. author: prarthonapaul --- WildFly allows the use of credential stores...
+            </description>
+            <pubDate>Mon, 19 Aug 2024 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/credential-store-for-encrypted-expressions/
+            </guid>
+        </item>
         
         <item>
             <title>Using Credential Stores to Replace Clear Text Passwords in WildFly</title>
@@ -130,20 +144,6 @@
             <pubDate>Wed, 20 Dec 2023 00:00:00 +0000</pubDate>
             <guid>
                 https://www.youtube.com/watch?v=uoQoCPGyAik
-            </guid>
-        </item>
-        
-        <item>
-            <title>Securing WildFly Apps with Auth0 on OpenShift</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/
-            </link>
-            <description>
-                You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Auth0 as the OIDC provider. If you prefer...
-            </description>
-            <pubDate>Mon, 11 Dec 2023 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/
             </guid>
         </item>
         

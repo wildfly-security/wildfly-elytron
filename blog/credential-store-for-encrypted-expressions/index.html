@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Credential Store For Encrypted Expressions</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Credential Store For Encrypted Expressions | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.3.3" />
+<meta property="og:title" content="Credential Store For Encrypted Expressions" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="de --- layout: post title: &#39;Using Credential Stores With Encrypted Expressions on WildFly&#39; date: 2024-08-19 tags: credential-store encryption synopsis: How to set up encrypted expressions and use it to replace sensitive information specified as clear-text on applications deployed to WildFly. author: prarthonapaul ---" />
+<meta property="og:description" content="de --- layout: post title: &#39;Using Credential Stores With Encrypted Expressions on WildFly&#39; date: 2024-08-19 tags: credential-store encryption synopsis: How to set up encrypted expressions and use it to replace sensitive information specified as clear-text on applications deployed to WildFly. author: prarthonapaul ---" />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/credential-store-for-encrypted-expressions/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/credential-store-for-encrypted-expressions/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2024-08-19T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="twitter:title" content="Credential Store For Encrypted Expressions" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2024-08-19T00:00:00+00:00","datePublished":"2024-08-19T00:00:00+00:00","description":"de --- layout: post title: &#39;Using Credential Stores With Encrypted Expressions on WildFly&#39; date: 2024-08-19 tags: credential-store encryption synopsis: How to set up encrypted expressions and use it to replace sensitive information specified as clear-text on applications deployed to WildFly. author: prarthonapaul ---","headline":"Credential Store For Encrypted Expressions","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/credential-store-for-encrypted-expressions/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/credential-store-for-encrypted-expressions/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link highlight-button Contribute-menuitem" href="/wildfly-elytron/contribute/">Contribute</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link CVE Reporting-menuitem" href="/wildfly-elytron/security/">CVE Reporting</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+            
+                <a class="mdl-navigation__link highlight-sidebar Contribute-menuitem" href="/wildfly-elytron/contribute/">Contribute</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link CVE Reporting-menuitem" href="/wildfly-elytron/security/">CVE Reporting</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Credential Store For Encrypted Expressions</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+        <p class="byline">
+          By <a href=""></a> | August 19, 2024
+          <br>
+          
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/credential-store-for-encrypted-expressions/&title=Credential Store For Encrypted Expressions" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Credential Store For Encrypted Expressions&url=https://wildfly-security.github.io/wildfly-elytron/blog/credential-store-for-encrypted-expressions/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/credential-store-for-encrypted-expressions/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/credential-store-for-encrypted-expressions/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Credential Store For Encrypted Expressions&amp;body=Credential Store For Encrypted Expressions https://wildfly-security.github.io/wildfly-elytron/blog/credential-store-for-encrypted-expressions/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>de ---
+layout: post
+title: 'Using Credential Stores With Encrypted Expressions on WildFly'
+date: 2024-08-19
+tags: credential-store encryption
+synopsis: How to set up encrypted expressions and use it to replace sensitive information specified as clear-text on applications deployed to WildFly.
+author: prarthonapaul
+---</p>
+</div>
+<div class="paragraph">
+<p>WildFly allows the use of credential stores to keep alias for sensitive information, such as, passwords for external services. Credential stores can be used to store different credentials under aliases and use credential-reference to specify them in server configuration. As a result, the sensitive information is no longer visible in clear text.</p>
+</div>
+<!-- toc disabled -->
+<div class="sect1">
+<h2 id="prerequisite"><a class="anchor" href="#prerequisite"></a>Prerequisite</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To follow along with this guide you will need:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>about 10 minutes</p>
+</li>
+<li>
+<p>WildFly with credential-store support</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="about-encrypted-expressions"><a class="anchor" href="#about-encrypted-expressions"></a>About Encrypted Expressions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://wildfly-security.github.io/wildfly-elytron/blog/tag/credential-store-for-passwords/">A previous guide</a> demonstrates how to use credential stores to avoid using clear-text passwords. However, as you may have noticed, the password for the credential store was specified in clear-text. And while having access to the credential-store password does not allow a human to read the contents of a credential-store, it is still not secure. Additionally, there are other types of sensitive information we may use when configuring a server which we would not want to appear in the standalone.xml file.</p>
+</div>
+<div class="paragraph">
+<p>This is where encrypted expressions are useful. Support for encrypted expressions allow us to specify sensitive information, like the password for a credential-store without using plain-text values. Encrypted expressions can also be used for system properties, where a value expression is specified.
+And lastly, credential-store can only be used for credential-reference attributes. But there are other attributes where we can enter sensitive information, but it does not include a credential reference. This guide will explain the these three use cases for encrypted expressions and how to configure them.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuring-encrypted-expressions"><a class="anchor" href="#configuring-encrypted-expressions"></a>Configuring Encrypted Expressions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Let&#8217;s first create a <code>secret-key-credential-store</code> that we can use to store secret keys that will be used to encrypt expressions. Just like a regular credential-store file, this will also create a .cs file inside the directory you specify. However, this will be human readable.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/secret-key-credential-store=newCredStore:add(path=newSecretKeyCred.cs, relative-to=jboss.server.config.dir)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you already had a .cs file that you would like to use, then you can specify the path here and set the <code>create</code> and <code>populate</code> attributes to <code>false</code>. These attributes are <code>true</code> by default as seen here:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">{
+    "outcome" =&gt; "success",
+    "result" =&gt; {
+        "path" =&gt; "newSecretKeyCred.cs",
+        "relative-to" =&gt; "jboss.server.config.dir",
+        "create" =&gt; true,
+        "default-alias" =&gt; "key",
+        "key-size" =&gt; 256,
+        "populate" =&gt; true
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here is an example of the contents of the newSecretKeyCred.cs file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"># Properties Credential Store (Do Not Modify)
+key=RUxZAUsOhzQhCv7KbD9f2SGBgWkmTC9l0lgu28FWM4UfRBY7QQ==</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As you can see there has been a key created for you already using the default alias <code>key</code>. You can create a new key with a new alias of your own using the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/secret-key-credential-store=newCredStore:generate-secret-key(alias=newSecretKey, key-size=128)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now let&#8217;s use these keys for the use cases mentioned above.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="encrypted-expression-for-credential-reference"><a class="anchor" href="#encrypted-expression-for-credential-reference"></a>Encrypted Expression for Credential Reference</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now that we have a generated secret key in a credential store we can activate the resource responsible for handling encrypted expressions. And we can use that to convert a clear-text password phrase into an encrypted expression.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/expression=encryption:add(resolvers=[{name=initial-resolver, credential-store=newCredStore, secret-key=key}])
+/subsystem=elytron/expression=encryption:create-expression(resolver=initial-resolver, clear-text=MyPassword)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>the second command will give you an output like this which we will use to specify the password instead of the clear-text phrase:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">{
+    "outcome" =&gt; "success",
+    "result" =&gt; {"expression" =&gt; \
+        "${ENC::initial-resolver:RUxZAUMQEH6CP3xXyAqYzqsC3oNayyeGH32wsdAZ8VLkkxaEmWc=}"}
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now if we wanted to create another credential-store, then we can use this encrypted expression to create it as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/credential-store=main:add(path=mySecondCredStore.cs, relative-to=jboss.server.config.dir, credential-reference= {clear-text="${ENC::initial-resolver:RUxZAUMQEH6CP3xXyAqYzqsC3oNayyeGH32wsdAZ8VLkkxaEmWc=}"}, create=true)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This does not just apply to credential stores, we can also do this with any other resource that uses credential-reference, such as a <code>key-store</code> or a <code>key-manager</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="encrypted-expression-for-system-property"><a class="anchor" href="#encrypted-expression-for-system-property"></a>Encrypted Expression for System Property</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>System properties can be used to customize the behaviour of the server. These are key-value pairs that can be specified using the cli commands. System properties can be specified as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">    /system-property=foo:add(value=bar)
+    {"outcome" =&gt; "success"}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>However, sometimes the value may be something you do not want to specify in plaintext. If we configure it as shown above, the value can easily be discovered using the read-resource function. So, we need a way to specify it without using clear-text. However, since this does not use credential-reference we cannot use a credential-store directly. Instead, we can use encrypted expressions.</p>
+</div>
+<div class="paragraph">
+<p>We can encrypt the value for a system property using encrypted expressions as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">    /subsystem=elytron/expression=encryption:create-expression(resolver=initial-resolver, clear-text=bar)
+    {
+        "outcome" =&gt; "success",
+        "result" =&gt; {"expression" =&gt; "${ENC::initial-resolver:RUxZAUMQXSp3dFy+4aUcAzpayRZVeHHNTU/4bE3iUW8LGPplXkA=}"}
+    }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can now update our value to this encrypted expression:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">    /system-property=foo:write-attribute(name=value, value=${ENC::initial-resolver:RUxZAUMQXSp3dFy+4aUcAzpayRZVeHHNTU/4bE3iUW8LGPplXkA=})</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If we use the read-resource function on our system property, we can no longer see the value in plaintext.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="encrypted-expressions-to-replace-other-passwords"><a class="anchor" href="#encrypted-expressions-to-replace-other-passwords"></a>Encrypted Expressions to Replace Other Passwords</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The WildFly has some resources which contain sensitive information, such as passwords, without using credential-reference. One such example is the <code>truststore-password</code> attribute under the <code>secure-deployment</code> resource under tne <code>elytron-oidc-client</code> subsystem. These values can also be specified using encrypted expressions. We can encrypt the value as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">    /subsystem=elytron/expression=encryption:create-expression(resolver=initial-resolver, clear-text=secret)
+    {
+        "outcome" =&gt; "success",
+        "result" =&gt; {"expression" =&gt; "${ENC::initial-resolver:RUxZAUMQdZ5/RHt5Oj+Whv
+    K3l+rtR2AnjrtOhBkKW6X58vUtrUw=}"}
+    }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once the encrypted expression has been added, it can easily be used to specify sensitive information, like as seen below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp.war:write-attribute(name=truststore-password,value="${ENC::initial-resolver:RUxZAUMQA6O7VXU/6cdzA4qlQNU1SM34N5kk53l8DjsljXoEYTc=}")
+    {"outcome" =&gt; "success"}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and for the naming subsystem example, we can use the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">    /subsystem=naming/binding=java\:global\/federation\/ldap\/example:write-attribute(name=environment, value={java.naming.security.credentials="${ENC::initial-resolver:RUxZAUMQA6O7VXU6cdzA4qlQNU1SM34N5kk53l8DjsljXoEYTc=}"})</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="disabling-cli-history"><a class="anchor" href="#disabling-cli-history"></a>Disabling Cli History</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As you may notice some of the commands still include sensitive information. And since the jboss cli caches all executed commands, we need to disable history to hide all inputs using the command below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">    history --disable</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Caching can be enabled again using the command below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">    history --enable</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This guide demonstrates three use cases where we can use encrypted expressions to specify sensitive information.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="resources"><a class="anchor" href="#resources"></a>Resources</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.wildfly.org/33/WildFly_Elytron_Security.html#EncryptedExpressions">Encrypted Expressions</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/33/WildFly_Elytron_Security.html#CredentialStore">Credential Stores</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/33/wildscribe/system-property/index.html">System Properties</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
