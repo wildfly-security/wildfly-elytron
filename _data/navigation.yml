@@ -1,5 +1,7 @@
-- name: Contribute
-  link: /contribute/
+- name: Open Source Day
+  link: /OSD/
+- name: Hacktoberfest
+  link: /hacktoberfest/
 - name: Home
   link: /
 - name: Guides
