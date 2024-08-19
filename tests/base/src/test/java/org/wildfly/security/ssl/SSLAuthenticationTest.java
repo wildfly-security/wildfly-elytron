@@ -719,12 +719,14 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testOcspRevoked() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(scarab.createKeyManager())
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
-                        .setTrustStore(createKeyStore("/jks/ca.truststore"))
+                        .setTrustStore(ca.loadKeyStore())
                         .setOcspResponderCert(ocspResponderCertificate)
                         .build())
                 .setNeedClientAuth(true)
@@ -736,12 +738,14 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testOcspUnknown() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(scarab.createKeyManager())
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
-                        .setTrustStore(createKeyStore("/jks/ca.truststore"))
+                        .setTrustStore(ca.loadKeyStore())
                         .setOcspResponderCert(ocspResponderCertificate)
                         .build())
                 .setNeedClientAuth(true)
