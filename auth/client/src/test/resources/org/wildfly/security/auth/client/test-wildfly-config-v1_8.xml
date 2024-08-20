@@ -15,7 +15,7 @@
     limitations under the License.
 -->
 <configuration>
-    <authentication-client xmlns="urn:elytron:client:1.8">
+    <authentication-client xmlns="urn:elytron:client:preview:1.8">
         <authentication-configurations>
             <configuration name="clear-cred">
                 <credentials>

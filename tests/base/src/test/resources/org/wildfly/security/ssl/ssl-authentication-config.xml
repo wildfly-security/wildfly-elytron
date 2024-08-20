@@ -20,7 +20,7 @@
 
 <!-- Configuration for the SSLAuthenticationTest -->
 <configuration>
-    <authentication-client xmlns="urn:elytron:client:1.8">
+    <authentication-client xmlns="urn:elytron:client:preview:1.8">
         <key-stores>
             <key-store name="ca" type="PKCS12" provider="SUN">
                 <file name="target/test-classes/pkcs12/ca.truststore"/>
