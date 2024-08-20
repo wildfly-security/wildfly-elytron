@@ -155,7 +155,7 @@ public final class ElytronXmlParser {
         VERSION_1_5("urn:elytron:client:1.5", VERSION_1_4),
         VERSION_1_6("urn:elytron:client:1.6", VERSION_1_5),
         VERSION_1_7("urn:elytron:client:1.7", VERSION_1_6),
-        VERSION_1_8("urn:elytron:client:1.8", VERSION_1_7);
+        VERSION_1_8_PREVIEW("urn:elytron:client:preview:1.8", VERSION_1_7);
 
         final String namespace;
 
@@ -541,7 +541,7 @@ public final class ElytronXmlParser {
                     case "accept-ocsp-stapling": {
                         if (isSet(foundBits, 10)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 10);
-                        if (!xmlVersion.isAtLeast(Version.VERSION_1_8)) throw reader.unexpectedElement();
+                        if (!xmlVersion.isAtLeast(Version.VERSION_1_8_PREVIEW)) throw reader.unexpectedElement();
                         acceptOcspStapling = parseOcspStaplingType(reader, trustManagerBuilder, xmlVersion, keyStoresMap);
                         break;
                     }
@@ -606,14 +606,14 @@ public final class ElytronXmlParser {
             switch (reader.getAttributeLocalName(i)) {
                 case "accept-ocsp": {
                     if (acceptOcspStapling) throw reader.unexpectedAttribute(i);
-                    if (!xmlVersion.isAtLeast(Version.VERSION_1_8)) throw reader.unexpectedAttribute(i);
+                    if (!xmlVersion.isAtLeast(Version.VERSION_1_8_PREVIEW)) throw reader.unexpectedAttribute(i);
                     acceptOcspStapling = reader.getBooleanAttributeValueResolved(i);
                     builder.setOcspStapling(acceptOcspStapling);
                     break;
                 }
                 case "soft-fail": {
                     if (softFail) throw reader.unexpectedAttribute(i);
-                    if (!xmlVersion.isAtLeast(Version.VERSION_1_8)) throw reader.unexpectedAttribute(i);
+                    if (!xmlVersion.isAtLeast(Version.VERSION_1_8_PREVIEW)) throw reader.unexpectedAttribute(i);
                     softFail = reader.getBooleanAttributeValueResolved(i);
                     builder.setSoftFail(softFail);
                     break;
