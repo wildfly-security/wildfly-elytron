@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Using Credential Stores for WildFly Client</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Using Credential Stores for WildFly Client | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.3.3" />
+<meta property="og:title" content="Using Credential Stores for WildFly Client" />
+<meta name="author" content="Prarthona Paul" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="WildFly allows the use of credential stores to keep aliases for sensitive information, such as, passwords for external services. Credential stores can be used to store different credentials under aliases and we can then use credential-references to specify them in server configuration. As a result, the credential is no longer visible in clear text. However, there are additional uses for credential store as well. This guides explains how to create credential stores using the elytron-tool and use it for an application deployed to WildFly." />
+<meta property="og:description" content="WildFly allows the use of credential stores to keep aliases for sensitive information, such as, passwords for external services. Credential stores can be used to store different credentials under aliases and we can then use credential-references to specify them in server configuration. As a result, the credential is no longer visible in clear text. However, there are additional uses for credential store as well. This guides explains how to create credential stores using the elytron-tool and use it for an application deployed to WildFly." />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/credential-stores-on-client-side/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/credential-stores-on-client-side/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2024-08-21T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="twitter:title" content="Using Credential Stores for WildFly Client" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Prarthona Paul"},"dateModified":"2024-08-21T00:00:00+00:00","datePublished":"2024-08-21T00:00:00+00:00","description":"WildFly allows the use of credential stores to keep aliases for sensitive information, such as, passwords for external services. Credential stores can be used to store different credentials under aliases and we can then use credential-references to specify them in server configuration. As a result, the credential is no longer visible in clear text. However, there are additional uses for credential store as well. This guides explains how to create credential stores using the elytron-tool and use it for an application deployed to WildFly.","headline":"Using Credential Stores for WildFly Client","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/credential-stores-on-client-side/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/credential-stores-on-client-side/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link highlight-button Open Source Day-menuitem" href="/wildfly-elytron/OSD/">Open Source Day</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link highlight-button Hacktoberfest-menuitem" href="/wildfly-elytron/hacktoberfest/">Hacktoberfest</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link CVE Reporting-menuitem" href="/wildfly-elytron/security/">CVE Reporting</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link highlight-sidebar Open Source Day-menuitem" href="/wildfly-elytron/OSD/">Open Source Day</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link highlight-sidebar Hacktoberfest-menuitem" href="/wildfly-elytron/hacktoberfest/">Hacktoberfest</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link CVE Reporting-menuitem" href="/wildfly-elytron/security/">CVE Reporting</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Using Credential Stores for WildFly Client</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/6ed81e314d6074bbf734abe812f33b05">
+        
+        <p class="byline">
+          By <a href="https://github.com/PrarthonaPaul">Prarthona Paul</a> | August 21, 2024
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/credential-store"> #credential-store</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/elytron-tool"> #elytron-tool</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/wildfly-config"> #wildfly-config</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/ejb"> #ejb</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/credential-stores-on-client-side/&title=Using Credential Stores for WildFly Client" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Using Credential Stores for WildFly Client&url=https://wildfly-security.github.io/wildfly-elytron/blog/credential-stores-on-client-side/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/credential-stores-on-client-side/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/credential-stores-on-client-side/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Using Credential Stores for WildFly Client&amp;body=Using Credential Stores for WildFly Client https://wildfly-security.github.io/wildfly-elytron/blog/credential-stores-on-client-side/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>WildFly allows the use of credential stores to keep aliases for sensitive information, such as, passwords for external services. Credential stores can be used to store different credentials under aliases and we can then use credential-references to specify them in server configuration. As a result, the credential is no longer visible in clear text. However, there are additional uses for credential store as well. This guides explains how to create credential stores using the elytron-tool and use it for an application deployed to WildFly.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#prerequisite">Prerequisite</a></li>
+<li><a href="#access-the-example-application">Access the Example Application</a></li>
+<li><a href="#about-wildfly-client-configuration">About WildFly Client Configuration</a></li>
+<li><a href="#configure-the-server">Configure the Server</a>
+<ul class="sectlevel2">
+<li><a href="#configure-the-filesystem-realm">Configure the FileSystem Realm</a></li>
+<li><a href="#configure-the-security-domain">Configure the Security Domain</a></li>
+<li><a href="#create-an-authentication-factory">Create an Authentication Factory</a></li>
+</ul>
+</li>
+<li><a href="#configure-the-wildfly-client">Configure the WildFly Client</a>
+<ul class="sectlevel2">
+<li><a href="#create-the-credential-store">Create the Credential Store</a></li>
+</ul>
+</li>
+<li><a href="#configure-wildfly-config-xml">Configure wildfly-config.xml</a></li>
+<li><a href="#build-and-deploy-the-application">Build and Deploy the application</a></li>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#resources">Resources</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="prerequisite"><a class="anchor" href="#prerequisite"></a>Prerequisite</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To follow along with this guide you will need:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>about 10 minutes</p>
+</li>
+<li>
+<p>WildFly</p>
+</li>
+<li>
+<p>Elytron-tool (provided with WildFly)</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="access-the-example-application"><a class="anchor" href="#access-the-example-application"></a>Access the Example Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For this guide we will be using the <code>ejb-security</code> example application. Let us first clone the project and navigate to it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd ejb-security</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="about-wildfly-client-configuration"><a class="anchor" href="#about-wildfly-client-configuration"></a>About WildFly Client Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>EJBs, also known as Enterprise JavaBeans are a collection of specifications that are used for building java applications and offer a set of APIs for developing and running secured applications. When invoking EJBs using the WildFly server, we need to configure the WildFly client to specify relevant information about authentication to the secured the application. This can be done using a file named wildfly-config.xml located inside the <code>src/main/resources</code> folder of the application.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configure-the-server"><a class="anchor" href="#configure-the-server"></a>Configure the Server</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For this guide, we will be securing an EJB using a filesystem realm and invoking them from a remote client using a credential store.  This guide will dive deeper into the credential-store configuration of it. <a href="https://wildfly-security.github.io/wildfly-elytron/blog/advanced-ejb-security/">This blog post</a> contains more details about the steps we are taking for configuring the server and what they do.</p>
+</div>
+<div class="sect2">
+<h3 id="configure-the-filesystem-realm"><a class="anchor" href="#configure-the-filesystem-realm"></a>Configure the FileSystem Realm</h3>
+<div class="paragraph">
+<p>First run the server and in another terminal, connect to the management cli:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">    $ WILDFLY_HOME/bin/jboss-cli.sh --connect</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now we can create the filesystem realm and create an identity called quickStartUser, which we will be using to access the application:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"># Create a filesystem realm called fs-realm-users in the server configuration directory
+/subsystem=elytron/filesystem-realm=fsRealm:add(path=fs-realm-users, relative-to=jboss.server.config.dir)
+
+# Add an identity called quickStartUser, which we will be using to access the application
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity(identity=quickstartUser)
+
+# Set a password for the identity
+/subsystem=elytron/filesystem-realm=fsRealm:set-password(clear={password=quickstartPwd1!}, identity=quickstartUser)
+
+# Assign the appropriate roles needed to access the application
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity-attribute(identity=quickstartUser, name=Roles, value=[guest])
+
+# Add a role decoder which can convert atteibutes from the identity into roles
+/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that the password can also be specified using an encrypted expression instead of clear text. You can refer to <a href="https://wildfly-security.github.io/wildfly-elytron/blog/encrypted-expression-on-wildfly/">this guide</a> for more details about using credential stores and encrypted expressions.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="configure-the-security-domain"><a class="anchor" href="#configure-the-security-domain"></a>Configure the Security Domain</h3>
+<div class="paragraph">
+<p>Let&#8217;s create a security domain and an application security domain to be able to invoke our EJB:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/security-domain=fsSD:add(realms=[{realm=fsRealm, role-decoder=from-roles-attribute}], default-realm=fsRealm,permission-mapper=default-permission-mapper)
+/subsystem=ejb3/application-security-domain=other:add(security-domain=fsSD)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that creating an additional security domain (fsSD in this case) is not necessary. We could alternatively take the default ApplicationDomain and add the FileSystem realm, role-decoder and permission-mapper to it.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="create-an-authentication-factory"><a class="anchor" href="#create-an-authentication-factory"></a>Create an Authentication Factory</h3>
+<div class="paragraph">
+<p>We now need to create a sasl-authentication-factory and connect our security domain to it and specify a mechanism for the authentication:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/sasl-authentication-factory=application-sasl-authentication:write-attribute(name=security-domain, value=fsSD)
+/subsystem=elytron/sasl-authentication-factory=application-sasl-authentication:list-add(name=mechanism-configurations, value={mechanism-name=SCRAM-SHA-512})
+/subsystem=remoting/http-connector=http-remoting-connector:write-attribute(name=sasl-authentication-factory,value=application-sasl-authentication).</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configure-the-wildfly-client"><a class="anchor" href="#configure-the-wildfly-client"></a>Configure the WildFly Client</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now that the server is configured, we can move onto configuring our WildFly client. The first step is to create a credential-store so we can add the quickStartUser identity and its password to it. Using a credential-store helps us avoid specifying the credentials for our identity using plaintext. Previous guides demonstrated how to create a credential store using the elytron subsystem. However, we can also do it using the elytron-tool, which the WildFly server comes with. The elytron tool can be accessed using the elytron-tool.sh(.bat for windows) script and offers many functionalities that the elytron subsystem has.</p>
+</div>
+<div class="sect2">
+<h3 id="create-the-credential-store"><a class="anchor" href="#create-the-credential-store"></a>Create the Credential Store</h3>
+<div class="paragraph">
+<p>We can use the elytron-tool to securely create a credential-store as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"> $ WILDFLY_HOME/bin/elytron-tool.sh credential-store --create --location "/PATH/TO/mycredstore.cs" --password StorePassword</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now let&#8217;s store the login information for our <code>quickStartUser</code> identity into the credential-store:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"> $ WILDFLY_HOME/bin/elytron-tool.sh credential-store --location "/PATH/TO/mycredstore.cs" --password StorePassword --add quickstartUser --secret quickstartPwd1!</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Our WildFly client will be able to access this credential-store to access the login information for the identity. Here the quickstartUser is an alias that the password is being stored under and it does not have to match the identity name we specified earlier.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configure-wildfly-config-xml"><a class="anchor" href="#configure-wildfly-config-xml"></a>Configure wildfly-config.xml</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now that we have our credential-store set up, we need to let our WildFly Client know where to find it and how to access it. We will be making use of a file called <code>wildfly-config.xml</code> to communicate that. This file can be found inside the <code>src/main/resources</code> folder.</p>
+</div>
+<div class="paragraph">
+<p>We can specify the location and the type and password for the credential-store as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">&lt;credential-stores&gt;
+    &lt;credential-store name="mycredstore"&gt;
+        &lt;attributes&gt;
+            &lt;attribute name="keyStoreType" value="JCEKS"/&gt;
+            &lt;attribute name="location" value="PATH/TO/mycredstore.cs"&gt;&lt;/attribute&gt;
+        &lt;/attributes&gt;
+            &lt;protection-parameter-credentials&gt;
+                &lt;clear-password password="StorePassword"/&gt;
+        &lt;/protection-parameter-credentials&gt;
+    &lt;/credential-store&gt;
+&lt;/credential-stores&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This should be added into the xml file already, but you may need to update the paths with the actual paths for the credential store. Note you would need to replace "PATH/TO/mycredstore.cs" with the actual path to your credential store.</p>
+</div>
+<div class="paragraph">
+<p>Now we need to specify which identity to extract from our credential-store. A <code>credential-store</code> can hold multiple credentials that are used for various purposes. We can specify which one to use by identifying it with the unique alias we declared earlier. We will also be specifying the authentication mechanism here to match what we specified for the server:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;authentication-configurations&gt;
+    &lt;configuration name="default-config"&gt;
+        &lt;set-user-name name="quickstartUser"/&gt;
+        &lt;credentials&gt;
+            &lt;credential-store-reference store="mycredstore" alias="quickstartUser"/&gt;
+        &lt;/credentials&gt;
+        &lt;sasl-mechanism-selector selector="SCRAM-SHA-512"/&gt;
+        &lt;providers&gt;
+            &lt;use-service-loader /&gt;
+        &lt;/providers&gt;
+    &lt;/configuration&gt;
+&lt;/authentication-configurations&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="build-and-deploy-the-application"><a class="anchor" href="#build-and-deploy-the-application"></a>Build and Deploy the application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now we can use maven to build and deploy the application using the commands below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">    $ mvn clean install wildfly:deploy</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Unlike other applications, this will not be a web application, rather something we can run on the terminal. If you examine the server logs, you will notice that instead of a <code>.war</code> deployment, we will be producing a <code>.jar</code> deployment file. This will not be a web application, so we won&#8217;t use a browser to access it, but instead we will use the terminal as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">    $ mvn exec:exec</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can see the following output on your terminal:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+Successfully called secured bean, caller principal quickstartUser
+
+Principal has admin permission: false
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As you can see, it mentions that the secured bean has been accessed by our identity, quickstartUser and it does not have admin permissions, since we only assigned the <code>guest</code> role to it.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This guide demonstrates how a <code>credential-store</code> can be used to specify identity credentials when configuring a WildFly client. This guide also demonstrates how the <code>elytron-tool</code> can be used to generate the credential store and add aliases to it.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="resources"><a class="anchor" href="#resources"></a>Resources</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.wildfly.org/33/WildFly_Elytron_Security.html#filesystem-security-realm">Filesystem</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/33/WildFly_Elytron_Security.html#CredentialStore">Credential-Stores</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/33/WildFly_Elytron_Security.html#credential-store-creation">Creating credential-stores using the Elytron-tool</a></p>
+</li>
+<li>
+<p>To learn more about the functions of elytron-tool, you can use the <code>./bin/elytron-tool.sh -h</code> command from <code>WILDFLY_HOME</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Mon, 19 Aug 2024 21:12:34 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 21 Aug 2024 20:10:48 +0000</lastBuildDate>
+        
+        <item>
+            <title>Using Credential Stores for WildFly Client</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/credential-stores-on-client-side/
+            </link>
+            <description>
+                WildFly allows the use of credential stores to keep aliases for sensitive information, such as, passwords for external services. Credential stores can be used to store different credentials under aliases and we can then use credential-references to specify them in server configuration. As a result, the credential is no longer...
+            </description>
+            <pubDate>Wed, 21 Aug 2024 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/credential-stores-on-client-side/
+            </guid>
+        </item>
         
         <item>
             <title>Using Credential Stores With Encrypted Expressions on WildFly</title>
@@ -130,20 +144,6 @@
             <pubDate>Wed, 21 Feb 2024 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Vlog: Securing WildFly Apps with Auth0 on OpenShift</title>
-            <link>
-                https://www.youtube.com/watch?v=uoQoCPGyAik
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Wed, 20 Dec 2023 00:00:00 +0000</pubDate>
-            <guid>
-                https://www.youtube.com/watch?v=uoQoCPGyAik
             </guid>
         </item>
         
