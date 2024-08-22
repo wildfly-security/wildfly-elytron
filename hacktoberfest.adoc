@@ -24,6 +24,12 @@ https://hacktoberfest.com/[Hacktoberfest] takes places annually during the month
 
 To get started, follow the steps below:
 
+. *Create a Jira Account.* Visit https://issues.redhat.com/ and click on *Log In* at the top right corner of the page.
+* At the bottom of the *Log in to your Red Hat account* section, click on *Register for a Red Hat account*, which will lead you to a page to create an account. 
+* Fill in all the fields accordingly and click on *Create my account*. 
+* You will be asked to verify your email using a link sent to the email you used to register.
+* Once you have successfully created and verified your account, you can go back to https://issues.redhat.com/ to log into your Jira account. You will log into this account to assign yourself issues to work on in step 4.
+
 . *Set up your development environment.* We use Java 11, Maven, and Git. Follow our setup guide for your operating system:
 +
 ++++
