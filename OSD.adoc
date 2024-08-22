@@ -13,6 +13,12 @@ Welcome, Open Source Day participants! We are glad you have joined us!
 
 To get started, follow the steps below:
 
+. *Create a Jira Account.* Visit https://issues.redhat.com/ and click on *Log In* at the top right corner of the page.
+* At the botton of the *Log in to your Red Hat account* section, click on *Register for a Red Hat account*, which will lead you to a page to create an account. 
+* Fill in all the fields accordingly and click on *Create my account*. 
+* You will be asked to verify your email using a link sent to the email you used to register.
+* Once you have successfully created and verified your account, you can go back to https://issues.redhat.com/ to log into your Jira account. You will log into this account to assign yourself issues to work on in step 4.
+
 . *Set up your development environment.* We use Java 11, Maven, and Git. Follow the appropriate guide for your operating system to set up your developer environment for WildFly Elytron:
 +
 ++++
@@ -20,6 +26,7 @@ To get started, follow the steps below:
 ++++
 +
 . *Pick your https://en.wikipedia.org/wiki/Comparison_of_integrated_development_environments#Java[IDE].* We recommend https://www.jetbrains.com/idea/[IDEA] or https://www.eclipse.org/ide/[Eclipse], but feel free to use whatever you'd like.
+
 . *Start contributing!* Whether you're new to security, new to Java, or new to tools like Git or Maven, we have a bunch of issues that are perfect for getting started on our project, no prior experience is needed. Check out our list of https://issues.redhat.com/issues/?filter=12383825[good first issues]. Once you have selected an issue you'd like to work on, make sure it's not already assigned to someone else. To assign an issue to yourself, simply click on "Start Progress". This will automatically assign the issue to you. +
 Our https://github.com/wildfly-security/wildfly-elytron/blob/2.x/CONTRIBUTING.md#contributing-guidelines[contribution guide] has all the information you need on how to format your PRs.
 
