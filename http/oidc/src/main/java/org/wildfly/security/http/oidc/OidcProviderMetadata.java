@@ -329,8 +329,8 @@ public class OidcProviderMetadata {
         this.claimTypesSupported = claimTypesSupported;
     }
 
-    public Boolean getClaimsParameterSupported() {
-        return claimsParameterSupported;
+    public boolean getClaimsParameterSupported() {
+        return claimsParameterSupported == null ? false : claimsParameterSupported;
     }
 
     public void setClaimsParameterSupported(Boolean claimsParameterSupported) {
@@ -345,16 +345,16 @@ public class OidcProviderMetadata {
         this.scopesSupported = scopesSupported;
     }
 
-    public Boolean getRequestParameterSupported() {
-        return requestParameterSupported;
+    public boolean getRequestParameterSupported() {
+        return requestParameterSupported == null ? false : requestParameterSupported;
     }
 
     public void setRequestParameterSupported(Boolean requestParameterSupported) {
         this.requestParameterSupported = requestParameterSupported;
     }
 
-    public Boolean getRequestUriParameterSupported() {
-        return requestUriParameterSupported;
+    public boolean getRequestUriParameterSupported() {
+        return requestUriParameterSupported == null ? false : requestUriParameterSupported;
     }
 
     public void setRequestUriParameterSupported(Boolean requestUriParameterSupported) {
@@ -393,12 +393,12 @@ public class OidcProviderMetadata {
         this.revocationEndpointAuthSigningAlgValuesSupported = revocationEndpointAuthSigningAlgValuesSupported;
     }
 
-    public Boolean getBackchannelLogoutSupported() {
-        return backchannelLogoutSupported;
+    public boolean getBackchannelLogoutSupported() {
+        return backchannelLogoutSupported == null ? false : backchannelLogoutSupported;
     }
 
-    public Boolean getBackchannelLogoutSessionSupported() {
-        return backchannelLogoutSessionSupported;
+    public boolean getBackchannelLogoutSessionSupported() {
+        return backchannelLogoutSessionSupported == null ? false : backchannelLogoutSessionSupported;
     }
 
     public void setBackchannelLogoutSessionSupported(Boolean backchannelLogoutSessionSupported) {
@@ -416,8 +416,8 @@ public class OidcProviderMetadata {
 
     // KEYCLOAK-6771 Certificate Bound Token
     // https://tools.ietf.org/html/draft-ietf-oauth-mtls-08#section-6.2
-    public Boolean getTlsClientCertificateBoundAccessTokens() {
-        return tlsClientCertificateBoundAccessTokens;
+    public boolean getTlsClientCertificateBoundAccessTokens() {
+        return tlsClientCertificateBoundAccessTokens == null ? false : tlsClientCertificateBoundAccessTokens;
     }
 
     public List<String> getRequestObjectEncryptionAlgValuesSupported() {
