@@ -95,7 +95,7 @@ git config --global user.name "<Your Name>"
 [.responsive-img_capped_50-width.text-center]
 image::setup-elytron_fork-repo.png['Screenshot of buttons at top of wildfly-elytron repo, including "Fork" button']
 
-. Now go to your fork of the repository, the URL will be *https://github.com//wildfly-elytron*. Replace `<USERNAME>` with your GitHub username.
+. Now go to your fork of the repository, the URL will be *https://github.com/<USERNAME>/wildfly-elytron*. Replace `<USERNAME>` with your GitHub username.
 . At this point, you can follow the GitHub guide for https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account?platform=linux[adding a new SSH key to your GitHub account] to set up an SSH key so you can clone your repository.
 . At the top right, you will see there is a green "Code" button. Click on that and choose the "SSH" tab. Click on the button next to the url to copy it.
 +
