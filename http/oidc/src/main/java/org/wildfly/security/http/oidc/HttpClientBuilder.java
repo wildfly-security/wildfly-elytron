@@ -275,6 +275,15 @@ public class HttpClientBuilder {
         if (oidcClientConfig.getConnectionPoolSize() > 0) {
             size = oidcClientConfig.getConnectionPoolSize();
         }
+        if (oidcClientConfig.getConnectionTimeoutMillis() > 0) {
+            setEstablishConnectionTimeout(oidcClientConfig.getConnectionTimeoutMillis(), establishConnectionTimeoutUnits);
+        }
+        if (oidcClientConfig.getConnectionTtlMillis() > 0) {
+            setConnectionTimeToLive(oidcClientConfig.getConnectionTtlMillis(), connectionTimeToLiveUnit);
+        }
+        if (oidcClientConfig.getSocketTimeoutMillis() > 0) {
+            setSocketTimeout(oidcClientConfig.getSocketTimeoutMillis(), socketTimeoutUnits);
+        }
         HttpClientBuilder.HostnameVerificationPolicy policy = HttpClientBuilder.HostnameVerificationPolicy.WILDCARD;
         if (oidcClientConfig.isAllowAnyHostname()) {
             policy = HttpClientBuilder.HostnameVerificationPolicy.ANY;

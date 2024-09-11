@@ -173,6 +173,11 @@ public class OidcTest extends OidcBaseTest {
     }
 
     @Test
+    public void testTimeoutConfigurationOptions() throws Exception {
+        OidcClientConfigurationBuilder.build(getOidcConfigurationInputStreamWithTimeoutOptions(5000, 5000, 5000));
+    }
+
+    @Test
     public void testSucessfulAuthenticationWithAuthServerUrl() throws Exception {
         performAuthentication(getOidcConfigurationInputStream(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
                 true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
@@ -671,6 +676,23 @@ public class OidcTest extends OidcBaseTest {
                 "    \"ssl-required\" : \"EXTERNAL\",\n" +
                 "    \"credentials\" : {\n" +
                 "        \"secret\" : \"" + clientSecret + "\"\n" +
+                "    }\n" +
+                "}";
+        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private InputStream getOidcConfigurationInputStreamWithTimeoutOptions(int connectionTimeoutMillis, int connectionTtlMillis, int socketTimeoutMillis) {
+        String oidcConfig = "{\n" +
+                "    \"realm\" : \"" + TEST_REALM + "\",\n" +
+                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"public-client\" : \"false\",\n" +
+                "    \"connection-timeout-millis\" : \"" + connectionTimeoutMillis + "\",\n" +
+                "    \"connection-ttl-millis\" : \"" + connectionTtlMillis + "\",\n" +
+                "    \"socket-timeout-millis\" : \"" + socketTimeoutMillis + "\",\n" +
+                "    \"auth-server-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "\",\n" +
+                "    \"ssl-required\" : \"EXTERNAL\",\n" +
+                "    \"credentials\" : {\n" +
+                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
