@@ -1,0 +1,340 @@
+---
+layout: post
+title: 'Enabling Server Side OCSP Stapling During TLS'
+date: 2024-07-03
+tags: oidc Keycloak JWT encryption authentication
+synopsis: How to perform server side certificate revocation checking using OCSP Stapling when sending a TLS handshake request.
+author: prarthonapaul
+---
+
+:toc: macro
+:toc-title:
+
+During a TLS handshake the server presents a certificate to the client to identify itself, which the client can check to authenticate the server and continue the handshake. For X509 certificates that are issued by a certificate authority, the certificate can sometimes be revoked before its expiry date for various reasons. As a result, revocation status checking should be enabled, which is dictated by Online Certificate Status Protocol, or OCSP. 
+
+OCSP revocation checking can be enabled from the client or the server side. Client driven OCSP, which was already available for WildFly, delegates the responsibility of checking the revocation status on the party receiving the certificate. The client contacts the OCSP responser to check the certificate's revocation status. 
+
+The latest version of WildFly adds support for OCSP stapling, which enables the server to make the request to OCSP responder and "staple" the response to the handshake request. The server can also cache the responses and supply them to multiple clients, significantly reducing the load on the OCSP responder. 
+
+toc::[]
+
+== Prerequisites
+To follow along this guide you will need: 
+* About 15 minutes 
+* Keytool 
+* WildFly with OCSP stapling support 
+* OpenSSL
+
+== Access the Example Application 
+For this guide we will be using the `ocsp-stapling` example application from the `elytron-examples` repo. 
+
+```
+git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd ocsp-stapling
+```
+
+== About OCSP Stapling 
+WildFly enables server side OCSP Stapling using Java System properties. These properties are set when creating the SSL Context for the server and are system wide. As a result, if there are multiple server-ssl-contexts configured and even if only one of them uses OCSP stapling, this behaviour will apply to all SSL-Contexts. This can be restored by resetting the system properties set to enable ocsp-stapling. Please refer to the OCSP-Stapling documentation for more information about the system properties. 
+
+Note that the client should be configured to make use of the OCSP response stapled to the certificate by the server. WildFly Clients can be configured to accept OCSP stapled responses using the client-ssl-context resource or the WildFly client xml configuration. This guides demonstrates how to configure the WildFly server to send OCSP responses stapled to the TLS request as well as how to configure a WildFly client to accept OCSP Stapling using the XML config. 
+
+Note that not all clients may be setup to accept OCSP stapling as some browsers do not support it. In these cases, the client would fall back to client drives OCSP or other methods of revocation checking.
+
+== Generating Client Certificate 
+For demonstration purposes, we will be using a self signed certificate and add it to the server's trust store. However, this should not be done in a production setting. We will be using Keytool to do this using the following commands: 
+```
+keytool -genkeypair -alias client -keyalg RSA -keysize 2048 -validity 365 -keystore tlsClient.keystore -dname "CN=client" -storepass clientKeySecret
+```
+Note that we have also set the common name on the key to client (using the option -dname "CN=client"). Once the key pair is created, we export the certificate to a file:
+```
+$ keytool -exportcert -keystore tlsClient.keystore -alias client -storepass clientKeySecret -file tlsClient.cer
+```
+
+== Generating Server's Certificate
+Since we are stapling the OCSP response for the server's certificate, we must get it issued from a certificate authority so that the revocation status can queried. We can still use Keytool to do this. 
+
+. We will be using openSSL to set up a mock CA and OCSP responder. To set it up, we should create a directory named *demoCA* with another directory named *newCerts* inside it. We will also be creating 3 files named *index.txt*, *serial*, and *rand_serial* which will be used by OpenSSL: 
+```
+    mkdir -p demoCA/newcerts
+    touch demoCA/index.txt
+    echo '1000' > demoCA/serial
+    echo '1000' > demoCA/rand_serial
+```
+
+. Next, we need to generate a key pair for the RootCA, and the intermediateCA: 
+```
+    $ keytool -genkey -keyalg RSA -alias rootCA -keystore rootCA.keystore -keysize 2048 -storepass password -dname "CN=Elytron CA, ST=Elytron, C=UK, EMAILADDRESS=elytron@wildfly.org, O=Root Certificate Authority"
+
+    $ keytool -genkey -keyalg RSA -alias intermediateCA -keystore intermediateCA.keystore -keysize 2048 -storepass password -dname "CN=Elytron Intermediate CA, O=Intermediate Certificate Authority, C=UK ST=Elytron EMAILADDRESS=elytron@wildfly.org"
+```
+
+. Next, we will extract the certificates for the root and the intermediate CA's using OpenSSL:
+```
+    $ openssl req -new -x509 -days 3650 -key rootCA.keystore -out rootCA.crt -config openssl.conf -passin pass:password
+
+    $ openssl req -new -x509 -days 3650 -key intermediateCA.keystore -out intermediateCA.crt -config openssl.conf -passin pass:password
+```
+
+. Next we will create a key pair for the server and export its certificate that is currently self signed:
+```
+    $ keytool -genkey -keyalg RSA -alias server -keystore server.keystore -keysize 2048 -storepass password -dname "CN=wildfly, ST=ON, C=CA, O=elytron"
+    
+    $ openssl req -new -x509 -days 3650 -key server.keystore -out server.crt -config server_openssl.conf -passin pass:password
+```
+
+. For this example, we will have an intermediate CA whose certificate will be signed by the rootCA and it will be used to sign the issue other certificates. So, we will generate a certificate request (CSR) for the intermediareCA and use the rootCA to sign it:
+```
+    $ openssl x509 -x509toreq -in intermediateCA.crt -out intermediateCA.csr -signkey intermediateCA.keystore -passin pass:password
+
+    $ openssl ca -batch -startdate 150813080000Z -enddate 250813090000Z -keyfile rootCA.keystore -cert rootCA.crt -policy elytron_policy -config openssl.conf -notext -out intermediateCA.crt -infiles intermediateCA.csr 
+```
+You will be prompted to enter the PKCS password, which is the password for the rootCA keystore.
+
+. Next, we will create a certificate signing request for the server so that the certificate can be signed using the intermediate CA. We will be using the extensions specified under the *usr_cert* section inside the OpenSSL configuration file to add the Authority Information Access (AIA) extension which will contain the OCSP URI.
+```
+    $ keytool -certreq -alias server -keystore server.keystore -file server.csr -storepass password
+
+    $ openssl ca -batch -startdate 150813080000Z -enddate 250813090000Z -keyfile intermediateCA.keystore -cert intermediateCA.crt -policy elytron_policy -extensions usr_cert -config openssl.conf -notext -out server.crt -infiles server.csr
+```
+
+. Now we will create a keystore for the OCSP responder and generate a signing request for the root CA to sign it. We will be using the extensions specified in the *v3_OCSP* section of the OpenSSL configuration file to specify that this certificate will be used for OCSP signing.
+```
+    $ openssl req -new -nodes -out ocspSigning.csr -keyout ocspSigning.keystore
+    $ openssl ca -keyfile rootCA.keystore -cert rootCA.crt -in ocspSigning.csr -out ocspSigning.crt -config openssl.conf -extensions v3_OCSP
+```
+
+. Now we can start the OCSP instance using OpenSSL's OCSP command. Since we have a root and an itermediate CA, we will be creating a certificate chain for them:
+```
+    $ cat intermediateCA.crt rootCA.crt > ca_chain.crt
+
+    $ openssl ocsp -index demoCA/index.txt -port 10000 -rsigner ocspSigning.crt -rkey ocspSigning.key -CA ca_chain.crt -text -out log.txt &
+
+```
+
+. Now we can import the signed server certificate along with the CA certificates into the server's keystore to create a certificate chain:
+```
+    $ keytool -importcert -alias rootCA -file rootCA.crt -keystore server.keystore -storepass password
+    $ keytool -importcert -alias intermediateCA -file intermediateCA.crt -keystore server.keystore -storepass password
+    $ keytool -importcert -alias server -file server.crt -keystore server.keystore -storepass password
+```
+
+== Creating the Client's Trust Store
+Since our certificates are self signed, we will need to add the CA's certs to the client's truststore so that the client can authenticate the server. In order to create the truststore, we need to add both the root and the intermediate CA's cert to the truststore: 
+```
+    $ keytool -importcert -alias rootCA -file rootCA.crt -keystore ca.truststore -storepass password
+    $ keytool -importcert -alias intermediateCA -file intermediateCA.crt -keystore ca.truststore -storepass password
+```
+
+Use the *mv* command to move the *server.keystore* file to the *WILDFLY_HOME/stadalone/configuration* directory.
+
+== Setting up OCSP Responder Certificate
+In order for the client to accept the server's OCSP stapled response, the client's truststore should contain the OCSP responder's certificate. This can be done by adding the certificate directly to the certificate's truststore, or we can create a seperate keystore and adding the certificate to the revocation checker. For this example, we will create a separate truststore: 
+```
+    $ keytool -importcert -alias ocspResoponder -file ocspSigning.crt -keystore ocsp.truststore   -storepass password
+```
+
+This will be used in the client's OCSP set up later.
+
+== Configuring the Server's Key Manager
+Now we will configure the server to set up its ssl context. First we need to start the server at the preview stability level to enable the OCSP-stapling functionalities: 
+```
+    $ WILDFLY_HOME/bin/standalone.sh --stability=preview
+```
+And then in another terminal connect it to the management CLI: 
+```
+    $ WILDFLY_HOME/bin/jboss-cli.sh --connect
+```
+
+We will use the Elytron subsystem to create a keystore to hold the server’s key pair. We will be loading the keys from the keystore file we created in the previous step: 
+```
+    /subsystem=elytron/key-store=tlsKeyStore:add(path=server.keystore,relative-to=jboss.server.config.dir,credential-reference={clear-text=password})
+    /subsystem=elytron/key-store=tlsKeyStore:load()
+```
+
+Next, we create a key-manager which will be used to access the keystore during the TLS handshake: 
+```
+    /subsystem=elytron/key-manager=tlsKM:add(key-store=tlsKeyStore,credential-reference={clear-text=password})
+```
+
+== Setting Up the Server's Trust Store
+We will also need to add the client's certificate to the server's truststore in order to authenticate the client. We can use the elytron subsystem to do this as well. 
+```
+    /subsystem=elytron/key-store=tlsTrustStore:add(path=tlsServer.truststore,relative-to=jboss.server.config.dir,credential-reference={clear-text=serverTrustSecret})
+
+    /subsystem=elytron/key-store=tlsTrustStore:import-certificate(alias=client,path=/PATH/TO/tlsClient.cer,credential-reference={clear-text=serverTrustSecret},trust-cacerts=true,validate=false)
+
+    /subsystem=elytron/key-store=tlsTrustStore:store()
+```
+
+We will also configure a trust manager which will supply the truststore during the TLS handshake: 
+```
+    /subsystem=elytron/trust-manager=tlsTM:add(key-store=tlsTrustStore)
+```
+
+== Configuring the WildFly Client
+We will be using the *wildfly-config.xml* file located inside `src/main/resources` to configure our client. Simialrly to the server, the client also needs a trust and key stores which will supply the appropriate certs that will be used during the TLS handshake. Note that in all locations "PATH/TO/" needs to be replaced with the actual paths to these keystores: 
+
+[source,xml]
+----
+    <key-stores>
+        <key-store name="tlsClientTrustStore" type="PKCS12">
+            <file name="/PATH/TO/ca.truststore"/>
+            <key-store-clear-password password="clientTrustSecret"/>
+        </key-store>
+        <key-store name="tlsClientKeyStore" type="PKCS12">
+            <file name="/PATH/TO/tlsClient.keystore"/>
+            <key-store-clear-password password="clientKeySecret"/>
+        </key-store>
+        <key-store name="ocspResponderkeyStore" type="PKCS12">
+            <file name="/PATH/TO/ocsp.truststore"/>
+            <key-store-clear-password password="password"/>
+        </key-store>
+    </key-stores>
+----
+
+Below this is the configuration for the TLS connection, under the <ssl-contexts> tag. The configuration specifies both the truststore and keystore to use for the connection. It also specifies the `accept-ocsp-stapling` element which is used to enable the client to make use of the OCSP response added by the server: 
+
+[source,xml]
+----
+    <ssl-context-rules>
+        <rule use-ssl-context="example-tls"/>
+    </ssl-context-rules>
+    <ssl-contexts>
+        <ssl-context name="example-tls">
+            <key-store-ssl-certificate key-store-name="tlsClientKeyStore" alias="client">
+                <key-store-clear-password password="clientKeySecret"/>
+            </key-store-ssl-certificate>
+            <trust-store key-store-name="tlsClientTrustStore"/>
+            <cipher-suite names="TLS_AES_128_GCM_SHA256" selector="DEFAULT"/>
+            <protocol names="TLSv1.3 TLSv1.2"/>
+            <accept-ocsp-stapling accept-ocsp="true" soft-fail="true" responder-keystore="ocspResponderkeyStore" responder-certificate="ocspResoponder"/>
+        </ssl-context>
+    </ssl-contexts>
+----
+
+Note that we have set *soft-fail* to true, which determines the client behaviour when a certificate's revocation status cannot be determined. When this is set to true, the client will accept an unknown status as good, and when set to false, the client will reject it. 
+
+We have also added the OCSP responder's certificate here in the OCSP settings using *ocspResponderkeyStore*. 
+
+== Configuring the server
+We will now configure the server to require a login and enable server side OCSP stapling. 
+
+=== Configuring the Security Domain and SASL Authentication Factory
+Returning to the terminal with the management CLI: 
+```
+    /subsystem=elytron/filesystem-realm=tlsFsRealm:add(path=tlsFsRealmUsers, relative-to=jboss.server.config.dir)
+```
+Then, we add the example_user identity to the realm, and give it the guest role:
+```
+    /subsystem=elytron/filesystem-realm=tlsFsRealm:add-identity(identity=example_user)
+
+    /subsystem=elytron/filesystem-realm=tlsFsRealm:set-password(identity=example_user, clear={password=examplePwd1!})
+
+    /subsystem=elytron/filesystem-realm=tlsFsRealm:add-identity-attribute(identity=example_user, name=Roles, value=[guest])
+```
+
+Next, we will configure the security domain to use the filesystem realm:
+```
+    /subsystem=elytron/security-domain=tlsFsSD:add(realms=[{realm=tlsFsRealm}],default-realm=tlsFsRealm,permission-mapper=default-permission-mapper)
+```
+
+Afterwards, we add a mapping to the security domain into the ejb3 subsystem, for securing the EJB:
+```
+    /subsystem=ejb3/application-security-domain=tlsApp:add(security-domain=tlsFsSD)
+```
+Elytron supports two types of authentication: HTTP authentication and SASL authentication. We will use the SASL authentication mechanism SCRAM-SHA-512-PLUS, which performs channel binding with the TLS session. We create a sasl-authentication-factory that uses the security domain we configured previously:
+```
+    /subsystem=elytron/sasl-authentication-factory=tlsSASLFactory:add(sasl-server-factory=configured,security-domain=tlsFsSD,mechanism-configurations=[{mechanism-name=SCRAM-SHA-512-PLUS}])
+```
+
+=== Configuring the Server's SSL Context
+Now we can configure the server's ssl-context and enable ocsp-stapling for the server: 
+```
+    /subsystem=elytron/server-ssl-context=tlsSSC:add(key-manager=tlsKM,protocols=["TLSv1.3","TLSv1.2"],cipher-suite-names=TLS_AES_128_GCM_SHA256,trust-manager=tlsTM,need-client-auth=true)
+    /subsystem=elytron/server-ssl-context=tlsSSC:write-attribute(name=ocsp-stapling, value={})
+```
+While the command above does enable OCSP stapling, it uses the default values for the attributes. We can change those values using the following command: 
+```
+    /subsystem=elytron/server-ssl-context=tlsSSC:write-attribute(name=ocsp-stapling, value={responder-uri=http://127.0.0.1:10000, response-timeout=5000, cache-size=256, cache-lifetime=3600, responder-override=true})
+```
+
+=== Configure the Remote Connector
+We then configure the https-listener in the undertow subsystem to use this SSL context:
+```
+    /subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=tlsSSC)
+```
+Now, we configure a new http-connector called tlsConnector, which references both the https-listener and the sasl-authentication-factory:
+```
+    /subsystem=remoting/http-connector=tlsConnector:add(connector-ref=https,sasl-authentication-factory=tlsSASLFactory)
+```
+Lastly, we add the connector to the ejb3 subsystem to be used when the remote client attempts to connect:
+```
+    /subsystem=ejb3/service=remote:write-attribute(name=connectors,value=[tlsConnector])
+```
+
+== Build and Deploy the Demo App
+1. Make sure you start the WildFly server as described above.
+2. Open a new terminal and navigate to the root directory of this example.
+3. Type the following command to build the artifacts.
+
+[source,bash]
+----
+    $ mvn clean install wildfly:deploy
+----
+
+This deploys the `ocsp-stapling/target/ocsp-stapling.jar` to the running instance of the server.
+
+You should see a message in the server log indicating that the archive deployed successfully.
+
+== Run the Client
+Before you run the client, make sure you have successfully deployed the EJBs to the server in
+the previous step and that your terminal is still in the root directory of this example.
+
+Run this command to execute the client:
+[source,bash]
+----
+    $ mvn exec:exec
+----
+
+== Investigate the Console Output
+
+When you run the `mvn exec:exec` command, you should see the following output.
+
+[source,bash]
+----
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+Successfully called secured bean, caller principal example_user
+
+Principal has admin permission: false
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+----
+
+The server and client were able to verify each other's certificates as matching their trust
+stores, as configured in the client-side `wildfly-config.xml` file and in the server-side using the management CLI. Additionally, the username and credentials stored in the credential store were used to log
+into the application server, as configured in *wildfly-config.xml*. As expected, the *example_user* was able to invoke the method available for the *guest* role but not for the *admin* role.
+
+== Undeploy the Demo App
+
+1. Make sure you start the WildFly server.
+2. Open a terminal to the root directory of this example.
+3. Type this command to undeploy the archive:
+[source,bash]
+----
+    $ mvn wildfly:undeploy
+----
+
+== Summary
+
+This guide has demonstrated how to configure the WildFly server and client to perform mutual TLS authentication for forming connections using OCSP Stapling. Although this post used an EJB to establish a TLS authentication, similar steps can be followed for other types of clients, such as browsers as long as the client accepts OCSP stapling. 
+
+== Resources
+* https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/ocsp.html[Client Driven OCSP and OCSP Stapling]
+* https://docs.wildfly.org/33/Client_Guide.html[WildFly Client Config]
+* https://docs.wildfly.org/33/WildFly_Elytron_Security.html#configure-certificate-revocation-through-ocsp-stapling[Configure Certificate Revocation Through OCSP Stapling]
+
+
+
+
+
