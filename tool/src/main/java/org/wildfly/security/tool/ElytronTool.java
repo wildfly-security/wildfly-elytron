@@ -20,10 +20,17 @@ package org.wildfly.security.tool;
 import org.apache.commons.cli.AlreadySelectedException;
 import org.apache.commons.cli.Option;
 import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.tool.help.CommandsSection;
+import org.wildfly.security.tool.help.DescriptionSection;
+import org.wildfly.security.tool.help.HelpCommand;
+import org.wildfly.security.tool.help.OptionsSection;
+import org.wildfly.security.tool.help.UsageSection;
 
 import java.security.Security;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Elytron Tool main class which drives all registered commands.
@@ -131,15 +138,27 @@ public class ElytronTool {
     }
 
     private void generalHelp() {
-        System.out.print(ElytronToolMessages.msg.generalHelpTitle());
-        System.out.println();
-        for (Command c: commandRegistry.values()) {
-            if (scriptName != null) {
-                c.setToolCommand(scriptName);
-            }
-            c.help();
-            System.out.println();
-        }
+        DescriptionSection descriptionSection = new DescriptionSection(ElytronToolMessages.msg.cmdElytronToolDescription());
+        UsageSection usageSection = new UsageSection(null, null);
+        OptionsSection optionsSection = new OptionsSection(ElytronToolMessages.msg.generalHelpOptionsOpening(), null);
+
+        // Using SortedMap so commands are in alphabetical order
+        SortedMap<String, String> commandsMap = new TreeMap<>();
+        commandsMap.put(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND, ElytronToolMessages.msg.cmdLineCredentialStoreHelpHeader());
+        commandsMap.put(VaultCommand.VAULT_COMMAND, ElytronToolMessages.msg.cmdVaultHelpHeader());
+        commandsMap.put(FileSystemRealmCommand.FILE_SYSTEM_REALM_COMMAND, ElytronToolMessages.msg.cmdFileSystemRealmHelpHeader());
+        commandsMap.put(FileSystemEncryptRealmCommand.FILE_SYSTEM_ENCRYPT_COMMAND, ElytronToolMessages.msg.cmdFileSystemEncryptHelpHeader());
+        commandsMap.put(MaskCommand.MASK_COMMAND, ElytronToolMessages.msg.cmdMaskHelpHeader());
+        commandsMap.put(FileSystemRealmIntegrityCommand.FILE_SYSTEM_REALM_INTEGRITY_COMMAND, ElytronToolMessages.msg.cmdFileSystemIntegrityHelpHeader());
+        CommandsSection commandsSection = new CommandsSection(commandsMap);
+
+        HelpCommand helpCommand = HelpCommand.HelpCommandBuilder.builder()
+                .description(descriptionSection)
+                .usage(usageSection)
+                .options(optionsSection)
+                .commands(commandsSection)
+                .build();
+        helpCommand.printHelp();
     }
 
     Command findCommand(String commandName) {

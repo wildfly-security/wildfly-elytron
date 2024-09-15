@@ -60,7 +60,7 @@
         <version.com.fasterxml.jackson.databind>${version.com.fasterxml.jackson}</version.com.fasterxml.jackson.databind>
         <version.commons-cli>1.6.0</version.commons-cli>
         <version.jakarta.enterprise>4.0.1</version.jakarta.enterprise>
-        <version.org.apache.commons>3.14.0</version.org.apache.commons>
+        <version.org.apache.commons>3.15.0</version.org.apache.commons>
         <version.org.apache.directory.server>2.0.0.AM27</version.org.apache.directory.server>
         <version.org.apache.directory.api>2.1.6</version.org.apache.directory.api>
         <version.org.apache.kerby>2.0.3</version.org.apache.kerby>
@@ -70,20 +70,20 @@
         <version.org.apache.sshd.common>2.12.0</version.org.apache.sshd.common>
         <version.org.apache.httpcomponents.httpclient>4.5.14</version.org.apache.httpcomponents.httpclient>
         <version.org.apache.httpcomponents.httpcore>4.4.16</version.org.apache.httpcomponents.httpcore>
+        <version.org.eclipse.parsson.jakarta.json>1.1.5</version.org.eclipse.parsson.jakarta.json>
         <version.org.jboss.logging>3.5.3.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.1.19.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.6.Final</version.org.jboss.logmanager.log4j-jboss>
         <version.org.jboss.logging.tools>2.2.1.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.12.2.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.2.0.Final</version.org.jboss.slf4j>
-        <version.jakarta.json.jakarta-json-api>2.0.0</version.jakarta.json.jakarta-json-api>
+        <version.jakarta.json.jakarta-json-api>2.1.2</version.jakarta.json.jakarta-json-api>
         <version.jakarta.servlet.jakarta-servlet-api>5.0.0</version.jakarta.servlet.jakarta-servlet-api>
         <version.org.jboss.threads>3.5.1.Final</version.org.jboss.threads>
         <version.org.kohsuke.metainf-services.metainf-services>1.11</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.13.1</version.junit.junit>
         <version.jmockit>1.34</version.jmockit>
         <version.hsqldb>2.7.1</version.hsqldb>
-        <version.org.glassfish.jakarta.json>2.0.0</version.org.glassfish.jakarta.json>
         <version.net.minidev.json-smart>2.4.9</version.net.minidev.json-smart>
         <version.com.nimbusds.nimbus-jose-jwt>9.31</version.com.nimbusds.nimbus-jose-jwt>
         <version.com.squareup.okhttp3.mockwebserver>3.8.1</version.com.squareup.okhttp3.mockwebserver>
@@ -95,11 +95,12 @@
         <version.org.xipki.pki.ocsp-server>3.0.0</version.org.xipki.pki.ocsp-server>
         <version.org.bitbucket.b_c.jose4j>0.9.6</version.org.bitbucket.b_c.jose4j>
         <version.org.testcontainers.testcontainers>1.15.3</version.org.testcontainers.testcontainers>
-        <version.org.keycloak>18.0.2</version.org.keycloak>
-        <version.io.rest-assured>4.3.3</version.io.rest-assured>
+        <version.org.keycloak>25.0.2</version.org.keycloak>
+        <version.io.rest-assured>5.5.0</version.io.rest-assured>
         <version.net.sourceforge.htmlunit.htmlunit>2.40.0</version.net.sourceforge.htmlunit.htmlunit>
         <version.org.apache.santuario>2.3.0</version.org.apache.santuario>
-        <version.org.keycloak.keycloak-services>3.1.0.Final</version.org.keycloak.keycloak-services>
+        <version.org.keycloak.keycloak-services>23.0.7</version.org.keycloak.keycloak-services>
+        <version.org.aesh>2.7</version.org.aesh>
 
         <test.level>INFO</test.level>
         <!-- Checkstyle configuration -->
@@ -984,6 +985,11 @@
                 <artifactId>jose4j</artifactId>
                 <version>${version.org.bitbucket.b_c.jose4j}</version>
             </dependency>
+            <dependency>
+                <groupId>org.aesh</groupId>
+                <artifactId>aesh</artifactId>
+                <version>${version.org.aesh}</version>
+            </dependency>
 
             <!--
                   Test Scope Only
@@ -1152,9 +1158,9 @@
             </dependency>
 
             <dependency>
-                <groupId>org.glassfish</groupId>
+                <groupId>org.eclipse.parsson</groupId>
                 <artifactId>jakarta.json</artifactId>
-                <version>${version.org.glassfish.jakarta.json}</version>
+                <version>${version.org.eclipse.parsson.jakarta.json}</version>
                 <scope>test</scope>
             </dependency>
 

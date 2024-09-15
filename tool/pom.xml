@@ -300,6 +300,10 @@
             <artifactId>jboss-logging-processor</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.aesh</groupId>
+            <artifactId>aesh</artifactId>
+        </dependency>
         <!--
               Test Scope Only
          -->
