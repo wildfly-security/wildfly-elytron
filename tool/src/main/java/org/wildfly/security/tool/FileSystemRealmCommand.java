@@ -48,7 +48,6 @@ import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.lang3.ArrayUtils;
@@ -63,6 +62,10 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
+import org.wildfly.security.tool.help.DescriptionSection;
+import org.wildfly.security.tool.help.HelpCommand;
+import org.wildfly.security.tool.help.OptionsSection;
+import org.wildfly.security.tool.help.UsageSection;
 
 /**
  * Elytron-Tool command to convert legacy properties file into a FileSystemRealm.
@@ -298,13 +301,15 @@ class FileSystemRealmCommand extends Command {
      */
     @Override
     public void help() {
-        HelpFormatter help = new HelpFormatter();
-        help.setWidth(WIDTH);
-        help.printHelp(ElytronToolMessages.msg.cmdHelp(getToolCommand(), FILE_SYSTEM_REALM_COMMAND),
-                ElytronToolMessages.msg.cmdFileSystemRealmHelpHeader().concat(ElytronToolMessages.msg.cmdLineActionsHelpHeader()),
-                options,
-                "",
-                true);
+        OptionsSection optionsSection = new OptionsSection(ElytronToolMessages.msg.cmdLineActionsHelpHeader(), options);
+        UsageSection usageSection = new UsageSection(FILE_SYSTEM_REALM_COMMAND, null);
+        DescriptionSection descriptionSection = new DescriptionSection(ElytronToolMessages.msg.cmdFileSystemRealmHelpHeader());
+        HelpCommand helpCommand = HelpCommand.HelpCommandBuilder.builder()
+                .description(descriptionSection)
+                .usage(usageSection)
+                .options(optionsSection)
+                .build();
+        helpCommand.printHelp();
     }
 
     @Override
