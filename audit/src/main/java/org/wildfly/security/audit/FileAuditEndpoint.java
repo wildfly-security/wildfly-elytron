@@ -70,7 +70,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
     }
 
     void setFile(final File file) throws IOException {
-        boolean ok = false;
+        boolean isFileSet = false;
         final FileOutputStream fos = new FileOutputStream(file, true);
         try {
             final Writer writer = new OutputStreamWriter(new BufferedOutputStream(fos), this.charset);
@@ -78,14 +78,14 @@ public class FileAuditEndpoint implements AuditEndpoint {
                 this.fileDescriptor = fos.getFD();
                 this.writer = writer;
                 this.file = file;
-                ok = true;
+                isFileSet = true;
             } finally {
-                if (! ok) {
+                if (! isFileSet) {
                     safeClose(writer);
                 }
             }
         } finally {
-            if (! ok) {
+            if (! isFileSet) {
                 safeClose(fos);
             }
         }

@@ -31,7 +31,7 @@
 
     <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-elytron-parent</artifactId>
-    <version>2.3.2.CR1-SNAPSHOT</version>
+    <version>2.5.3.CR1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>WildFly Elytron Parent</name>
@@ -55,16 +55,15 @@
     </scm>
 
     <properties>
-        <maven.compiler.release>11</maven.compiler.release>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <version.com.fasterxml.jackson>2.15.4</version.com.fasterxml.jackson>
+        <jdk.min.version>11</jdk.min.version>
+        <version.com.fasterxml.jackson>2.17.0</version.com.fasterxml.jackson>
         <version.com.fasterxml.jackson.databind>${version.com.fasterxml.jackson}</version.com.fasterxml.jackson.databind>
         <version.commons-cli>1.6.0</version.commons-cli>
         <version.jakarta.enterprise>4.0.1</version.jakarta.enterprise>
         <version.org.apache.commons>3.14.0</version.org.apache.commons>
-        <version.org.apache.directory.server>2.0.0-M24</version.org.apache.directory.server>
-        <version.org.apache.directory.api>1.0.0</version.org.apache.directory.api>
+        <version.org.apache.directory.server>2.0.0.AM27</version.org.apache.directory.server>
+        <version.org.apache.directory.api>2.1.6</version.org.apache.directory.api>
+        <version.org.apache.kerby>2.0.3</version.org.apache.kerby>
         <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
         <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
         <version.org.bouncycastle>1.67</version.org.bouncycastle>
@@ -83,7 +82,7 @@
         <version.org.kohsuke.metainf-services.metainf-services>1.11</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.13.1</version.junit.junit>
         <version.jmockit>1.34</version.jmockit>
-        <version.hsqldb>2.4.0</version.hsqldb>
+        <version.hsqldb>2.7.1</version.hsqldb>
         <version.org.glassfish.jakarta.json>2.0.0</version.org.glassfish.jakarta.json>
         <version.net.minidev.json-smart>2.4.9</version.net.minidev.json-smart>
         <version.com.nimbusds.nimbus-jose-jwt>9.31</version.com.nimbusds.nimbus-jose-jwt>
@@ -100,6 +99,7 @@
         <version.io.rest-assured>4.3.3</version.io.rest-assured>
         <version.net.sourceforge.htmlunit.htmlunit>2.40.0</version.net.sourceforge.htmlunit.htmlunit>
         <version.org.apache.santuario>2.3.0</version.org.apache.santuario>
+        <version.org.keycloak.keycloak-services>3.1.0.Final</version.org.keycloak.keycloak-services>
 
         <test.level>INFO</test.level>
         <!-- Checkstyle configuration -->
@@ -504,6 +504,11 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-digest</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-dynamic-ssl</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1058,12 +1063,6 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.directory.server</groupId>
-                <artifactId>apacheds-protocol-kerberos</artifactId>
-                <version>${version.org.apache.directory.server}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.server</groupId>
                 <artifactId>apacheds-protocol-ldap</artifactId>
                 <version>${version.org.apache.directory.server}</version>
                 <scope>test</scope>
@@ -1093,6 +1092,12 @@
                         <artifactId>log4j</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.kerby</groupId>
+                <artifactId>kerb-simplekdc</artifactId>
+                <version>${version.org.apache.kerby}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
@@ -1129,6 +1134,12 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcmail-jdk15on</artifactId>
                 <version>${version.org.bouncycastle}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-services</artifactId>
+                <version>${version.org.keycloak.keycloak-services}</version>
                 <scope>test</scope>
             </dependency>
 
@@ -1279,6 +1290,7 @@
         <module>credential/source/impl</module>
         <module>digest</module>
         <module>encryption</module>
+        <module>dynamic-ssl</module>
         <module>http/base</module>
         <module>http/basic</module>
         <module>http/bearer</module>

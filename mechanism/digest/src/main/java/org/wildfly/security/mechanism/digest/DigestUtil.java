@@ -30,8 +30,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.function.Supplier;
 
-import javax.security.sasl.SaslException;
-
 import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.security.mechanism._private.ElytronMessages;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
@@ -52,9 +50,12 @@ public class DigestUtil {
     /**
      * Client side method to parse challenge sent by server.
      *
-     * @param challenge
-     * @return
-     * @throws AuthenticationMechanismException
+     * @param challenge the byte array representing the authentication challenge to be parsed.
+     * @param charset the charset to decide which whitespace separator is used.
+     * @param multiRealm {@code true} if there are multiple realms in the challenge, {@code false} otherwise
+     * @param log the logger to use.
+     * @return A new HashMap representing response for the parsed challenge
+     * @throws AuthenticationMechanismException if there is an error parsing the challenge
      */
     public static HashMap<String, byte[]> parseResponse(byte [] challenge, Charset charset, boolean multiRealm, ElytronMessages log) throws AuthenticationMechanismException {
 
@@ -170,6 +171,15 @@ public class DigestUtil {
         return response;
     }
 
+    /**
+     * Adds a key-value pair to a HashMap representing a parsed challenge.
+     *
+     * @param response the HashMap to add the key-value pair to.
+     * @param keyBuilder the StringBuilder containing the key.
+     * @param valueBuilder the ByteStringBuilder containing the value.
+     * @param realmNumber the current number of realms in the parsed challenge.
+     * @return the updated number of realms in the parsed challenge.
+     */
     private static int addToParsedChallenge(HashMap<String, byte[]> response, StringBuilder keyBuilder, ByteStringBuilder valueBuilder, int realmNumber) {
         String k = keyBuilder.toString();
         byte[] v = valueBuilder.toArray();
@@ -183,6 +193,13 @@ public class DigestUtil {
         return realmNumber;
     }
 
+    /**
+     * Finds the next non-whitespace character in a byte array.
+     *
+     * @param buffer the byte array to search in.
+     * @param startPoint the starting point in the buffer to begin the search.
+     * @return the index of the next non-whitespace character.
+     */
     private static int skipWhiteSpace(byte[] buffer, int startPoint) {
         int i = startPoint;
         while (i < buffer.length && isWhiteSpace(buffer[i])) {
@@ -191,6 +208,12 @@ public class DigestUtil {
         return i;
     }
 
+    /**
+     * Checks if a given byte is a whitespace character.
+     *
+     * @param b the byte to check.
+     * @return {@code true} if the byte is a whitespace character, {@code false} otherwise.
+     */
     private static boolean isWhiteSpace(byte b) {
         if (b == 13)   // CR
             return true;
@@ -204,6 +227,15 @@ public class DigestUtil {
             return false;
     }
 
+    /**
+     * Digests the concatenated username, realm and password.
+     *
+     * @param messageDigest the message digest algorithm to use when computing the digest.
+     * @param username the username to use when concatenating.
+     * @param realm the realm to use when concatenating.
+     * @param password the password in the form of a char array to use when concatenating.
+     * @return byte array of the digested password.
+     */
     public static byte[] userRealmPasswordDigest(MessageDigest messageDigest, String username, String realm, char[] password) {
         CharsetEncoder latin1Encoder = StandardCharsets.ISO_8859_1.newEncoder();
         latin1Encoder.reset();
@@ -232,10 +264,13 @@ public class DigestUtil {
     }
 
     /**
-     * Get array of password chars from TwoWayPassword
+     * Get array of password chars from TwoWayPassword.
      *
-     * @return
-     * @throws SaslException
+     * @param password the TwoWayPassword that needs to be processed.
+     * @param providers the supplier for the providers to be used for processing.
+     * @param log the logger to use.
+     * @throws AuthenticationMechanismException if there is an error retrieving the encoded password.
+     * @return encoded password in the form of a char array.
      */
     public static char[] getTwoWayPasswordChars(TwoWayPassword password, Supplier<Provider[]> providers, ElytronMessages log) throws AuthenticationMechanismException {
         if (password == null) {

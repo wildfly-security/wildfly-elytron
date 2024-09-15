@@ -31,6 +31,7 @@ import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,25 +43,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
 import javax.net.ssl.SSLSession;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.x500.X500Principal;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
-
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
+import org.wildfly.security.auth.callback.PrincipalAuthorizeCallback;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.authz.Roles;
 import org.wildfly.security.credential.BearerTokenCredential;
@@ -68,6 +68,7 @@ import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpExchangeSpi;
 import org.wildfly.security.http.HttpScope;
@@ -79,6 +80,7 @@ import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.http.Scope;
 import org.wildfly.security.http.basic.BasicMechanismFactory;
 import org.wildfly.security.http.bearer.BearerMechanismFactory;
+import org.wildfly.security.http.cert.ClientCertMechanismFactory;
 import org.wildfly.security.http.digest.DigestMechanismFactory;
 import org.wildfly.security.http.digest.NonceManager;
 import org.wildfly.security.http.external.ExternalMechanismFactory;
@@ -89,17 +91,19 @@ import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
+import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 
 import mockit.Mock;
 import mockit.MockUp;
 
-// has dependency on wildfly-elytron-sasl, wildfly-elytron-http-basic and wildfly-elytron-digest
+// has dependency on wildfly-elytron-sasl, wildfly-elytron-http-cert, wildfly-elytron-http-basic and wildfly-elytron-digest
 public class AbstractBaseHttpTest {
 
     protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
     protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
     protected final HttpServerAuthenticationMechanismFactory externalFactory = new ExternalMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
     protected final HttpServerAuthenticationMechanismFactory bearerFactory = new BearerMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
+    protected HttpServerAuthenticationMechanismFactory certFactory = new ClientCertMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get()[0]);
     protected HttpServerAuthenticationMechanismFactory statefulBasicFactory = new org.wildfly.security.http.sfbasic.BasicMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
 
     protected void mockDigestNonce(final String nonce) {
@@ -147,6 +151,8 @@ public class AbstractBaseHttpTest {
         private List<HttpServerCookie> cookies;
         private String requestMethod = "GET";
         private Map<String, List<String>> requestHeaders = new HashMap<>();
+        private X500Principal testPrincipal = null;
+        private Map<String, Object> sessionScopeAttachments = new HashMap<>();
 
         public TestingHttpServerRequest(String[] authorization) {
             if (authorization != null) {
@@ -156,6 +162,15 @@ public class AbstractBaseHttpTest {
             this.cookies = new ArrayList<>();
         }
 
+        public TestingHttpServerRequest(String[] authorization, X500Principal principal) {
+            if (authorization != null) {
+                requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
+            }
+            this.remoteUser = null;
+            this.cookies = new ArrayList<>();
+            this.testPrincipal = principal;
+        }
+
         public TestingHttpServerRequest(String[] authorization, URI requestURI) {
             if (authorization != null) {
                 requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
@@ -163,6 +178,16 @@ public class AbstractBaseHttpTest {
             this.remoteUser = null;
             this.requestURI = requestURI;
             this.cookies = new ArrayList<>();
+        }
+
+        public TestingHttpServerRequest(String[] authorization, URI requestURI, Map<String, Object> sessionScopeAttachments) {
+            if (authorization != null) {
+                requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
+            }
+            this.remoteUser = null;
+            this.requestURI = requestURI;
+            this.cookies = new ArrayList<>();
+            this.sessionScopeAttachments = sessionScopeAttachments;
         }
 
         public TestingHttpServerRequest(String[] authorization, URI requestURI, List<HttpServerCookie> cookies) {
@@ -215,12 +240,18 @@ public class AbstractBaseHttpTest {
             return headerValues != null ? headerValues.get(0) : null;
         }
 
+
         public SSLSession getSSLSession() {
-            throw new IllegalStateException();
+            return null;
         }
 
         public Certificate[] getPeerCertificates() {
-            throw new IllegalStateException();
+            if (testPrincipal != null) {
+                X509Certificate cert1 = SelfSignedX509CertificateAndSigningKey.builder().setDn(testPrincipal).build().getSelfSignedCertificate();
+                return new Certificate[]{ cert1 };
+            }
+
+            return null;
         }
 
         public void noAuthenticationInProgress(HttpServerMechanismsResponder responder) {
@@ -301,39 +332,48 @@ public class AbstractBaseHttpTest {
         }
 
         public HttpScope getScope(Scope scope) {
-            return new HttpScope() {
+            if (scope.equals(Scope.SSL_SESSION)) {
+                return null;
+            } else {
+                return new HttpScope() {
 
-                @Override
-                public boolean exists() {
-                    return true;
-                }
+                    @Override
+                    public boolean exists() {
+                        return true;
+                    }
 
-                @Override
-                public boolean create() {
-                    return false;
-                }
+                    @Override
+                    public boolean create() {
+                        return false;
+                    }
 
-                @Override
-                public boolean supportsAttachments() {
-                    return true;
-                }
+                    @Override
+                    public boolean supportsAttachments() {
+                        return true;
+                    }
 
-                @Override
-                public boolean supportsInvalidation() {
-                    return false;
-                }
+                    @Override
+                    public boolean supportsInvalidation() {
+                        return false;
+                    }
 
-                @Override
-                public void setAttachment(String key, Object value) {
-                    // no-op
-                }
+                    @Override
+                    public void setAttachment(String key, Object value) {
+                        if (scope.equals(Scope.SESSION)) {
+                            sessionScopeAttachments.put(key, value);
+                        }
+                    }
 
-                @Override
-                public Object getAttachment(String key) {
-                    return null;
-                }
-
-            };
+                    @Override
+                    public Object getAttachment(String key) {
+                        if (scope.equals(Scope.SESSION)) {
+                            return sessionScopeAttachments.get(key);
+                        } else {
+                            return null;
+                        }
+                    }
+                };
+            }
         }
 
         public Collection<String> getScopeIds(Scope scope) {
@@ -351,6 +391,10 @@ public class AbstractBaseHttpTest {
         @Override
         public String getRemoteUser() {
             return remoteUser;
+        }
+
+        public Map<String, Object> getSessionScopeAttachments() {
+            return sessionScopeAttachments;
         }
     }
 
@@ -406,6 +450,10 @@ public class AbstractBaseHttpTest {
             throw new IllegalStateException();
         }
     }
+
+    protected CallbackHandler getCallbackHandler(String realm) {
+        return getCallbackHandler(null, realm, null);
+    };
 
     protected CallbackHandler getCallbackHandler(String username, String realm, String password) {
         return getCallbackHandler(username, realm, password, null, false);
@@ -464,6 +512,10 @@ public class AbstractBaseHttpTest {
                     } else if (((EvidenceVerifyCallback) callback).getEvidence() instanceof BearerTokenEvidence) {
                         BearerTokenEvidence evidence = (BearerTokenEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
                         ((EvidenceVerifyCallback) callback).setVerified(Objects.equals(token, evidence.getToken()));
+                    } else if (((EvidenceVerifyCallback) callback).getEvidence() instanceof X509PeerCertificateChainEvidence) {
+                        X509PeerCertificateChainEvidence evidence = (X509PeerCertificateChainEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
+                        evidence.setDecodedPrincipal(evidence.getFirstCertificate().getIssuerX500Principal());
+                        ((EvidenceVerifyCallback) callback).setVerified("CN=Duk3,OU=T3st,O=W0nd3rl4nd,C=US".equals(evidence.getFirstCertificate().getIssuerX500Principal().getName()));
                     }
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     // NO-OP
@@ -501,6 +553,9 @@ public class AbstractBaseHttpTest {
                     } else {
                         ciac.setAuthorized(null);
                     }
+                } else if (callback instanceof PrincipalAuthorizeCallback){
+                    PrincipalAuthorizeCallback pac = (PrincipalAuthorizeCallback) callback;
+                    pac.setAuthorized(true);
                 } else {
                     throw new UnsupportedCallbackException(callback);
                 }

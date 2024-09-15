@@ -19,18 +19,13 @@
 package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
+import static org.wildfly.security.http.oidc.JWTSigningUtils.loadKeyPairFromKeyStore;
 import static org.wildfly.security.http.oidc.Oidc.CLIENT_ASSERTION;
 import static org.wildfly.security.http.oidc.Oidc.CLIENT_ASSERTION_TYPE;
 import static org.wildfly.security.http.oidc.Oidc.CLIENT_ASSERTION_TYPE_JWT;
-import static org.wildfly.security.http.oidc.Oidc.PROTOCOL_CLASSPATH;
 import static org.wildfly.security.http.oidc.Oidc.asInt;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Map;
@@ -154,44 +149,5 @@ public class JWTClientCredentialsProvider implements ClientCredentialsProvider {
         NumericDate exp = NumericDate.fromSeconds(now.getValue() + tokenTimeout);
         jwtClaims.setExpirationTime(exp);
         return jwtClaims;
-    }
-
-    private static KeyPair loadKeyPairFromKeyStore(String keyStoreFile, String storePassword, String keyPassword, String keyAlias, String keyStoreType) {
-        InputStream stream = findFile(keyStoreFile);
-        try {
-            KeyStore keyStore = KeyStore.getInstance(keyStoreType);
-            keyStore.load(stream, storePassword.toCharArray());
-            PrivateKey privateKey = (PrivateKey) keyStore.getKey(keyAlias, keyPassword.toCharArray());
-            if (privateKey == null) {
-                log.unableToLoadKeyWithAlias(keyAlias);
-            }
-            PublicKey publicKey = keyStore.getCertificate(keyAlias).getPublicKey();
-            return new KeyPair(publicKey, privateKey);
-        } catch (Exception e) {
-            throw log.unableToLoadPrivateKey(e);
-        }
-    }
-
-    private static InputStream findFile(String keystoreFile) {
-        if (keystoreFile.startsWith(PROTOCOL_CLASSPATH)) {
-            String classPathLocation = keystoreFile.replace(PROTOCOL_CLASSPATH, "");
-            // try current class classloader first
-            InputStream is = JWTClientCredentialsProvider.class.getClassLoader().getResourceAsStream(classPathLocation);
-            if (is == null) {
-                is = Thread.currentThread().getContextClassLoader().getResourceAsStream(classPathLocation);
-            }
-            if (is != null) {
-                return is;
-            } else {
-                throw log.unableToFindKeystoreFile(keystoreFile);
-            }
-        } else {
-            try {
-                // fallback to file
-                return new FileInputStream(keystoreFile);
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 }

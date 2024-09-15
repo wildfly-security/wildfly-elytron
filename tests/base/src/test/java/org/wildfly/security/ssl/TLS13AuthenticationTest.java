@@ -23,12 +23,9 @@ import static org.junit.Assert.assertNull;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URI;
 import java.security.AccessController;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.PrivilegedAction;
 import java.security.Security;
 import java.util.Locale;
@@ -36,17 +33,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509ExtendedKeyManager;
-import javax.net.ssl.X509TrustManager;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -61,6 +52,8 @@ import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.permission.PermissionVerifier;
 import org.wildfly.security.ssl.test.util.CAGenerationTool;
 import org.wildfly.security.ssl.test.util.CAGenerationTool.Identity;
+import org.wildfly.security.ssl.test.util.DefinedCAIdentity;
+import org.wildfly.security.ssl.test.util.DefinedIdentity;
 import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
 
 /**
@@ -70,8 +63,9 @@ import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
  */
 public class TLS13AuthenticationTest {
 
+    private static final String CLIENT_CONFIG = "tls13-authentication-config.xml";
     private static final char[] PASSWORD = "Elytron".toCharArray();
-    private static final String CA_JKS_LOCATION = "./target/test-classes/jks";
+    private static final String CA_JKS_LOCATION = "./target/test-classes/pkcs12";
 
     private static CAGenerationTool caGenerationTool = null;
     private static SecurityDomain securityDomain = null;
@@ -84,7 +78,7 @@ public class TLS13AuthenticationTest {
                 .setRequestIdentities(Identity.LADYBIRD, Identity.SCARAB)
                 .build();
 
-        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/jks/beetles.keystore"));
+        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(caGenerationTool.getBeetlesKeyStore());
         securityDomain = SecurityDomain.builder()
                 .addRealm("KeystoreRealm", securityRealm)
                 .build()
@@ -105,15 +99,18 @@ public class TLS13AuthenticationTest {
     public void testTwoWayTLS13() throws Exception {
         final String CIPHER_SUITE = "TLS_AES_128_GCM_SHA256";
 
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
+
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(securityDomain)
                 .setCipherSuiteSelector(CipherSuiteSelector.fromNamesString(CIPHER_SUITE))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
-                .setTrustManager(getCATrustManager())
+                .setKeyManager(scarab.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
                 .setNeedClientAuth(true)
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-two-way-tls13.org", "wildfly-ssl-test-config-v1_5.xml", CIPHER_SUITE, true);
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-two-way-tls13.org", CLIENT_CONFIG, CIPHER_SUITE, true);
         assertNotNull(identity);
         assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
     }
@@ -124,15 +121,18 @@ public class TLS13AuthenticationTest {
         final String PREFERRED_CIPHER_SUITE = "TLS_AES_256_GCM_SHA384";
         final String SERVER_CIPHER_SUITE = String.format("%s:%s", PREFERRED_CIPHER_SUITE, REQUIRED_CIPHER_SUITE);
 
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
+
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(securityDomain)
                 .setCipherSuiteSelector(CipherSuiteSelector.fromNamesString(SERVER_CIPHER_SUITE))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
-                .setTrustManager(getCATrustManager())
+                .setKeyManager(scarab.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
                 .setNeedClientAuth(true)
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-different-preferred-tls13-suites.org", "wildfly-ssl-test-config-v1_5.xml", REQUIRED_CIPHER_SUITE, true);
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-different-preferred-tls13-suites.org", CLIENT_CONFIG, REQUIRED_CIPHER_SUITE, true);
         assertNotNull(identity);
         assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
     }
@@ -142,18 +142,21 @@ public class TLS13AuthenticationTest {
         final String TLS13_CIPHER_SUITE = "TLS_AES_128_GCM_SHA256";
         final String TLS12_CIPHER_SUITE = "TLS_RSA_WITH_AES_128_CBC_SHA256"; // TLS v1.2
 
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
+
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(securityDomain)
                 .setCipherSuiteSelector(CipherSuiteSelector.aggregate(
                                 CipherSuiteSelector.fromNamesString(TLS13_CIPHER_SUITE),
                                 CipherSuiteSelector.fromString(TLS12_CIPHER_SUITE)
                 ))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
-                .setTrustManager(getCATrustManager())
+                .setKeyManager(scarab.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
                 .setNeedClientAuth(true)
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-client-tls12-only.org", "wildfly-ssl-test-config-v1_5.xml", TLS12_CIPHER_SUITE, false);
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-client-tls12-only.org", CLIENT_CONFIG, TLS12_CIPHER_SUITE, false);
         assertNotNull(identity);
         assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
     }
@@ -162,15 +165,18 @@ public class TLS13AuthenticationTest {
     public void testServerTLS12Only() throws Exception {
         final String SERVER_CIPHER_SUITE = "TLS_RSA_WITH_AES_128_CBC_SHA256"; // TLS v1.2
 
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
+
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(securityDomain)
                 .setCipherSuiteSelector(CipherSuiteSelector.fromString(SERVER_CIPHER_SUITE))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
-                .setTrustManager(getCATrustManager())
+                .setKeyManager(scarab.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
                 .setNeedClientAuth(true)
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-server-tls12-only.org", "wildfly-ssl-test-config-v1_5.xml", SERVER_CIPHER_SUITE, false);
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-server-tls12-only.org", CLIENT_CONFIG, SERVER_CIPHER_SUITE, false);
         assertNotNull(identity);
         assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
     }
@@ -179,12 +185,14 @@ public class TLS13AuthenticationTest {
     public void testOneWayTLS13() throws Exception {
         final String CIPHER_SUITE = "TLS_AES_128_GCM_SHA256";
 
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
+
         SSLContext serverContext = new SSLContextBuilder()
                 .setCipherSuiteSelector(CipherSuiteSelector.fromNamesString(CIPHER_SUITE))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .setKeyManager(scarab.createKeyManager())
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-one-way-tls13.org", "wildfly-ssl-test-config-v1_5.xml", CIPHER_SUITE, true);
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-one-way-tls13.org", CLIENT_CONFIG, CIPHER_SUITE, true);
         assertNull(identity);
     }
 
@@ -239,53 +247,6 @@ public class TLS13AuthenticationTest {
             safeClose(clientSocket);
             safeClose(sslServerSocket);
         }
-    }
-
-    /**
-     * Get the key manager backed by the specified key store.
-     *
-     * @param keystorePath the path to the keystore with X509 private key
-     * @return the initialised key manager.
-     */
-    private static X509ExtendedKeyManager getKeyManager(final String keystorePath) throws Exception {
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-        keyManagerFactory.init(loadKeyStore(keystorePath), PASSWORD);
-
-        for (KeyManager current : keyManagerFactory.getKeyManagers()) {
-            if (current instanceof X509ExtendedKeyManager) {
-                return (X509ExtendedKeyManager) current;
-            }
-        }
-
-        throw new IllegalStateException("Unable to obtain X509ExtendedKeyManager.");
-    }
-
-    /**
-     * Get the trust manager that trusts all certificates signed by the certificate authority.
-     *
-     * @return the trust manager that trusts all certificates signed by the certificate authority.
-     * @throws KeyStoreException
-     */
-    private static X509TrustManager getCATrustManager() throws Exception {
-        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
-        trustManagerFactory.init(loadKeyStore("/jks/ca.truststore"));
-
-        for (TrustManager current : trustManagerFactory.getTrustManagers()) {
-            if (current instanceof X509TrustManager) {
-                return (X509TrustManager) current;
-            }
-        }
-
-        throw new IllegalStateException("Unable to obtain X509TrustManager.");
-    }
-
-    private static KeyStore loadKeyStore(final String path) throws Exception {
-        KeyStore keyStore = KeyStore.getInstance("jks");
-        try (InputStream caTrustStoreFile = SSLAuthenticationTest.class.getResourceAsStream(path)) {
-            keyStore.load(caTrustStoreFile, PASSWORD);
-        }
-
-        return keyStore;
     }
 
     private void safeClose(Closeable closeable) {

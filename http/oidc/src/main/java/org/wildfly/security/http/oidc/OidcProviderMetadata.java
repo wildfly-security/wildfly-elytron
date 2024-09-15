@@ -114,6 +114,9 @@ public class OidcProviderMetadata {
     @JsonProperty("request_uri_parameter_supported")
     private Boolean requestUriParameterSupported;
 
+    @JsonProperty("pushed_authorization_request_endpoint")
+    private String pushedAuthorizationRequestEndpoint;
+
     @JsonProperty("revocation_endpoint")
     private String revocationEndpoint;
 
@@ -141,6 +144,12 @@ public class OidcProviderMetadata {
     // https://tools.ietf.org/html/draft-ietf-oauth-mtls-08#section-6.2
     @JsonProperty("tls_client_certificate_bound_access_tokens")
     private Boolean tlsClientCertificateBoundAccessTokens;
+
+    @JsonProperty("request_object_encryption_enc_values_supported")
+    private List<String> requestObjectEncryptionEncValuesSupported;
+
+    @JsonProperty("request_object_encryption_alg_values_supported")
+    private List<String> requestObjectEncryptionAlgValuesSupported;
 
     protected Map<String, Object> otherClaims = new HashMap<String, Object>();
 
@@ -320,8 +329,8 @@ public class OidcProviderMetadata {
         this.claimTypesSupported = claimTypesSupported;
     }
 
-    public Boolean getClaimsParameterSupported() {
-        return claimsParameterSupported;
+    public boolean getClaimsParameterSupported() {
+        return claimsParameterSupported == null ? false : claimsParameterSupported;
     }
 
     public void setClaimsParameterSupported(Boolean claimsParameterSupported) {
@@ -336,16 +345,16 @@ public class OidcProviderMetadata {
         this.scopesSupported = scopesSupported;
     }
 
-    public Boolean getRequestParameterSupported() {
-        return requestParameterSupported;
+    public boolean getRequestParameterSupported() {
+        return requestParameterSupported == null ? false : requestParameterSupported;
     }
 
     public void setRequestParameterSupported(Boolean requestParameterSupported) {
         this.requestParameterSupported = requestParameterSupported;
     }
 
-    public Boolean getRequestUriParameterSupported() {
-        return requestUriParameterSupported;
+    public boolean getRequestUriParameterSupported() {
+        return requestUriParameterSupported == null ? false : requestUriParameterSupported;
     }
 
     public void setRequestUriParameterSupported(Boolean requestUriParameterSupported) {
@@ -384,12 +393,12 @@ public class OidcProviderMetadata {
         this.revocationEndpointAuthSigningAlgValuesSupported = revocationEndpointAuthSigningAlgValuesSupported;
     }
 
-    public Boolean getBackchannelLogoutSupported() {
-        return backchannelLogoutSupported;
+    public boolean getBackchannelLogoutSupported() {
+        return backchannelLogoutSupported == null ? false : backchannelLogoutSupported;
     }
 
-    public Boolean getBackchannelLogoutSessionSupported() {
-        return backchannelLogoutSessionSupported;
+    public boolean getBackchannelLogoutSessionSupported() {
+        return backchannelLogoutSessionSupported == null ? false : backchannelLogoutSessionSupported;
     }
 
     public void setBackchannelLogoutSessionSupported(Boolean backchannelLogoutSessionSupported) {
@@ -407,8 +416,32 @@ public class OidcProviderMetadata {
 
     // KEYCLOAK-6771 Certificate Bound Token
     // https://tools.ietf.org/html/draft-ietf-oauth-mtls-08#section-6.2
-    public Boolean getTlsClientCertificateBoundAccessTokens() {
-        return tlsClientCertificateBoundAccessTokens;
+    public boolean getTlsClientCertificateBoundAccessTokens() {
+        return tlsClientCertificateBoundAccessTokens == null ? false : tlsClientCertificateBoundAccessTokens;
+    }
+
+    public List<String> getRequestObjectEncryptionAlgValuesSupported() {
+        return requestObjectEncryptionAlgValuesSupported;
+    }
+
+    public void setRequestObjectEncryptionAlgValuesSupported(List<String> requestObjectEncryptionAlgValuesSupported) {
+        this.requestObjectEncryptionAlgValuesSupported = requestObjectEncryptionAlgValuesSupported;
+    }
+
+    public List<String> getRequestObjectEncryptionEncValuesSupported() {
+        return requestObjectEncryptionEncValuesSupported;
+    }
+
+    public void setRequestObjectEncryptionEncValuesSupported(List<String> requestObjectEncryptionEncValuesSupported) {
+        this.requestObjectEncryptionEncValuesSupported = requestObjectEncryptionEncValuesSupported;
+    }
+
+    public String getPushedAuthorizationRequestEndpoint() {
+        return pushedAuthorizationRequestEndpoint;
+    }
+
+    public void setPushedAuthorizationRequestEndpoint(String url) {
+        this.pushedAuthorizationRequestEndpoint = url;
     }
 
     @JsonAnyGetter

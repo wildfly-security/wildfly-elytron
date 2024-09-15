@@ -36,7 +36,7 @@ import org.wildfly.security.auth.server.SecurityRealm;
 public class PrincipalMappingSuiteChild {
 
     @Test
-    public void testSimpleToDn() throws RealmUnavailableException {
+    public void testLdapRealmPrincipalMapping() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
@@ -65,40 +65,6 @@ public class PrincipalMappingSuiteChild {
         assertTrue("Exists", identity.exists());
 
         identity = realm.getRealmIdentity(new NamePrincipal("uid=nobody,dc=elytron,dc=wildfly,dc=org"));
-        assertFalse("Exists", identity.exists());
-    }
-
-    @Test
-    public void testSimpleToSimpleValidate() throws RealmUnavailableException {
-        SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
-                .identityMapping()
-                    .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                    .setRdnIdentifier("uid")
-                    .build()
-                .build();
-
-        RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal("PlainUser"));
-        assertTrue("Exists", identity.exists());
-
-        identity = realm.getRealmIdentity(new NamePrincipal("nobody"));
-        assertFalse("Exists", identity.exists());
-    }
-
-    @Test
-    public void testSimpleToSimpleReload() throws RealmUnavailableException {
-        SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
-                .identityMapping()
-                    .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                    .setRdnIdentifier("uid")
-                    .build()
-                .build();
-
-        RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal("PlainUser"));
-        assertTrue("Exists", identity.exists());
-
-        identity = realm.getRealmIdentity(new NamePrincipal("nobody"));
         assertFalse("Exists", identity.exists());
     }
 

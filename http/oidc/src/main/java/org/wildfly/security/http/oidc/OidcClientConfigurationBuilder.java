@@ -18,7 +18,11 @@
 
 package org.wildfly.security.http.oidc;
 
+import static org.jose4j.jws.AlgorithmIdentifiers.NONE;
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
+import static org.wildfly.security.http.oidc.Oidc.AuthenticationRequestFormat.OAUTH2;
+import static org.wildfly.security.http.oidc.Oidc.AuthenticationRequestFormat.REQUEST;
+import static org.wildfly.security.http.oidc.Oidc.AuthenticationRequestFormat.REQUEST_URI;
 import static org.wildfly.security.http.oidc.Oidc.SSLRequired;
 import static org.wildfly.security.http.oidc.Oidc.TokenStore;
 
@@ -99,6 +103,44 @@ public class OidcClientConfigurationBuilder {
         }
         if (oidcJsonConfiguration.getTokenCookiePath() != null) {
             oidcClientConfiguration.setOidcStateCookiePath(oidcJsonConfiguration.getTokenCookiePath());
+        }
+        if (oidcJsonConfiguration.getScope() != null) {
+            oidcClientConfiguration.setScope(oidcJsonConfiguration.getScope());
+        }
+        if (oidcJsonConfiguration.getAuthenticationRequestFormat() != null) {
+            if (!(oidcJsonConfiguration.getAuthenticationRequestFormat().equals(OAUTH2.getValue()) ||
+            oidcJsonConfiguration.getAuthenticationRequestFormat().equals(REQUEST.getValue()) ||
+            oidcJsonConfiguration.getAuthenticationRequestFormat().equals(REQUEST_URI.getValue()))) {
+                throw log.invalidAuthenticationRequestFormat();
+            }
+            oidcClientConfiguration.setAuthenticationRequestFormat(oidcJsonConfiguration.getAuthenticationRequestFormat());
+        } else {
+            oidcClientConfiguration.setAuthenticationRequestFormat(OAUTH2.getValue());
+        }
+        if (oidcJsonConfiguration.getRequestObjectSigningAlgorithm() != null) {
+            oidcClientConfiguration.setRequestObjectSigningAlgorithm(oidcJsonConfiguration.getRequestObjectSigningAlgorithm());
+        } else {
+            oidcClientConfiguration.setRequestObjectSigningAlgorithm(NONE);
+        }
+        if (oidcJsonConfiguration.getRequestObjectEncryptionAlgValue() != null && oidcJsonConfiguration.getRequestObjectEncryptionEncValue() != null) { //both are required to encrypt the request object
+            oidcClientConfiguration.setRequestObjectEncryptionAlgValue(oidcJsonConfiguration.getRequestObjectEncryptionAlgValue());
+            oidcClientConfiguration.setRequestObjectEncryptionEncValue(oidcJsonConfiguration.getRequestObjectEncryptionEncValue());
+            JWKEncPublicKeyLocator encryptionPublicKeyLocator = new JWKEncPublicKeyLocator();
+            oidcClientConfiguration.setEncryptionPublicKeyLocator(encryptionPublicKeyLocator);
+        } else if (oidcJsonConfiguration.getRequestObjectEncryptionAlgValue() != null || oidcJsonConfiguration.getRequestObjectEncryptionEncValue() != null) {   //if only one is specified, that is not correct
+            throw log.invalidRequestObjectEncryptionAlgorithmConfiguration();
+        }
+        if (oidcJsonConfiguration.getRequestObjectSigningKeyStoreFile() != null
+                && oidcJsonConfiguration.getRequestObjectSigningKeyStorePassword() != null
+                && oidcJsonConfiguration.getRequestObjectSigningKeyPassword() != null
+                && oidcJsonConfiguration.getRequestObjectSigningKeyAlias() != null) {
+            oidcClientConfiguration.setRequestObjectSigningKeyStoreFile(oidcJsonConfiguration.getRequestObjectSigningKeyStoreFile());
+            oidcClientConfiguration.setRequestObjectSigningKeyStorePassword(oidcJsonConfiguration.getRequestObjectSigningKeyStorePassword());
+            oidcClientConfiguration.setRequestObjectSigningKeyPassword(oidcJsonConfiguration.getRequestObjectSigningKeyPassword());
+            oidcClientConfiguration.setRequestObjectSigningKeyAlias(oidcJsonConfiguration.getRequestObjectSigningKeyAlias());
+            if (oidcJsonConfiguration.getRequestObjectSigningKeyStoreType() != null) {
+                oidcClientConfiguration.setRequestObjectSigningKeyStoreType(oidcJsonConfiguration.getRequestObjectSigningKeyStoreType());
+            }
         }
         if (oidcJsonConfiguration.getPrincipalAttribute() != null) oidcClientConfiguration.setPrincipalAttribute(oidcJsonConfiguration.getPrincipalAttribute());
 
@@ -190,8 +232,8 @@ public class OidcClientConfigurationBuilder {
         return adapterConfig;
     }
 
-
     public static OidcClientConfiguration build(OidcJsonConfiguration oidcJsonConfiguration) {
         return new OidcClientConfigurationBuilder().internalBuild(oidcJsonConfiguration);
     }
+
 }

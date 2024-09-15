@@ -57,6 +57,7 @@ public final class MechanismUtil {
      * @param providers the security providers to use with the {@link PasswordFactory}
      * @param <S> the password type
      * @return the password
+     * @throws AuthenticationMechanismException if there is an error retrieving the password
      */
     @Deprecated
     public static <S extends Password> S getPasswordCredential(String userName, CallbackHandler callbackHandler, Class<S> passwordType, String passwordAlgorithm, AlgorithmParameterSpec matchParameters, AlgorithmParameterSpec generateParameters, Supplier<Provider[]> providers) throws AuthenticationMechanismException {
@@ -78,6 +79,7 @@ public final class MechanismUtil {
      * @param <S> the password type
      * @param log mechanism specific logger
      * @return the password
+     * @throws AuthenticationMechanismException if there is an error retrieving the password
      */
     @Deprecated
     public static <S extends Password> S getPasswordCredential(String userName, CallbackHandler callbackHandler, Class<S> passwordType, String passwordAlgorithm, AlgorithmParameterSpec matchParameters, AlgorithmParameterSpec generateParameters, Supplier<Provider[]> providers, ElytronMessages log) throws AuthenticationMechanismException {

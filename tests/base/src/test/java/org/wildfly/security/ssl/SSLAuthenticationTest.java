@@ -19,10 +19,10 @@ package org.wildfly.security.ssl;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import static org.wildfly.security.ssl.test.util.CAGenerationTool.SIGNATURE_ALGORTHM;
 import static org.wildfly.security.x500.X500.OID_AD_OCSP;
 import static org.wildfly.security.x500.X500.OID_KP_OCSP_SIGNING;
@@ -37,10 +37,9 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URI;
-import java.security.Principal;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.AccessController;
+import java.security.KeyStore;
+import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.Security;
 import java.security.cert.X509Certificate;
@@ -55,17 +54,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509ExtendedKeyManager;
-import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 
 import org.bouncycastle.asn1.x500.X500Name;
@@ -79,21 +73,24 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.common.Assert;
-import org.wildfly.security.auth.server.SecurityIdentity;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.permission.PermissionVerifier;
 import org.wildfly.security.ssl.test.util.CAGenerationTool;
 import org.wildfly.security.ssl.test.util.CAGenerationTool.Identity;
+import org.wildfly.security.ssl.test.util.CustomIdentity;
+import org.wildfly.security.ssl.test.util.DefinedCAIdentity;
+import org.wildfly.security.ssl.test.util.DefinedIdentity;
 import org.wildfly.security.x500.GeneralName;
-import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
 import org.wildfly.security.x500.cert.AccessDescription;
 import org.wildfly.security.x500.cert.AuthorityInformationAccessExtension;
 import org.wildfly.security.x500.cert.ExtendedKeyUsageExtension;
+import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
 
 /**
  * Simple test case to test authentication occurring during the establishment of an {@link SSLSession}.
@@ -107,7 +104,7 @@ public class SSLAuthenticationTest {
     private final int TESTING_PORT = 18201;
     private static final char[] PASSWORD = "Elytron".toCharArray();
 
-    private static final String JKS_LOCATION = "./target/test-classes/jks";
+    private static final String JKS_LOCATION = "./target/test-classes/pkcs12";
     private static final String CA_CRL_LOCATION = "./target/test-classes/ca/crl";
     private static final String ICA_CRL_LOCATION = "./target/test-classes/ica/crl";
     private static final File WORKING_DIR_CACRL = new File(CA_CRL_LOCATION);
@@ -123,62 +120,18 @@ public class SSLAuthenticationTest {
     private static final File LADYBUG_REVOKED_PEM_CRL = new File(WORKING_DIR_CACRL, "ladybug-revoked.pem");
     private static TestingOcspServer ocspServer = null;
     private static X509Certificate ocspResponderCertificate;
-
-    /**
-     * Get the key manager backed by the specified key store.
-     *
-     * @param keystorePath the path to the keystore with X509 private key
-     * @return the initialised key manager.
-     */
-    private static X509ExtendedKeyManager getKeyManager(final String keystorePath) throws Exception {
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-        keyManagerFactory.init(createKeyStore(keystorePath), PASSWORD);
-
-        for (KeyManager current : keyManagerFactory.getKeyManagers()) {
-            if (current instanceof X509ExtendedKeyManager) {
-                return (X509ExtendedKeyManager) current;
-            }
-        }
-
-        throw new IllegalStateException("Unable to obtain X509ExtendedKeyManager.");
-    }
+    private static KeyStore shortWingedKeyStore;
+    private static CustomIdentity goodIdentity;
+    private static CustomIdentity revokedIdentity;
 
     private static TrustManagerFactory getTrustManagerFactory() throws Exception {
         return TrustManagerFactory.getInstance("PKIX");
     }
 
-    /**
-     * Get the trust manager that trusts all certificates signed by the certificate authority.
-     *
-     * @return the trust manager that trusts all certificates signed by the certificate authority.
-     * @throws KeyStoreException
-     */
-    private static X509TrustManager getCATrustManager() throws Exception {
-        TrustManagerFactory trustManagerFactory = getTrustManagerFactory();
-        trustManagerFactory.init(createKeyStore("/jks/ca.truststore"));
-
-        for (TrustManager current : trustManagerFactory.getTrustManagers()) {
-            if (current instanceof X509TrustManager) {
-                return (X509TrustManager) current;
-            }
-        }
-
-        throw new IllegalStateException("Unable to obtain X509TrustManager.");
-    }
-
     private static KeyStore createKeyStore() throws Exception {
-        KeyStore ks = KeyStore.getInstance("JKS");
-        ks.load(null,null);
+        KeyStore ks = KeyStore.getInstance("PKCS12");
+        ks.load(null, null);
         return ks;
-    }
-
-    private static KeyStore createKeyStore(final String path) throws Exception {
-        KeyStore keyStore = KeyStore.getInstance("jks");
-        try (InputStream caTrustStoreFile = SSLAuthenticationTest.class.getResourceAsStream(path)) {
-            keyStore.load(caTrustStoreFile, PASSWORD);
-        }
-
-        return keyStore;
     }
 
     private static void createTemporaryKeyStoreFile(KeyStore keyStore, File outputFile, char[] password) throws Exception {
@@ -190,12 +143,12 @@ public class SSLAuthenticationTest {
         }
     }
 
-    private static SecurityDomain getKeyStoreBackedSecurityDomain(String keyStorePath) throws Exception {
-        return getKeyStoreBackedSecurityDomain(keyStorePath, true);
+    private static SecurityDomain getKeyStoreBackedSecurityDomain(KeyStore keyStore) throws Exception {
+        return getKeyStoreBackedSecurityDomain(keyStore, true);
     }
 
-    private static SecurityDomain getKeyStoreBackedSecurityDomain(String keyStorePath, boolean decoder) throws Exception {
-        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(createKeyStore(keyStorePath));
+    private static SecurityDomain getKeyStoreBackedSecurityDomain(KeyStore keyStore, boolean decoder) throws Exception {
+        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(keyStore);
 
         SecurityDomain.Builder builder = SecurityDomain.builder()
                 .addRealm("KeystoreRealm", securityRealm)
@@ -222,34 +175,42 @@ public class SSLAuthenticationTest {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
         // Generates certificate and keystore for OCSP responder
-        ocspResponderCertificate = caGenerationTool.createIdentity("ocspResponder",
-                new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=OcspResponder"),
-                "ocsp-responder.keystore", Identity.CA, new ExtendedKeyUsageExtension(false, Collections.singletonList(OID_KP_OCSP_SIGNING)));
+        DefinedCAIdentity caIdentity = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedCAIdentity intermediateCAIdentity = caGenerationTool.getDefinedCAIdentity(Identity.INTERMEDIATE);
+        CustomIdentity responderIdentity = caIdentity.createIdentity("ocspResponder",
+        new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=OcspResponder"),
+        "ocsp-responder.keystore", new ExtendedKeyUsageExtension(false, Collections.singletonList(OID_KP_OCSP_SIGNING)));
+        ocspResponderCertificate = responderIdentity.getCertificate();
 
         // Generates GOOD certificate referencing the OCSP responder
-        X509Certificate ocspCheckedGoodCertificate = caGenerationTool.createIdentity("checked",
-                new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedGood"),
-                "ocsp-checked-good.keystore", Identity.INTERMEDIATE, new AuthorityInformationAccessExtension(Collections.singletonList(
-                        new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
-                )));
+        goodIdentity = intermediateCAIdentity.createIdentity("checked",
+        new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedGood"),
+        "ocsp-checked-good.keystore", new AuthorityInformationAccessExtension(Collections.singletonList(
+                new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
+        )));
+        X509Certificate ocspCheckedGoodCertificate = goodIdentity.getCertificate();
 
         // Generates REVOKED certificate referencing the OCSP responder
-        X509Certificate ocspCheckedRevokedCertificate = caGenerationTool.createIdentity("checked",
-                new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedRevoked"),
-                "ocsp-checked-revoked.keystore", Identity.CA, (new AuthorityInformationAccessExtension(Collections.singletonList(
-                        new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
-                ))));
+        revokedIdentity = caIdentity.createIdentity("checked",
+        new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedRevoked"),
+        "ocsp-checked-revoked.keystore", (new AuthorityInformationAccessExtension(Collections.singletonList(
+                new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
+        ))));
+        X509Certificate ocspCheckedRevokedCertificate = revokedIdentity.getCertificate();
 
         // Generates UNKNOWN certificate referencing the OCSP responder
-        X509Certificate ocspCheckedUnknownCertificate = caGenerationTool.createIdentity("checked",
-                new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedUnknown"),
-                "ocsp-checked-unknown.keystore", Identity.CA, new AuthorityInformationAccessExtension(Collections.singletonList(
-                        new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
-                )));
+        CustomIdentity unknownIdentity = caIdentity.createIdentity("checked",
+        new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedUnknown"),
+        "ocsp-checked-unknown.keystore", new AuthorityInformationAccessExtension(Collections.singletonList(
+                new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
+        )));
+        X509Certificate ocspCheckedUnknownCertificate = unknownIdentity.getCertificate();
 
-        X509Certificate greenJuneCertificate = caGenerationTool.getCertificate(Identity.GREENJUNE);
+        X509Certificate greenJuneCertificate = caGenerationTool
+                                                .getDefinedIdentity(Identity.GREENJUNE)
+                                                .getCertificate();
 
-        KeyStore beetlesKeyStore = createKeyStore("/jks/beetles.keystore");
+        KeyStore beetlesKeyStore = caGenerationTool.getBeetlesKeyStore();
         beetlesKeyStore.setCertificateEntry("ocspResponder", ocspResponderCertificate);
         beetlesKeyStore.setCertificateEntry("ocspCheckedGood", ocspCheckedGoodCertificate);
         beetlesKeyStore.setCertificateEntry("ocspCheckedRevoked", ocspCheckedRevokedCertificate);
@@ -258,9 +219,9 @@ public class SSLAuthenticationTest {
         createTemporaryKeyStoreFile(beetlesKeyStore, new File(JKS_LOCATION, "beetles.keystore"), PASSWORD);
 
         // Adds trusted cert for shortwinged
-        KeyStore shortwingedKeyStore = createKeyStore();
-        shortwingedKeyStore.setCertificateEntry("rove", caGenerationTool.getCertificate(Identity.ROVE));
-        createTemporaryKeyStoreFile(shortwingedKeyStore, SHORTWINGED_FILE, PASSWORD);
+        shortWingedKeyStore = createKeyStore();
+        shortWingedKeyStore.setCertificateEntry("rove", caGenerationTool.getDefinedIdentity(Identity.ROVE).getCertificate());
+        //createTemporaryKeyStoreFile(shortwingedKeyStore, SHORTWINGED_FILE, PASSWORD);
 
         // Used for all CRLs
         Calendar calendar = Calendar.getInstance();
@@ -273,52 +234,53 @@ public class SSLAuthenticationTest {
 
         // Creates the CRL for ca/crl/blank.pem
         X509v2CRLBuilder caBlankCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.CA).getSubjectDN()),
+                convertSunStyleToBCStyle(caIdentity.getCertificate().getSubjectDN()),
                 currentDate
         );
         X509CRLHolder caBlankCrlHolder = caBlankCrlBuilder.setNextUpdate(nextYear).build(
                 new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                         .setProvider("BC")
-                        .build(caGenerationTool.getPrivateKey(Identity.CA))
+                        .build(caIdentity.getPrivateKey())
         );
 
         // Creates the CRL for ica/crl/blank.pem
         X509v2CRLBuilder icaBlankCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.INTERMEDIATE).getSubjectDN()),
+                convertSunStyleToBCStyle(intermediateCAIdentity.getCertificate().getSubjectDN()),
                 currentDate
         );
         X509CRLHolder icaBlankCrlHolder = icaBlankCrlBuilder.setNextUpdate(nextYear).build(
                 new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                         .setProvider("BC")
-                        .build(caGenerationTool.getPrivateKey(Identity.INTERMEDIATE))
+                        .build(intermediateCAIdentity.getPrivateKey())
         );
 
         // Creates the CRL for firefly-revoked.pem
         X509v2CRLBuilder fireflyRevokedCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.CA).getSubjectDN()),
+                convertSunStyleToBCStyle(caIdentity.getCertificate().getSubjectDN()),
                 currentDate
         );
 
         fireflyRevokedCrlBuilder.addCRLEntry(
-                caGenerationTool.getCertificate(Identity.FIREFLY).getSerialNumber(),
+                caGenerationTool.getDefinedIdentity(Identity.FIREFLY).getCertificate().getSerialNumber(),
                 revokeDate,
                 CRLReason.unspecified
         );
         X509CRLHolder fireflyRevokedCrlHolder = fireflyRevokedCrlBuilder.setNextUpdate(nextYear).build(
                 new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                         .setProvider("BC")
-                        .build(caGenerationTool.getPrivateKey(Identity.CA))
+                        .build(caIdentity.getPrivateKey())
         );
 
+        DefinedCAIdentity secondCAIdentity = caGenerationTool.getDefinedCAIdentity(Identity.SECOND_CA);
         // Creates the CRL for ladybug-revoked.pem
         X509v2CRLBuilder ladybugRevokedCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.SECOND_CA).getSubjectDN()),
+                convertSunStyleToBCStyle(secondCAIdentity.getCertificate().getSubjectDN()),
                 currentDate
         );
 
         // revokes the certificate with serial number #2
         ladybugRevokedCrlBuilder.addCRLEntry(
-                caGenerationTool.getCertificate(Identity.LADYBUG).getSerialNumber(),
+                caGenerationTool.getDefinedIdentity(Identity.LADYBUG).getCertificate().getSerialNumber(),
                 revokeDate,
                 CRLReason.unspecified
         );
@@ -326,35 +288,35 @@ public class SSLAuthenticationTest {
         X509CRLHolder ladybugRevokedCrlHolder = ladybugRevokedCrlBuilder.setNextUpdate(nextYear).build(
                 new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                 .setProvider("BC")
-                .build(caGenerationTool.getPrivateKey(Identity.SECOND_CA))
+                .build(secondCAIdentity.getPrivateKey())
         );
 
         // Creates the CRL for ica-revoked.pem
         X509v2CRLBuilder icaRevokedCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.CA).getSubjectDN()),
+                convertSunStyleToBCStyle(caIdentity.getCertificate().getSubjectDN()),
                 currentDate
         );
         icaRevokedCrlBuilder.addCRLEntry(
-                caGenerationTool.getCertificate(Identity.INTERMEDIATE).getSerialNumber(),
+                intermediateCAIdentity.getCertificate().getSerialNumber(),
                 revokeDate,
                 CRLReason.unspecified
         );
         X509CRLHolder icaRevokedCrlHolder = icaRevokedCrlBuilder.setNextUpdate(nextYear).build(
                 new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                         .setProvider("BC")
-                        .build(caGenerationTool.getPrivateKey(Identity.CA))
+                        .build(caIdentity.getPrivateKey())
         );
 
         // Creates the CRL for rove-revoked.pem
         X509v2CRLBuilder roveRevokedCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.INTERMEDIATE).getSubjectDN()),
+                convertSunStyleToBCStyle(intermediateCAIdentity.getCertificate().getSubjectDN()),
                 currentDate
         );
 
         X509CRLHolder roveRevokedCrlHolder = roveRevokedCrlBuilder.setNextUpdate(nextYear).build(
                 new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                 .setProvider("BC")
-                .build(caGenerationTool.getPrivateKey(Identity.INTERMEDIATE))
+                .build(intermediateCAIdentity.getPrivateKey())
         );
 
         PemWriter caBlankCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(CA_BLANK_PEM_CRL)));
@@ -385,9 +347,9 @@ public class SSLAuthenticationTest {
         roveRevokedCrlOutput.close();
 
         ocspServer = new TestingOcspServer(OCSP_PORT);
-        ocspServer.createIssuer(1, caGenerationTool.getCertificate(Identity.CA));
-        ocspServer.createIssuer(2, caGenerationTool.getCertificate(Identity.INTERMEDIATE));
-        ocspServer.createCertificate(1, 1, caGenerationTool.getCertificate(Identity.INTERMEDIATE));
+        ocspServer.createIssuer(1, caIdentity.getCertificate());
+        ocspServer.createIssuer(2, intermediateCAIdentity.getCertificate());
+        ocspServer.createCertificate(1, 1, intermediateCAIdentity.getCertificate());
         ocspServer.createCertificate(2, 2, ocspCheckedGoodCertificate);
         ocspServer.createCertificate(3, 1, ocspCheckedRevokedCertificate);
         ocspServer.revokeCertificate(3, 4);
@@ -433,8 +395,9 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testOneWay() throws Throwable {
+        DefinedIdentity firefly = caGenerationTool.getDefinedIdentity(Identity.FIREFLY);
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .setKeyManager(firefly.createKeyManager())
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Firefly", null, true);
@@ -442,8 +405,9 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testCrlBlank() throws Throwable {
+        DefinedIdentity firefly = caGenerationTool.getDefinedIdentity(Identity.FIREFLY);
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .setKeyManager(firefly.createKeyManager())
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-crl.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Firefly", null, true);
@@ -451,8 +415,9 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testServerRevoked() throws Throwable {
+        DefinedIdentity firefly = caGenerationTool.getDefinedIdentity(Identity.FIREFLY);
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .setKeyManager(firefly.createKeyManager())
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-firefly-revoked.org", false, null, null, true);
@@ -460,8 +425,9 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testServerIcaRevoked() throws Throwable {
+        DefinedIdentity rove = caGenerationTool.getDefinedIdentity(Identity.ROVE);
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/jks/rove.keystore"))
+                .setKeyManager(rove.createKeyManager())
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-ica-revoked.org", false, null, null, true);
@@ -474,8 +440,9 @@ public class SSLAuthenticationTest {
      */
     @Test
     public void testOneWayServerRejectedWithSingleCRL() throws Throwable {
+        DefinedIdentity firefly = caGenerationTool.getDefinedIdentity(Identity.FIREFLY);
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .setKeyManager(firefly.createKeyManager())
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-one-crl.org", false, null, null, true);
@@ -488,8 +455,9 @@ public class SSLAuthenticationTest {
      */
     @Test
     public void testOneWayServerRejectedWithMultipleCRL() throws Throwable {
+        DefinedIdentity firefly = caGenerationTool.getDefinedIdentity(Identity.FIREFLY);
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .setKeyManager(firefly.createKeyManager())
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-multiple-crls-failure.org", false,
@@ -503,8 +471,9 @@ public class SSLAuthenticationTest {
      */
     @Test
     public void testOneWayServerAcceptedWithMultipleCRL() throws Throwable {
+        DefinedIdentity greenJune = caGenerationTool.getDefinedIdentity(Identity.GREENJUNE);
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/jks/greenjune.keystore"))
+                .setKeyManager(greenJune.createKeyManager())
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-multiple-crls-success.org", true,
@@ -517,8 +486,9 @@ public class SSLAuthenticationTest {
      */
     @Test
     public void testCRLMaxCertPathSucceeds() throws Throwable {
+        DefinedIdentity rove = caGenerationTool.getDefinedIdentity(Identity.ROVE);
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/jks/rove.keystore"))
+                .setKeyManager(rove.createKeyManager())
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-max-cert-path.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Rove", null, true);
@@ -531,8 +501,9 @@ public class SSLAuthenticationTest {
      */
     @Test
     public void testCRLMaxCertPathFails() throws Throwable {
+        DefinedIdentity rove = caGenerationTool.getDefinedIdentity(Identity.ROVE);
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/jks/rove.keystore"))
+                .setKeyManager(rove.createKeyManager())
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-max-cert-path-failure.org", false, null, null, true);
@@ -540,10 +511,12 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testTwoWay() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
-                .setTrustManager(getCATrustManager())
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(scarab.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
                 .setNeedClientAuth(true)
                 .build().create();
 
@@ -553,10 +526,12 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testTwoWayNoDecoder() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore", false))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
-                .setTrustManager(getCATrustManager())
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore(), false))
+                .setKeyManager(scarab.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
                 .setNeedClientAuth(true)
                 .build().create();
 
@@ -566,10 +541,12 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testTwoWayIca() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/shortwinged.keystore"))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
-                .setTrustManager(getCATrustManager())
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(shortWingedKeyStore))
+                .setKeyManager(scarab.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
                 .setNeedClientAuth(true)
                 .build().create();
 
@@ -585,9 +562,10 @@ public class SSLAuthenticationTest {
     public void testAcceptedIssuersConfiguredWithCRL() throws Throwable {
         InputStream crl = new FileInputStream("./target/test-classes/ica/crl/blank-blank.pem");
 
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
         X509RevocationTrustManager trustManager = X509RevocationTrustManager.builder()
                 .setTrustManagerFactory(getTrustManagerFactory())
-                .setTrustStore(createKeyStore("/jks/ca.truststore"))
+                .setTrustStore(ca.loadKeyStore())
                 .setCrlStream(crl)
                 .setPreferCrls(true)
                 .setNoFallback(true)
@@ -608,11 +586,13 @@ public class SSLAuthenticationTest {
         // this CRL contains the certificate with the alias "ladybug" which is being sent by the client
         crlStreams.add(new FileInputStream("target/test-classes/ca/crl/ladybug-revoked.pem"));
 
+        DefinedCAIdentity secondCA = caGenerationTool.getDefinedCAIdentity(Identity.SECOND_CA);
+        DefinedIdentity firefly = caGenerationTool.getDefinedIdentity(Identity.FIREFLY);
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .setKeyManager(firefly.createKeyManager())
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
-                        .setTrustStore(createKeyStore("/jks/ca.truststore2"))
+                        .setTrustStore(secondCA.loadKeyStore())
                         .setCrlStreams(crlStreams)
                         .setPreferCrls(true)
                         .setNoFallback(true)
@@ -635,12 +615,14 @@ public class SSLAuthenticationTest {
         // CRL contains "ladybug" certificate but client sends "green june" certificate
         crlStreams.add(new FileInputStream("target/test-classes/ca/crl/ladybug-revoked.pem"));
 
+        DefinedCAIdentity secondCA = caGenerationTool.getDefinedCAIdentity(Identity.SECOND_CA);
+        DefinedIdentity firefly = caGenerationTool.getDefinedIdentity(Identity.FIREFLY);
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
-                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(firefly.createKeyManager())
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
-                        .setTrustStore(createKeyStore("/jks/ca.truststore2"))
+                        .setTrustStore(secondCA.loadKeyStore())
                         .setCrlStreams(crlStreams)
                         .setPreferCrls(true)
                         .setNoFallback(true)
@@ -666,11 +648,13 @@ public class SSLAuthenticationTest {
         crlStreams.add(new FileInputStream("target/test-classes/ca/crl/ladybug-revoked.pem"));
         crlStreams.add(new FileInputStream("target/test-classes/ca/crl/firefly-revoked.pem"));
 
+        DefinedCAIdentity secondCA = caGenerationTool.getDefinedCAIdentity(Identity.SECOND_CA);
+        DefinedIdentity firefly = caGenerationTool.getDefinedIdentity(Identity.FIREFLY);
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .setKeyManager(firefly.createKeyManager())
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
-                        .setTrustStore(createKeyStore("/jks/ca.truststore2"))
+                        .setTrustStore(secondCA.loadKeyStore())
                         .setCrlStreams(crlStreams)
                         .setPreferCrls(true)
                         .setNoFallback(true)
@@ -694,12 +678,14 @@ public class SSLAuthenticationTest {
         crlStreams.add(new FileInputStream("target/test-classes/ca/crl/ladybug-revoked.pem"));
         crlStreams.add(new FileInputStream("target/test-classes/ca/crl/firefly-revoked.pem"));
 
+        DefinedCAIdentity secondCA = caGenerationTool.getDefinedCAIdentity(Identity.SECOND_CA);
+        DefinedIdentity firefly = caGenerationTool.getDefinedIdentity(Identity.FIREFLY);
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
-                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(firefly.createKeyManager())
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
-                        .setTrustStore(createKeyStore("/jks/ca.truststore2"))
+                        .setTrustStore(secondCA.loadKeyStore())
                         .setCrlStreams(crlStreams)
                         .setPreferCrls(true)
                         .setNoFallback(true)
@@ -714,12 +700,14 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testOcspGood() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(scarab.createKeyManager())
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
-                        .setTrustStore(createKeyStore("/jks/ca.truststore"))
+                        .setTrustStore(ca.loadKeyStore())
                         .setOcspResponderCert(ocspResponderCertificate)
                         .build())
                 .setNeedClientAuth(true)
@@ -727,6 +715,44 @@ public class SSLAuthenticationTest {
 
         performConnectionTest(serverContext, "protocol://test-two-way-ocsp-good.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Scarab",
                 "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedGood", false);
+    }
+
+    @Test
+    public void testOcspRevoked() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(scarab.createKeyManager())
+                .setTrustManager(X509RevocationTrustManager.builder()
+                        .setTrustManagerFactory(getTrustManagerFactory())
+                        .setTrustStore(ca.loadKeyStore())
+                        .setOcspResponderCert(ocspResponderCertificate)
+                        .build())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way-ocsp-revoked.org", false, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Scarab",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedRevoked", false);
+    }
+
+    @Test
+    public void testOcspUnknown() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(scarab.createKeyManager())
+                .setTrustManager(X509RevocationTrustManager.builder()
+                        .setTrustManagerFactory(getTrustManagerFactory())
+                        .setTrustStore(ca.loadKeyStore())
+                        .setOcspResponderCert(ocspResponderCertificate)
+                        .build())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way-ocsp-unknown.org", false, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Scarab",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedUnknown", false);
     }
 
     @Test
@@ -750,12 +776,14 @@ public class SSLAuthenticationTest {
     }
 
     private void ocspMaxCertPathCommon(int maxCertPath, boolean expectValid) throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(scarab.createKeyManager())
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
-                        .setTrustStore(createKeyStore("/jks/ca.truststore"))
+                        .setTrustStore(ca.loadKeyStore())
                         .setOcspResponderCert(ocspResponderCertificate)
                         .setMaxCertPath(maxCertPath)
                         .build())
@@ -768,17 +796,18 @@ public class SSLAuthenticationTest {
     @Test
     public void testClientSideOcsp() throws Throwable {
         SSLContext serverContextGood = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/jks/ocsp-checked-good.keystore"))
+                .setKeyManager(goodIdentity.createKeyManager())
                 .build().create();
 
         SSLContext serverContextRevoked = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/jks/ocsp-checked-revoked.keystore"))
+                .setKeyManager(revokedIdentity.createKeyManager())
                 .build().create();
 
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
         SSLContext clientContext = new SSLContextBuilder()
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
-                        .setTrustStore(createKeyStore("/jks/ca.truststore"))
+                        .setTrustStore(ca.loadKeyStore())
                         .setOcspResponderCert(ocspResponderCertificate)
                         .build())
                 .setClientMode(true)
@@ -796,10 +825,12 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testWantClientAuthWithCorrectCertificate() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
-                .setTrustManager(getCATrustManager())
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(scarab.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
                 .setWantClientAuth(true)
                 .build().create();
 
@@ -809,10 +840,12 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testWantClientAuthWithIncorrectCertificate() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
-                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
-                .setTrustManager(getCATrustManager())
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(scarab.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
                 .setWantClientAuth(true)
                 .build().create();
 
@@ -821,7 +854,7 @@ public class SSLAuthenticationTest {
     }
 
     private void performConnectionTest(SSLContext serverContext, String clientUri, boolean expectValid, String expectedServerPrincipal, String expectedClientPrincipal, boolean oneWay) throws Throwable {
-        System.setProperty("wildfly.config.url", SSLAuthenticationTest.class.getResource("wildfly-ssl-test-config-v1_7.xml").toExternalForm());
+        System.setProperty("wildfly.config.url", SSLAuthenticationTest.class.getResource("ssl-authentication-config.xml").toExternalForm());
         AccessController.doPrivileged((PrivilegedAction<Integer>) () -> Security.insertProviderAt(WildFlyElytronPasswordProvider.getInstance(), 1));
 
         AuthenticationContext context = AuthenticationContext.getContextManager().get();
@@ -889,10 +922,10 @@ public class SSLAuthenticationTest {
                 }
 
                 if (oneWay) {
-                    assertFalse(clientSocket.getSession().getProtocol().equals("TLSv1.3")); // since TLS 1.3 is not enabled by default (ELY-1917)
+                    assertNotEquals("TLSv1.3", clientSocket.getSession().getProtocol());// since TLS 1.3 is not enabled by default (ELY-1917)
                 } else {
-                    assertFalse(serverSocket.getSession().getProtocol().equals("TLSv1.3")); // since TLS 1.3 is not enabled by default
-                    assertFalse(clientSocket.getSession().getProtocol().equals("TLSv1.3")); // since TLS 1.3 is not enabled by default
+                    assertNotEquals("TLSv1.3", serverSocket.getSession().getProtocol()); // since TLS 1.3 is not enabled by default
+                    assertNotEquals("TLSv1.3", clientSocket.getSession().getProtocol()); // since TLS 1.3 is not enabled by default
                 }
                 return received;
             } catch (Exception e) {
