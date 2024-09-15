@@ -32,6 +32,7 @@ import java.util.PropertyPermission;
 import java.util.Stack;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.wildfly.security.ParametricPrivilegedAction;
@@ -84,6 +85,8 @@ public class AlternateSecurityManagerTest {
 
     @Before
     public void before() {
+        Assume.assumeTrue("Skipping AlternateSecurityManagerTest suite, tests are not being run on JDK 17 or lower.",
+                Integer.parseInt(System.getProperty("java.specification.version")) <= 17);
         AccessControlContext current = AccessController.getContext();
         ProtectionDomain[] domains = getProtectionDomainStack(current);
 

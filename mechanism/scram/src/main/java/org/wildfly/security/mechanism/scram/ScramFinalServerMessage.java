@@ -19,29 +19,57 @@
 package org.wildfly.security.mechanism.scram;
 
 /**
+ * Final server message for the SCRAM authentication.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ScramFinalServerMessage {
     private final byte[] serverSignature;
     private final byte[] messageBytes;
 
+    /**
+     * Constructs a new {@code ScramFinalServerMessage} instance.
+     *
+     * @param serverSignature the server signature sent to the client in form of the byte array.
+     * @param messageBytes the final server message in form of byte array.
+     */
     ScramFinalServerMessage(final byte[] serverSignature, final byte[] messageBytes) {
         this.serverSignature = serverSignature;
         this.messageBytes = messageBytes;
     }
 
+    /**
+     * Returns the server signature sent to the client in form of the byte array.
+     *
+     * @return the server signature sent to the client in form of the byte array.
+     */
     byte[] getRawServerSignature() {
         return serverSignature;
     }
 
+    /**
+     * Returns the final server message in form of byte array.
+     *
+     * @return the final server message in form of byte array.
+     */
     byte[] getRawMessageBytes() {
         return messageBytes;
     }
 
+    /**
+     * Returns a copy of the server signature sent to the client in form of the byte array.
+     *
+     * @return a copy of the server signature sent to the client in form of the byte array.
+     */
     public byte[] getServerSignature() {
         return serverSignature.clone();
     }
 
+    /**
+     * Returns a copy of the final server message in form of byte array.
+     *
+     * @return a copy of the final server message in form of byte array.
+     */
     public byte[] getMessageBytes() {
         return messageBytes.clone();
     }

@@ -45,6 +45,7 @@ import org.wildfly.security.jose.util.JsonSerialization;
 public class Oidc {
 
     public static final String ACCEPT = "Accept";
+    public static final String AUTHENTICATION_REQUEST_FORMAT = "authentication-request-format";
     public static final String OIDC_NAME = "OIDC";
     public static final String JSON_CONTENT_TYPE = "application/json";
     public static final String HTML_CONTENT_TYPE = "text/html";
@@ -65,6 +66,7 @@ public class Oidc {
     public static final String FACES_REQUEST = "Faces-Request";
     public static final String GRANT_TYPE = "grant_type";
     public static final String INVALID_TOKEN = "invalid_token";
+    public static final String ISSUER = "iss";
     public static final String LOGIN_HINT = "login_hint";
     public static final String DOMAIN_HINT = "domain_hint";
     public static final String MAX_AGE = "max_age";
@@ -73,6 +75,8 @@ public class Oidc {
     public static final String PARTIAL = "partial/";
     public static final String PASSWORD = "password";
     public static final String PROMPT = "prompt";
+    public static final String REQUEST = "request";
+    public static final String REQUEST_URI = "request_uri";
     public static final String SCOPE = "scope";
     public static final String UI_LOCALES = "ui_locales";
     public static final String USERNAME = "username";
@@ -113,6 +117,7 @@ public class Oidc {
     static final String KEYCLOAK_QUERY_BEARER_TOKEN = "k_query_bearer_token";
     static final String DEFAULT_TOKEN_SIGNATURE_ALGORITHM = "RS256";
     public static final String DISABLE_TYP_CLAIM_VALIDATION_PROPERTY_NAME = "wildfly.elytron.oidc.disable.typ.claim.validation";
+    public static final String ALLOW_QUERY_PARAMS_PROPERTY_NAME = "wildfly.elytron.oidc.allow.query.params";
     public static final String X_REQUESTED_WITH = "X-Requested-With";
     public static final String XML_HTTP_REQUEST = "XMLHttpRequest";
 
@@ -197,6 +202,27 @@ public class Oidc {
     public enum TokenStore {
         SESSION,
         COOKIE
+    }
+
+    public enum AuthenticationRequestFormat {
+        OAUTH2("oauth2"),
+        REQUEST("request"),
+        REQUEST_URI("request_uri");
+
+        private final String value;
+
+        AuthenticationRequestFormat(String value) {
+            this.value = value;
+        }
+
+        /**
+         * Get the string value for this authentication format.
+         *
+         * @return the string value for this authentication format
+         */
+        public String getValue() {
+            return value;
+        }
     }
 
     public enum ClientCredentialsProviderType {
@@ -350,6 +376,20 @@ public class Oidc {
         } else {
             log.tracef("\t%s: %s", name, token.substring(0, token.lastIndexOf(".")) + ".signature");
         }
+    }
+
+    protected static boolean checkCachedAccountMatchesRequest(OidcAccount account, OidcClientConfiguration deployment) {
+        if (deployment.getRealm() != null
+                && ! deployment.getRealm().equals(account.getOidcSecurityContext().getRealm())) {
+            log.debug("Account in session belongs to a different realm than for this request.");
+            return false;
+        }
+        if (deployment.getProviderUrl() != null
+                && ! deployment.getProviderUrl().equals(account.getOidcSecurityContext().getOidcClientConfiguration().getProviderUrl())) {
+            log.debug("Account in session belongs to a different provider than for this request.");
+            return false;
+        }
+        return true;
     }
 
 }

@@ -168,9 +168,7 @@ public final class X500PrincipalUtil {
             }
         } else {
             // The attribute values will be in reverse order
-            for (int i = 0; i < len; i++) {
-                result[i] = strings[i];
-            }
+            System.arraycopy(strings, 0, result, 0, len);
         }
         return result;
     }

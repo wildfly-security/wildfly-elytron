@@ -102,6 +102,14 @@ public class AuthenticationMechanismException extends IOException {
         return copyContents(source, new AuthenticationMechanismException(source.getMessage(), source.getCause()));
     }
 
+    /**
+     * Copies the stack trace and suppressed exceptions from a source exception to a specified throwable.
+     *
+     * @param source the source exception from which the stack trace and suppressed exceptions should be copied.
+     * @param throwable the throwable to which the contents should be copied.
+     * @param <T> the type of throwable to which the contents should be copied.
+     * @return the throwable that was passed in as a parameter, with the contents copied from the source exception.
+     */
     private static <T extends Throwable> T copyContents(final Exception source, final T throwable) {
         throwable.setStackTrace(source.getStackTrace());
         final Throwable[] suppressed = source.getSuppressed();

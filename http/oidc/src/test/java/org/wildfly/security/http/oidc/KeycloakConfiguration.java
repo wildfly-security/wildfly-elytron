@@ -18,11 +18,25 @@
 
 package org.wildfly.security.http.oidc;
 
+import static org.wildfly.security.http.oidc.OidcBaseTest.TENANT1_REALM;
+import static org.wildfly.security.http.oidc.OidcBaseTest.TENANT2_REALM;
+import static org.wildfly.security.http.oidc.Oidc.OIDC_SCOPE;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import javax.security.auth.x500.X500Principal;
 
+import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
@@ -30,8 +44,9 @@ import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.RolesRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-
+import org.wildfly.security.ssl.test.util.CAGenerationTool;
 import io.restassured.RestAssured;
+
 
 /**
  * Keycloak configuration for testing.
@@ -47,6 +62,35 @@ public class KeycloakConfiguration {
     private static final String BOB = "bob";
     private static final String BOB_PASSWORD = "bob123+";
     public static final String ALLOWED_ORIGIN = "http://somehost";
+    public static final boolean EMAIL_VERIFIED = false;
+    public static final String RSA_KEYSTORE_FILE_NAME = "jwt.keystore";
+    public static final String EC_KEYSTORE_FILE_NAME = "jwtEC.keystore";
+    public static final String KEYSTORE_ALIAS = "jwtKeystore";
+    public static final String KEYSTORE_PASS = "Elytron";
+    public static final String PKCS12_KEYSTORE_TYPE = "PKCS12";
+    public static String KEYSTORE_CLASSPATH;
+
+    /* Accepted Request Object Encrypting Algorithms for KeyCloak*/
+    public static final String RSA_OAEP = "RSA-OAEP";
+    public static final String RSA_OAEP_256 = "RSA-OAEP-256";
+    public static final String RSA1_5 = "RSA1_5";
+
+    /* Accepted Request Object Encryption Methods for KeyCloak*/
+    public static final String A128CBC_HS256 = "A128CBC-HS256";
+    public static final String A192CBC_HS384 = "A192CBC-HS384";
+    public static final String A256CBC_HS512 = "A256CBC-HS512";
+    public static CAGenerationTool caGenerationTool = null;
+    public X509Certificate caCertificate = null;
+
+    // the users below are for multi-tenancy tests specifically
+    public static final String TENANT1_USER = "tenant1_user";
+    public static final String TENANT1_PASSWORD = "tenant1_password";
+    public static final String TENANT2_USER = "tenant2_user";
+    public static final String TENANT2_PASSWORD = "tenant2_password";
+    public static final String CHARLIE = "charlie";
+    public static final String CHARLIE_PASSWORD =" charlie123+";
+    public static final String DAN = "dan";
+    public static final String DAN_PASSWORD =" dan123+";
 
     /**
      * Configure RealmRepresentation as follows:
@@ -60,14 +104,20 @@ public class KeycloakConfiguration {
      * </ul>
      */
     public static RealmRepresentation getRealmRepresentation(final String realmName, String clientId, String clientSecret,
-                                                             String clientHostName, int clientPort, String clientApp) {
-        return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp);
+                                                             String clientHostName, int clientPort, String clientApp, boolean configureClientScopes) throws Exception {
+        return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp, configureClientScopes);
+    }
+
+    public static RealmRepresentation getRealmRepresentation(final String realmName, String clientId, String clientSecret,
+                                                             String clientHostName, int clientPort, String clientApp, int accessTokenLifespan,
+                                                             int ssoSessionMaxLifespan, boolean configureClientScopes, boolean multiTenancyApp) throws Exception {
+        return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp, accessTokenLifespan, ssoSessionMaxLifespan, configureClientScopes, multiTenancyApp);
     }
 
     public static RealmRepresentation getRealmRepresentation(final String realmName, String clientId, String clientSecret,
                                                              String clientHostName, int clientPort, String clientApp,
                                                              boolean directAccessGrantEnabled, String bearerOnlyClientId,
-                                                             String corsClientId) {
+                                                             String corsClientId) throws Exception {
         return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, bearerOnlyClientId, corsClientId);
     }
 
@@ -101,23 +151,43 @@ public class KeycloakConfiguration {
                 .as(AccessTokenResponse.class).getToken();
     }
 
+    private static RealmRepresentation createRealm(final String realmName, String clientId, String clientSecret,
+                               String clientHostName, int clientPort, String clientApp,
+                               boolean directAccessGrantEnabled, String bearerOnlyClientId,
+                               String corsClientId) throws Exception {
+       return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, bearerOnlyClientId, corsClientId, false);
+    }
+
     private static RealmRepresentation createRealm(String name, String clientId, String clientSecret,
-                                                   String clientHostName, int clientPort, String clientApp) {
-        return createRealm(name, clientId, clientSecret, clientHostName, clientPort, clientApp, false, null, null);
+                                                   String clientHostName, int clientPort, String clientApp, boolean configureClientScopes) throws Exception {
+        return createRealm(name, clientId, clientSecret, clientHostName, clientPort, clientApp, false, null, null, configureClientScopes);
+    }
+
+    private static RealmRepresentation createRealm(String name, String clientId, String clientSecret,
+                                                   String clientHostName, int clientPort, String clientApp, int accessTokenLifeSpan, int ssoSessionMaxLifespan,
+                                                   boolean configureClientScopes, boolean multiTenancyApp) throws Exception {
+        return createRealm(name, clientId, clientSecret, clientHostName, clientPort, clientApp, false, null, null, accessTokenLifeSpan, ssoSessionMaxLifespan, configureClientScopes, multiTenancyApp);
     }
 
     private static RealmRepresentation createRealm(String name, String clientId, String clientSecret,
                                                    String clientHostName, int clientPort, String clientApp,
                                                    boolean directAccessGrantEnabled, String bearerOnlyClientId,
-                                                   String corsClientId) {
-        RealmRepresentation realm = new RealmRepresentation();
+                                                   String corsClientId, boolean configureClientScopes) throws Exception {
+        return createRealm(name, clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, bearerOnlyClientId, corsClientId, 3, 3, configureClientScopes, false);
+    }
 
+    private static RealmRepresentation createRealm(String name, String clientId, String clientSecret,
+                                                   String clientHostName, int clientPort, String clientApp,
+                                                   boolean directAccessGrantEnabled, String bearerOnlyClientId,
+                                                   String corsClientId, int accessTokenLifespan, int ssoSessionMaxLifespan,
+                                                   boolean configureClientScopes, boolean multiTenancyApp) throws Exception {
+        RealmRepresentation realm = new RealmRepresentation();
         realm.setRealm(name);
         realm.setEnabled(true);
         realm.setUsers(new ArrayList<>());
         realm.setClients(new ArrayList<>());
-        realm.setAccessTokenLifespan(3);
-        realm.setSsoSessionMaxLifespan(3);
+        realm.setAccessTokenLifespan(accessTokenLifespan);
+        realm.setSsoSessionMaxLifespan(ssoSessionMaxLifespan);
 
         RolesRepresentation roles = new RolesRepresentation();
         List<RoleRepresentation> realmRoles = new ArrayList<>();
@@ -128,37 +198,77 @@ public class KeycloakConfiguration {
         realm.getRoles().getRealm().add(new RoleRepresentation("user", null, false));
         realm.getRoles().getRealm().add(new RoleRepresentation("admin", null, false));
 
-        realm.getClients().add(createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled));
+        ClientRepresentation webAppClient = createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, multiTenancyApp);
+        if (configureClientScopes) {
+            webAppClient.setDefaultClientScopes(Collections.singletonList(OIDC_SCOPE));
+            webAppClient.setOptionalClientScopes(Arrays.asList("phone", "email", "profile"));
+        }
+        realm.getClients().add(webAppClient);
 
         if (bearerOnlyClientId != null) {
             realm.getClients().add(createBearerOnlyClient(bearerOnlyClientId));
         }
 
         if (corsClientId != null) {
-            realm.getClients().add(createWebAppClient(corsClientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, ALLOWED_ORIGIN));
+            realm.getClients().add(createWebAppClient(corsClientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, ALLOWED_ORIGIN, multiTenancyApp));
         }
 
-        realm.getUsers().add(createUser(ALICE, ALICE_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
-        realm.getUsers().add(createUser(BOB, BOB_PASSWORD, Arrays.asList(USER_ROLE)));
+        if (name.equals(TENANT1_REALM)) {
+            realm.getUsers().add(createUser(TENANT1_USER, TENANT1_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+            realm.getUsers().add(createUser(CHARLIE, CHARLIE_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+            realm.getUsers().add(createUser(DAN, DAN_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+        } else if (name.equals(TENANT2_REALM)) {
+            realm.getUsers().add(createUser(TENANT2_USER, TENANT2_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+            realm.getUsers().add(createUser(CHARLIE, CHARLIE_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+            realm.getUsers().add(createUser(DAN, DAN_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+        } else {
+            realm.getUsers().add(createUser(ALICE, ALICE_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+            realm.getUsers().add(createUser(BOB, BOB_PASSWORD, Arrays.asList(USER_ROLE)));
+        }
         return realm;
     }
 
-    private static ClientRepresentation createWebAppClient(String clientId, String clientSecret, String clientHostName, int clientPort, String clientApp, boolean directAccessGrantEnabled) {
-        return createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, null);
+    private static ClientRepresentation createWebAppClient(String clientId, String clientSecret, String clientHostName, int clientPort, String clientApp,
+                                                           boolean directAccessGrantEnabled, boolean multiTenancyApp) throws Exception {
+        return createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, null, multiTenancyApp);
     }
 
     private static ClientRepresentation createWebAppClient(String clientId, String clientSecret, String clientHostName, int clientPort,
-                                                           String clientApp, boolean directAccessGrantEnabled, String allowedOrigin) {
+                                                           String clientApp, boolean directAccessGrantEnabled, String allowedOrigin, boolean multiTenancyApp) throws Exception {
         ClientRepresentation client = new ClientRepresentation();
         client.setClientId(clientId);
         client.setPublicClient(false);
         client.setSecret(clientSecret);
         //client.setRedirectUris(Arrays.asList("*"));
-        client.setRedirectUris(Arrays.asList("http://" + clientHostName + ":" + clientPort + "/" + clientApp));
+        if (multiTenancyApp) {
+            client.setRedirectUris(Arrays.asList("http://" + clientHostName + ":" + clientPort + "/" + clientApp + "/*"));
+        } else {
+            client.setRedirectUris(Arrays.asList("http://" + clientHostName + ":" + clientPort + "/" + clientApp));
+        }
         client.setEnabled(true);
         client.setDirectAccessGrantsEnabled(directAccessGrantEnabled);
+
         if (allowedOrigin != null) {
             client.setWebOrigins(Collections.singletonList(allowedOrigin));
+        }
+
+        OIDCAdvancedConfigWrapper oidcAdvancedConfigWrapper = OIDCAdvancedConfigWrapper.fromClientRepresentation(client);
+        oidcAdvancedConfigWrapper.setUseJwksUrl(false);
+        KEYSTORE_CLASSPATH = Objects.requireNonNull(KeycloakConfiguration.class.getClassLoader().getResource("")).getPath();
+        File ksFile = new File(KEYSTORE_CLASSPATH + RSA_KEYSTORE_FILE_NAME);
+        if (ksFile.exists()) {
+            InputStream stream = findFile(KEYSTORE_CLASSPATH + RSA_KEYSTORE_FILE_NAME);
+            KeyStore keyStore = KeyStore.getInstance(PKCS12_KEYSTORE_TYPE);
+            keyStore.load(stream, KEYSTORE_PASS.toCharArray());
+            client.getAttributes().put("jwt.credential.certificate", Base64.getEncoder().encodeToString(keyStore.getCertificate(KEYSTORE_ALIAS).getEncoded()));
+        } else {
+            caGenerationTool = CAGenerationTool.builder()
+                    .setBaseDir(KEYSTORE_CLASSPATH)
+                    .setRequestIdentities(CAGenerationTool.Identity.values()) // Create all identities.
+                    .build();
+            X500Principal principal = new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=OcspResponder");
+            X509Certificate rsaCert = caGenerationTool.createIdentity(KEYSTORE_ALIAS, principal, RSA_KEYSTORE_FILE_NAME, CAGenerationTool.Identity.CA);
+            client.getAttributes().put("jwt.credential.certificate", Base64.getEncoder().encodeToString(rsaCert.getEncoded()));
         }
         return client;
     }
@@ -178,6 +288,9 @@ public class KeycloakConfiguration {
         user.setCredentials(new ArrayList<>());
         user.setRealmRoles(realmRoles);
         user.setEmail(username + "@gmail.com");
+        user.setEmailVerified(EMAIL_VERIFIED);
+        user.setFirstName("Alice");
+        user.setLastName("Smith");
 
         CredentialRepresentation credential = new CredentialRepresentation();
         credential.setType(CredentialRepresentation.PASSWORD);
@@ -185,6 +298,14 @@ public class KeycloakConfiguration {
         credential.setTemporary(false);
         user.getCredentials().add(credential);
         return user;
+    }
+
+    private static InputStream findFile(String keystoreFile) {
+        try {
+            return new FileInputStream(keystoreFile);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
