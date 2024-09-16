@@ -105,25 +105,25 @@ public interface ElytronToolMessages extends BasicLogger {
             "Provider must be installed through java.security file or through service loader from properly packaged jar file on classpath.")
     String cmdLineCustomCredentialStoreProviderDesc();
 
-    @Message(id = NONE, value = "Create credential store (Action)")
+    @Message(id = NONE, value = "* Create credential store")
     String cmdLineCreateCredentialStoreDesc();
 
     @Message(id = NONE, value = "Credential store type")
     String cmdLineCredentialStoreTypeDesc();
 
-    @Message(id = NONE, value = "Add new alias to the credential store (Action)")
+    @Message(id = NONE, value = "* Add new alias to the credential store")
     String cmdLineAddAliasDesc();
 
-    @Message(id = NONE, value = "Remove alias from the credential store (Action)")
+    @Message(id = NONE, value = "* Remove alias from the credential store")
     String cmdLineRemoveAliasDesc();
 
-    @Message(id = NONE, value = "Check if alias exists within the credential store (Action)")
+    @Message(id = NONE, value = "* Check if alias exists within the credential store")
     String cmdLineCheckAliasDesc();
 
-    @Message(id = NONE, value = "Display all aliases (Action)")
+    @Message(id = NONE, value = "* Display all aliases")
     String cmdLineAliasesDesc();
 
-    @Message(id = NONE, value = "Display all types of stored credentials for given alias (Action)")
+    @Message(id = NONE, value = "* Display all types of stored credentials for given alias")
     String cmdLineAliasTypes();
 
     @Message(id = NONE, value = "Generate private and public key pair and store them as a KeyPairCredential")
@@ -159,7 +159,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Print summary, especially command how to create this credential store")
     String cmdLinePrintSummary();
 
-    @Message(id = NONE, value = "Get help with usage of this command (Action)")
+    @Message(id = NONE, value = "* Get help with usage of this command")
     String cmdLineHelp();
 
     @Message(id = NONE, value = "Alias \"%s\" exists")
@@ -281,7 +281,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "CLI command to add new credential store:%n")
     String cliCommandToNewCredentialStore();
 
-    @Message(id = NONE, value = "Bulk conversion with options listed in description file. All options have no default value and should be set in the file. (Action)%n" +
+    @Message(id = NONE, value = "* Bulk conversion with options listed in description file. All options have no default value and should be set in the file.%n" +
                                 "All options are required with the exceptions:%n" +
                                 " - \"properties\" option%n - \"type\" option (defaults to \"KeyStoreCredentialStore\")%n - \"credential-store-provider\" option%n - \"other-providers\" option%n" +
                                 " - \"salt\" and \"iteration\" options can be omitted when plain-text password is used%n" +
@@ -406,7 +406,7 @@ public interface ElytronToolMessages extends BasicLogger {
     String longOptionDescription(String option, String longOption);
 
     // filesystem-realm command
-    @Message(id = NONE, value = "'FileSystemRealm' command is used to convert legacy properties files and scripts to an Elytron FileSystemRealm.")
+    @Message(id = NONE, value = "\"filesystem-realm\" command is used to convert legacy properties files and scripts to an Elytron FileSystemRealm.")
     String cmdFileSystemRealmHelpHeader();
 
     @Message(id = NONE, value = "The relative or absolute path to the users file.")
@@ -489,7 +489,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Name of the security-domain to be configured.")
     String cmdFileSystemRealmSecurityDomainNameDesc();
 
-    @Message(id = NONE, value = "Bulk conversion with options listed in description file. Optional options have default values, required options do not. (Action) %n" +
+    @Message(id = NONE, value = "* Bulk conversion with options listed in description file. Optional options have default values, required options do not.%n" +
             "The options fileSystemRealmName and securityDomainName are optional. %n" +
             "These optional options have default values of: converted-properties-filesystem-realm and converted-properties-security-domain. %n" +
             "Values are required for the following options: users-file, roles-file, and output-location. %n" +
@@ -498,7 +498,7 @@ public interface ElytronToolMessages extends BasicLogger {
             "Blocks of options must be separated by a blank line.")
     String cmdFileSystemRealmBulkConvertDesc();
 
-    @Message(id = NONE, value = "Bulk conversion with options listed in description file. Optional options have default values, required options do not. (Action) %n" +
+    @Message(id = NONE, value = "* Bulk conversion with options listed in description file. Optional options have default values, required options do not. %n" +
             "The options realm-name, hash-encoding, levels, secret-key, create, populate, keystore, type, password, password-env, and key-pair are optional. %n" +
             "Values are required for the following options: input-location, output-location, and credential-store. %n" +
             "The default values of realm-name, hash-encoding, hash-charset, levels, secret-key, create, and populate are encrypted-filesystem-realm, BASE64, UTF-8, 2, key, true, and true respectively. %n" +
@@ -508,7 +508,7 @@ public interface ElytronToolMessages extends BasicLogger {
             "Blocks of options must be separated by a blank line.")
     String cmdFileSystemRealmEncryptBulkConvertDesc();
 
-    @Message(id = NONE, value = "Bulk conversion with options listed in description file. (Action)" +
+    @Message(id = NONE, value = "* Bulk conversion with options listed in description file. " +
             "Optional options have defaults and can be skipped ([type, default_or_NULL]), required options do not (<type>). %n" +
             "One of either password or password-env is required. %n" +
             "Blocks of options must be separated by a blank line; order is not important. Syntax: %n" +
@@ -519,7 +519,7 @@ public interface ElytronToolMessages extends BasicLogger {
     String cmdFileSystemRealmIntegrityBulkConvertDesc();
 
     // filesystem-realm encrypt command
-    @Message(id = NONE, value = "'FileSystemRealmEncrypt' command is used to convert non-empty, un-encrypted FileSystemSecurityRealm(s) to encrypted FileSystemSecurityRealm(s) with a SecretKey.")
+    @Message(id = NONE, value = "\"filesystem-realm-encrypt\" command is used to convert non-empty, un-encrypted FileSystemSecurityRealm(s) to encrypted FileSystemSecurityRealm(s) with a SecretKey.")
     String cmdFileSystemEncryptHelpHeader();
 
     @Message(id = NONE, value = "Secret Key was not found in the Credential Store at %s, and populate option was not set. Skipping descriptor file block number %d.")
@@ -588,6 +588,9 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Provides a detailed summary of all operations performed, once the command finishes.")
     String cmdFileSystemRealmSummaryDesc();
+
+    @Message(id = NONE, value = "Whether the cli script file will be overwritten, if attempting to write to an existing file.")
+    String cmdFileSystemRealmOverwriteCliScriptFileDesc();
 
     @Message(id = NONE, value = "No users file specified. Please use either --bulk-convert <file> or specify a users file using --users-file <file>")
     MissingOptionException missingUsersFile();
@@ -669,7 +672,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Should file %s be overwritten? (y/n) ")
     String shouldFileBeOverwritten(String file);
 
-    @Message(id = NONE, value = "\nSome of the parameters below are mutually exclusive actions which are marked with (Action) in the description.")
+    @Message(id = NONE, value = "Some of the parameters below are mutually exclusive actions which are marked with * in the description.")
     String cmdLineActionsHelpHeader();
 
     @Message(id = NONE, value = "Key size (bits).")
@@ -738,8 +741,13 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "No Credential Store location or Secret Key Alias specified.")
     MissingOptionException missingCredentialStoreSecretKey();
 
+    @Message(id = NONE, value = "To get list of options for a specific command, please specify the command by using ./elytron-tool.sh [command] --help")
+    String generalHelpOptionsOpening();
+
+    @Message(id = NONE, value = "A tool that assists with Elytron configuration")
+    String cmdElytronToolDescription();
+
     // Numeric Errors
     @Message(id = 35, value = "Only one of '%s' and '%s' can be specified at the same time")
     IllegalArgumentException mutuallyExclusiveOptions(String first, String second);
-
 }

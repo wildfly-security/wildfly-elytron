@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.tool;
 
+import static org.wildfly.security.tool.Params.BOOLEAN_PARAM;
 import static org.wildfly.security.tool.Params.BULK_CONVERT_PARAM;
 import static org.wildfly.security.tool.Params.CREATE_CREDENTIAL_STORE_PARAM;
 import static org.wildfly.security.tool.Params.CREDENTIAL_STORE_LOCATION_PARAM;
@@ -38,6 +39,7 @@ import static org.wildfly.security.tool.Params.LEVELS_PARAM;
 import static org.wildfly.security.tool.Params.LINE_SEPARATOR;
 import static org.wildfly.security.tool.Params.NAME_PARAM;
 import static org.wildfly.security.tool.Params.OUTPUT_LOCATION_PARAM;
+import static org.wildfly.security.tool.Params.OVERWRITE_SCRIPT_FILE;
 import static org.wildfly.security.tool.Params.PASSWORD_ENV_PARAM;
 import static org.wildfly.security.tool.Params.PASSWORD_PARAM;
 import static org.wildfly.security.tool.Params.REALM_NAME_PARAM;
@@ -65,7 +67,6 @@ import javax.crypto.SecretKey;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
@@ -73,6 +74,10 @@ import org.wildfly.security.auth.realm.FileSystemRealmUtil;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealmBuilder;
 import org.wildfly.security.password.spec.Encoding;
+import org.wildfly.security.tool.help.DescriptionSection;
+import org.wildfly.security.tool.help.HelpCommand;
+import org.wildfly.security.tool.help.OptionsSection;
+import org.wildfly.security.tool.help.UsageSection;
 
 /**
  * Elytron-Tool command to convert un-encrypted FileSystemRealms into an encrypted realm with the use of a SecretKey.
@@ -173,6 +178,10 @@ class FileSystemEncryptRealmCommand extends Command {
         option.setArgName(FILE_PARAM);
         options.addOption(option);
 
+        option = new Option("w", OVERWRITE_SCRIPT_FILE, true, ElytronToolMessages.msg.cmdFileSystemRealmOverwriteCliScriptFileDesc());
+        option.setArgName(BOOLEAN_PARAM);
+        options.addOption(option);
+
         option = Option.builder().longOpt(HELP_PARAM).desc(ElytronToolMessages.msg.cmdLineHelp()).build();
         options.addOption(option);
 
@@ -205,6 +214,7 @@ class FileSystemEncryptRealmCommand extends Command {
         private Boolean encoded;
         private Boolean createCredentialStore;
         private Boolean populate;
+        private Boolean overwriteScriptFile;
         Descriptor() {
         }
 
@@ -227,6 +237,7 @@ class FileSystemEncryptRealmCommand extends Command {
             this.createCredentialStore = descriptor.createCredentialStore;
             this.secretKeyAlias = descriptor.secretKeyAlias;
             this.populate = descriptor.populate;
+            this.overwriteScriptFile = descriptor.overwriteScriptFile;
         }
 
         public Encoding getHashEncoding() {
@@ -359,6 +370,14 @@ class FileSystemEncryptRealmCommand extends Command {
             this.keyPairAlias = keyPairAlias;
         }
 
+        public Boolean getOverwriteScriptFile() {
+            return overwriteScriptFile;
+        }
+
+        public void setOverwriteScriptFile(Boolean overwriteScriptFile) {
+            this.overwriteScriptFile = overwriteScriptFile;
+        }
+
         void reset() {
             this.inputRealmLocation = null;
             this.outputRealmLocation = null;
@@ -376,6 +395,7 @@ class FileSystemEncryptRealmCommand extends Command {
             this.encoded = null;
             this.levels = null;
             this.populate = null;
+            this.overwriteScriptFile = null;
         }
     }
 
@@ -421,6 +441,7 @@ class FileSystemEncryptRealmCommand extends Command {
         String encodedOption = cmdLine.getOptionValue("f");
         String bulkConvert = cmdLine.getOptionValue("b");
         String populateOption = cmdLine.getOptionValue("p");
+        String overwriteScriptFileOption = cmdLine.getOptionValue("w");
 
         if (bulkConvert == null) {
             if (realmNameOption == null) {
@@ -469,6 +490,9 @@ class FileSystemEncryptRealmCommand extends Command {
                 descriptor.setPopulate(true);
             } else {
                 descriptor.setPopulate(Boolean.valueOf(populateOption));
+            }
+            if (overwriteScriptFileOption != null) {
+                descriptor.setOverwriteScriptFile(Boolean.valueOf(overwriteScriptFileOption));
             }
 
             if (levelsOption == null) {
@@ -576,13 +600,15 @@ class FileSystemEncryptRealmCommand extends Command {
      */
     @Override
     public void help() {
-        HelpFormatter help = new HelpFormatter();
-        help.setWidth(WIDTH);
-        help.printHelp(ElytronToolMessages.msg.cmdHelp(getToolCommand(), FILE_SYSTEM_ENCRYPT_COMMAND),
-                ElytronToolMessages.msg.cmdFileSystemEncryptHelpHeader(),
-                options,
-                "",
-                true);
+        OptionsSection optionsSection = new OptionsSection(ElytronToolMessages.msg.cmdLineActionsHelpHeader(), options);
+        UsageSection usageSection = new UsageSection(FILE_SYSTEM_ENCRYPT_COMMAND, null);
+        DescriptionSection descriptionSection = new DescriptionSection(ElytronToolMessages.msg.cmdFileSystemEncryptHelpHeader());
+        HelpCommand helpCommand = HelpCommand.HelpCommandBuilder.builder()
+                .description(descriptionSection)
+                .usage(usageSection)
+                .options(optionsSection)
+                .build();
+        helpCommand.printHelp();
     }
 
     /**
@@ -923,6 +949,7 @@ class FileSystemEncryptRealmCommand extends Command {
             String keyStoreType = descriptor.getKeyStoreType();
             char[] password = descriptor.getPassword();
             String keyPairAlias = descriptor.getKeyPairAlias();
+            Boolean overwriteScript = descriptor.getOverwriteScriptFile();
 
             if (hashCharset == null) {
                 hashCharset = StandardCharsets.UTF_8;
@@ -937,17 +964,20 @@ class FileSystemEncryptRealmCommand extends Command {
 
             Path scriptPath = Paths.get(String.format("%s/%s.cli", outputRealmLocation, fileSystemRealmName));
 
-            if (scriptPath.toFile().exists()) {
-                createScriptCheck = prompt(
-                        true,
-                        ElytronToolMessages.msg.shouldFileBeOverwritten(scriptPath.toString()),
-                        false,
-                        null
-                );
-                if (createScriptCheck.trim().isEmpty()) createScriptCheck = "n";
+            if (overwriteScript == null) {
+                if (scriptPath.toFile().exists()) {
+                    createScriptCheck = prompt(
+                            true,
+                            ElytronToolMessages.msg.shouldFileBeOverwritten(scriptPath.toString()),
+                            false,
+                            null
+                    );
+                    if (createScriptCheck.trim().isEmpty()) createScriptCheck = "n";
+                }
+
+                overwriteScript = createScriptCheck.isEmpty() || createScriptCheck.toLowerCase().startsWith("y");
             }
 
-            boolean overwriteScript = createScriptCheck.isEmpty() || createScriptCheck.toLowerCase().startsWith("y");
             if (!overwriteScript) { // Generate a random file for the CLI script
                 do {
                     scriptPath = Paths.get(String.format("%s/%s.cli",
@@ -1001,7 +1031,7 @@ class FileSystemEncryptRealmCommand extends Command {
             if (overwriteScript) { // Create a new script file, or overwrite the existing one
                 Files.write(scriptPath, scriptLines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             } else {
-                Files.write(scriptPath, scriptLines, StandardOpenOption.APPEND);
+                Files.write(scriptPath, scriptLines, StandardOpenOption.CREATE);
             }
             counter++;
         }

@@ -27,7 +27,10 @@ import static org.wildfly.security.http.oidc.KeycloakConfiguration.ALLOWED_ORIGI
 import static org.wildfly.security.http.oidc.Oidc.OIDC_NAME;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -36,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.http.HttpStatus;
+import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -144,6 +148,35 @@ public class BearerTest extends OidcBaseTest {
         if (client != null) {
             client.shutdown();
         }
+    }
+
+    @Test
+    public void testOIDCSecurityContextDeserialization() throws Exception {
+        String accessTokenString = KeycloakConfiguration.getAccessToken(KEYCLOAK_CONTAINER.getAuthServerUrl(), TEST_REALM, KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD, CLIENT_ID, CLIENT_SECRET);
+        AccessToken accessToken = new AccessToken(new JwtConsumerBuilder().setSkipSignatureVerification().setSkipAllValidators().build().processToClaims(accessTokenString));
+        OidcSecurityContext oidcSecurityContext = new OidcSecurityContext(accessTokenString, accessToken, null, null);
+        OidcPrincipal oidcPrincipal = new OidcPrincipal("alice", oidcSecurityContext);
+
+        // Serialize
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+        objectOutputStream.writeObject(oidcPrincipal);
+        objectOutputStream.close();
+
+        //deserialize
+        byte[] bytes = byteArrayOutputStream.toByteArray();
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+        ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
+        OidcPrincipal deserializedOidcPrincipal = (OidcPrincipal)objectInputStream.readObject();
+        OidcSecurityContext deserializedOidcSecurityContext = deserializedOidcPrincipal.getOidcSecurityContext();
+        AccessToken deserializedAccessToken = deserializedOidcSecurityContext.getToken();
+
+        assertEquals(accessTokenString, deserializedOidcSecurityContext.getTokenString());
+        assertEquals(KeycloakConfiguration.ALICE, deserializedOidcPrincipal.getName());
+        assertEquals(KeycloakConfiguration.ALICE, deserializedAccessToken.getPreferredUsername());
+        assertEquals("alice@gmail.com", deserializedAccessToken.getEmail());
+        assertEquals(TEST_REALM, deserializedOidcSecurityContext.getRealm());
+        objectInputStream.close();
     }
 
     @Test
