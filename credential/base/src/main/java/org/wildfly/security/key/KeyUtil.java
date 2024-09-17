@@ -37,6 +37,7 @@ import java.security.interfaces.RSAKey;
 import java.security.interfaces.RSAMultiPrimePrivateCrtKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.DSAParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.util.Arrays;
 import java.util.Objects;
@@ -99,7 +100,9 @@ public final class KeyUtil {
         } else if (key instanceof RSAKey && paramSpecClass.isAssignableFrom(RSAParameterSpec.class)) {
             return paramSpecClass.cast(new RSAParameterSpec((RSAKey) key));
         } else if (key instanceof DSAKey && paramSpecClass.isAssignableFrom(DSAParams.class)) {
-            return paramSpecClass.cast(((DSAKey) key).getParams());
+            final DSAKey dsaKey = (DSAKey) key;
+            final DSAParams dsaParams = dsaKey.getParams();
+            return paramSpecClass.cast(new DSAParameterSpec(dsaParams.getP(), dsaParams.getQ(), dsaParams.getG()));
         } else if (key instanceof ECKey && paramSpecClass.isAssignableFrom(ECParameterSpec.class)) {
             return paramSpecClass.cast(((ECKey) key).getParams());
         } else if (key instanceof DHKey && paramSpecClass.isAssignableFrom(DHParameterSpec.class)) {
