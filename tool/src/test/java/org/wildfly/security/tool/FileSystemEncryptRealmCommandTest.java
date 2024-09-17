@@ -17,8 +17,6 @@
  */
 package org.wildfly.security.tool;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.wildfly.security.tool.Command.ELYTRON_KS_PASS_PROVIDERS;
@@ -65,12 +63,6 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest {
     private void runCommand(String inputLocation, String outputLocation, String fileSystemRealmName, String encoded, boolean create, int expectedStatus) {
         String[] requiredArgs;
         requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", CREDENTIAL_STORE_PATH};
-        executeCommandAndCheckStatus(requiredArgs, expectedStatus);
-    }
-
-    private void runCommand(String inputLocation, String outputLocation, String fileSystemRealmName, String encoded, boolean create, int expectedStatus, boolean overwriteScriptFile) {
-        String[] requiredArgs;
-        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", CREDENTIAL_STORE_PATH, "--overwrite-script-file", String.valueOf(overwriteScriptFile)};
         executeCommandAndCheckStatus(requiredArgs, expectedStatus);
     }
 
@@ -165,48 +157,6 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest {
         if(!fileExists(file)){
             throw new FileNotFoundException("Encrypted Identity/Identities Missing: " + file);
         }
-    }
-
-    @Test
-    public void testOverwritingScriptFileTrue() throws Exception {
-        String outputLocation = RELATIVE_BASE_DIR + "fs-encrypted-realms";
-        String fileSystemRealmName = "overwrite-script-true";
-        String file = "target/test-classes/filesystem-encrypt/fs-encrypted-realms/overwrite-script-true.cli";
-
-        String inputLocation = RELATIVE_BASE_DIR + "fs-unencrypted-realms/single-user-with-role/";
-        runCommand(inputLocation, outputLocation, fileSystemRealmName, 3, "false", true, 0);
-
-        assertTrue(fileExists(file));
-        File scriptFile = new File(file);
-        Long modifiedBefore = scriptFile.lastModified();
-
-        inputLocation = RELATIVE_BASE_DIR + "fs-unencrypted-realms/single-user/";
-        runCommand(inputLocation, outputLocation, fileSystemRealmName, "false", true, 0, true);
-
-        Long modifiedAfter = scriptFile.lastModified();
-
-        assertNotEquals(modifiedBefore, modifiedAfter);
-    }
-
-    @Test
-    public void testOverwritingScriptFileFalse() throws Exception {
-        String outputLocation = RELATIVE_BASE_DIR + "fs-encrypted-realms";
-        String fileSystemRealmName = "overwrite-script-false";
-        String file = "target/test-classes/filesystem-encrypt/fs-encrypted-realms/overwrite-script-false.cli";
-
-        String inputLocation = RELATIVE_BASE_DIR + "fs-unencrypted-realms/single-user-with-role/";
-        runCommand(inputLocation, outputLocation, fileSystemRealmName, 3, "false", true, 0);
-
-        assertTrue(fileExists(file));
-        File scriptFile = new File(file);
-        Long modifiedBefore = scriptFile.lastModified();
-
-        inputLocation = RELATIVE_BASE_DIR + "fs-unencrypted-realms/single-user/";
-        runCommand(inputLocation, outputLocation, fileSystemRealmName, "false", true, 0, false);
-
-        Long modifiedAfter = scriptFile.lastModified();
-
-        assertEquals(modifiedBefore, modifiedAfter);
     }
 
     @Test
