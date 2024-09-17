@@ -44,8 +44,28 @@ import static org.wildfly.security.http.oidc.KeycloakConfiguration.TENANT1_PASSW
 import static org.wildfly.security.http.oidc.KeycloakConfiguration.TENANT1_USER;
 import static org.wildfly.security.http.oidc.KeycloakConfiguration.TENANT2_PASSWORD;
 import static org.wildfly.security.http.oidc.KeycloakConfiguration.TENANT2_USER;
+import static org.wildfly.security.http.oidc.Oidc.AUTH_SERVER_URL;
+import static org.wildfly.security.http.oidc.Oidc.AUTHENTICATION_REQUEST_FORMAT;
+import static org.wildfly.security.http.oidc.Oidc.CREDENTIALS;
+import static org.wildfly.security.http.oidc.Oidc.ClientCredentialsProviderType;
+import static org.wildfly.security.http.oidc.Oidc.PROVIDER_URL;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_NAME;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_SCOPE;
+import static org.wildfly.security.http.oidc.Oidc.PUBLIC_CLIENT;
+import static org.wildfly.security.http.oidc.Oidc.PRINCIPAL_ATTRIBUTE;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_ALGORITHM;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_KEYSTORE_FILE;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_KEYSTORE_PASSWORD;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_KEYSTORE_TYPE;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_KEY_PASSWORD;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_KEY_ALIAS;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_ENCRYPTION_ALG_VALUE;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_ENCRYPTION_ENC_VALUE;
+import static org.wildfly.security.http.oidc.Oidc.RESOURCE;
+import static org.wildfly.security.http.oidc.Oidc.REALM;
+import static org.wildfly.security.http.oidc.Oidc.SCOPE;
+import static org.wildfly.security.http.oidc.Oidc.SSL_REQUIRED;
+import static org.wildfly.security.http.oidc.Oidc.TOKEN_SIGNATURE_ALGORITHM;
 import static org.wildfly.security.http.oidc.Oidc.AuthenticationRequestFormat.OAUTH2;
 import static org.wildfly.security.http.oidc.Oidc.AuthenticationRequestFormat.REQUEST;
 import static org.wildfly.security.http.oidc.Oidc.AuthenticationRequestFormat.REQUEST_URI;
@@ -664,13 +684,13 @@ public class OidcTest extends OidcBaseTest {
 
     private InputStream getOidcConfigurationInputStream(String clientSecret, String authServerUrl) {
         String oidcConfig = "{\n" +
-                "    \"realm\" : \"" + TEST_REALM + "\",\n" +
-                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"auth-server-url\" : \"" + authServerUrl + "\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + clientSecret + "\"\n" +
+                "    \"" + REALM + "\" : \"" + TEST_REALM + "\",\n" +
+                "    \"" + RESOURCE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + AUTH_SERVER_URL + "\" : \"" + authServerUrl + "\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + clientSecret + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
@@ -678,12 +698,12 @@ public class OidcTest extends OidcBaseTest {
 
     private InputStream getOidcConfigurationInputStreamWithEnvironmentVariableExpression() {
         String oidcConfig = "{\n" +
-                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "${oidc.provider-url-env}\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    \"" + RESOURCE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "${oidc.provider-url-env}\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
@@ -691,12 +711,12 @@ public class OidcTest extends OidcBaseTest {
 
     private InputStream getOidcConfigurationInputStreamWithSystemPropertyExpression() {
         String oidcConfig = "{\n" +
-                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"provider-url\" : \"${oidc.provider.url}\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    \"" + RESOURCE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + PROVIDER_URL + "\" : \"${oidc.provider.url}\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
@@ -704,12 +724,12 @@ public class OidcTest extends OidcBaseTest {
 
     private InputStream getOidcConfigurationInputStreamWithProviderUrlTrailingSlash() {
         String oidcConfig = "{\n" +
-                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "/" + "\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    \"" + RESOURCE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "/" + "\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
@@ -717,11 +737,11 @@ public class OidcTest extends OidcBaseTest {
 
     private InputStream getOidcConfigurationMissingRequiredOption() {
         String oidcConfig = "{\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
@@ -729,45 +749,43 @@ public class OidcTest extends OidcBaseTest {
 
     private InputStream getOidcConfigurationInputStreamWithTokenSignatureAlgorithm() {
         String oidcConfig = "{\n" +
-                "    \"token-signature-algorithm\" : \"RS256\",\n" +
-                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    \"" + TOKEN_SIGNATURE_ALGORITHM + "\" : \"RS256\",\n" +
+                "    \"" + RESOURCE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
     }
     private InputStream getOidcConfigurationInputStreamWithScope(String scopeValue){
         String oidcConfig = "{\n" +
-                "    \"client-id\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM_WITH_SCOPES + "/" + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"scope\" : \"" + scopeValue + "\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    \"" + Oidc.CLIENT_ID_JSON_VALUE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM_WITH_SCOPES + "/" + "\",\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + SCOPE + "\" : \"" + scopeValue + "\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
     }
     private InputStream getOidcConfigurationInputStreamWithRequestParameter(String requestParameter, String signingAlgorithm, String encryptionAlgorithm, String encMethod){
         String oidcConfig = "{\n" +
-                "    \"client-id\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM_WITH_SCOPES + "/" + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"authentication-request-format\" : \"" + requestParameter + "\",\n" +
-                "    \"request-object-signing-algorithm\" : \"" + signingAlgorithm + "\",\n" +
-                "    \"request-object-encryption-alg-value\" : \"" + encryptionAlgorithm + "\",\n" +
-                "    \"request-object-encryption-enc-value\" : \"" + encMethod + "\",\n" +
-                "    \"scope\" : \"profile email phone\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    \"" + Oidc.CLIENT_ID_JSON_VALUE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM_WITH_SCOPES + "/" + "\",\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + AUTHENTICATION_REQUEST_FORMAT + "\" : \"" + requestParameter + "\",\n" +
+                "    \"" + REQUEST_OBJECT_SIGNING_ALGORITHM + "\" : \"" + signingAlgorithm + "\",\n" +
+                "    \"" + REQUEST_OBJECT_ENCRYPTION_ALG_VALUE + "\" : \"" + encryptionAlgorithm + "\",\n" +
+                "    \"" + REQUEST_OBJECT_ENCRYPTION_ENC_VALUE + "\" : \"" + encMethod + "\",\n" +
+                "    \"" + SCOPE + "\" : \"profile email phone\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
@@ -775,16 +793,15 @@ public class OidcTest extends OidcBaseTest {
 
     private InputStream getOidcConfigurationInputStreamWithoutEncValue(String requestParameter, String encryptionAlgorithm){
         String oidcConfig = "{\n" +
-                "    \"client-id\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM_WITH_SCOPES + "/" + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"authentication-request-format\" : \"" + requestParameter + "\",\n" +
-                "    \"request-object-encryption-alg-value\" : \"" + encryptionAlgorithm + "\",\n" +
-                "    \"scope\" : \"profile email phone\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    \"" + Oidc.CLIENT_ID_JSON_VALUE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM_WITH_SCOPES + "/" + "\",\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + AUTHENTICATION_REQUEST_FORMAT + "\" : \"" + requestParameter + "\",\n" +
+                "    \"" + REQUEST_OBJECT_ENCRYPTION_ALG_VALUE + "\" : \"" + encryptionAlgorithm + "\",\n" +
+                "    \"" + SCOPE + "\" : \"profile email phone\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
@@ -792,22 +809,22 @@ public class OidcTest extends OidcBaseTest {
 
     private InputStream getOidcConfigurationInputStreamWithRequestParameter(String requestParameter, String signingAlgorithm, String encryptionAlgorithm, String encMethod, String keyStorePath, String alias, String keyStoreType){
         String oidcConfig = "{\n" +
-                "    \"client-id\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM_WITH_SCOPES + "/" + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"authentication-request-format\" : \"" + requestParameter + "\",\n" +
-                "    \"request-object-signing-algorithm\" : \"" + signingAlgorithm + "\",\n" +
-                "    \"request-object-encryption-alg-value\" : \"" + encryptionAlgorithm + "\",\n" +
-                "    \"request-object-encryption-enc-value\" : \"" + encMethod + "\",\n" +
-                "    \"request-object-signing-keystore-file\" : \"" + keyStorePath + "\",\n" +
-                "    \"request-object-signing-keystore-type\" : \"" + keyStoreType + "\",\n" +
-                "    \"request-object-signing-keystore-password\" : \"" + KEYSTORE_PASS + "\",\n" +
-                "    \"request-object-signing-key-password\" : \"" + KEYSTORE_PASS + "\",\n" +
-                "    \"request-object-signing-key-alias\" : \"" + alias + "\",\n" +
-                "    \"scope\" : \"email phone profile\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    \"" + Oidc.CLIENT_ID_JSON_VALUE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM_WITH_SCOPES + "/" + "\",\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + AUTHENTICATION_REQUEST_FORMAT + "\" : \"" + requestParameter + "\",\n" +
+                "    \"" + REQUEST_OBJECT_SIGNING_ALGORITHM + "\" : \"" + signingAlgorithm + "\",\n" +
+                "    \"" + REQUEST_OBJECT_ENCRYPTION_ALG_VALUE + "\" : \"" + encryptionAlgorithm + "\",\n" +
+                "    \"" + REQUEST_OBJECT_ENCRYPTION_ENC_VALUE + "\" : \"" + encMethod + "\",\n" +
+                "    \"" + REQUEST_OBJECT_SIGNING_KEYSTORE_FILE + "\" : \"" + keyStorePath + "\",\n" +
+                "    \"" + REQUEST_OBJECT_SIGNING_KEYSTORE_TYPE + "\" : \"" + keyStoreType + "\",\n" +
+                "    \"" + REQUEST_OBJECT_SIGNING_KEYSTORE_PASSWORD + "\" : \"" + KEYSTORE_PASS + "\",\n" +
+                "    \"" + REQUEST_OBJECT_SIGNING_KEY_PASSWORD + "\" : \"" + KEYSTORE_PASS + "\",\n" +
+                "    \"" + REQUEST_OBJECT_SIGNING_KEY_ALIAS + "\" : \"" + alias + "\",\n" +
+                "    \"" + SCOPE + "\" : \"email phone profile\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
@@ -815,26 +832,26 @@ public class OidcTest extends OidcBaseTest {
 
     private InputStream getOidcConfigurationInputStreamWithRequestObjectPublicClient(String requestParameter, String signingAlgorithm){
         String oidcConfig = "{\n" +
-                "    \"client-id\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM_WITH_SCOPES + "/" + "\",\n" +
-                "    \"public-client\" : \"true\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"authentication-request-format\" : \"" + requestParameter + "\",\n" +
-                "    \"request-object-signing-algorithm\" : \"" + signingAlgorithm + "\",\n" +
-                "    \"scope\" : \"email phone profile\"\n" +
+                "    \"" + Oidc.CLIENT_ID_JSON_VALUE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM_WITH_SCOPES + "/" + "\",\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"true\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + AUTHENTICATION_REQUEST_FORMAT + "\" : \"" + requestParameter + "\",\n" +
+                "    \"" + REQUEST_OBJECT_SIGNING_ALGORITHM + "\" : \"" + signingAlgorithm + "\",\n" +
+                "    \"" + SCOPE + "\" : \"email phone profile\"\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
     }
 
     private InputStream getOidcConfigurationInputStreamWithPrincipalAttribute(String principalAttributeValue) {
         String oidcConfig = "{\n" +
-                "    \"principal-attribute\" : \"" + principalAttributeValue + "\",\n" +
-                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    \"" + PRINCIPAL_ATTRIBUTE + "\" : \"" + principalAttributeValue + "\",\n" +
+                "    \"" + RESOURCE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
@@ -842,13 +859,13 @@ public class OidcTest extends OidcBaseTest {
 
     static InputStream getTenantConfigWithAuthServerUrl(String tenant) {
         String oidcConfig = "{\n" +
-                "    \"realm\" : \"" + tenant + "\",\n" +
-                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"auth-server-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    \"" + REALM + "\" : \"" + tenant + "\",\n" +
+                "    \""+ RESOURCE +"\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PUBLIC_CLIENT +"\" : \"false\",\n" +
+                "    \"" + AUTH_SERVER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
@@ -856,12 +873,12 @@ public class OidcTest extends OidcBaseTest {
 
     static InputStream getTenantConfigWithProviderUrl(String tenant) {
         String oidcConfig = "{\n" +
-                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + tenant + "\",\n" +
-                "    \"client-id\" : \"" + CLIENT_ID + "\",\n" +
-                "    \"public-client\" : \"false\",\n" +
-                "    \"ssl-required\" : \"EXTERNAL\",\n" +
-                "    \"credentials\" : {\n" +
-                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    \"" + PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + tenant + "\",\n" +
+                "    \"" + Oidc.CLIENT_ID_JSON_VALUE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
