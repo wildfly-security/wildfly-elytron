@@ -76,6 +76,8 @@ import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.permission.PermissionVerifier;
+import org.wildfly.security.ssl.builder.SSLContextBuilder;
+import org.wildfly.security.ssl.builder.SSLUtils;
 import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;

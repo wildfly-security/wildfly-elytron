@@ -127,7 +127,7 @@ import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.util.ServiceLoaderSaslClientFactory;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
-import org.wildfly.security.ssl.SSLContextBuilder;
+import org.wildfly.security.ssl.builder.SSLContextBuilder;
 import org.wildfly.security.ssl.X509RevocationTrustManager;
 import org.wildfly.security.ssh.util.SshUtil;
 
