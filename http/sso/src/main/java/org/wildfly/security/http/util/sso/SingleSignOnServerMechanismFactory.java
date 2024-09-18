@@ -46,6 +46,7 @@ import static org.wildfly.security.http.util.sso.ElytronMessages.log;
  * <p>The single sign-one capabilities provided by this factory is based on a HTTP Cookie to track SSO sessions and also an {@link IdentityCache} providing
  * a storage (eg.: using a shared or distributable cache/map) for these sessions and related data.
  *
+ *  @deprecated  Only inner class SingleSignOnConfiguration is deprecated.
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  * @author Paul Ferraro
  */

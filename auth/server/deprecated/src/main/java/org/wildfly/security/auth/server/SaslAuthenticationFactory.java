@@ -48,7 +48,7 @@ import static org.wildfly.security.auth.server.ElytronMessages.log;
  * A SASL server factory configuration.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @deprecated Use {@link org.wildfly.security.auth.server.sasl.SaslAuthenticationFactory} instead
+ * @deprecated Use {@link org.wildfly.security.auth.server.sasl.SaslAuthenticationFactory org.wildfly.security.auth.server.sasl.SaslAuthenticationFactory} instead
  */
 @Deprecated
 public final class SaslAuthenticationFactory extends AbstractMechanismAuthenticationFactory<SaslServer, SaslServerFactory, SaslException> {

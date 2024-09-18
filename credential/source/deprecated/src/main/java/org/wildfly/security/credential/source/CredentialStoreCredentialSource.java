@@ -37,7 +37,7 @@ import static org.wildfly.security.credential.source.ElytronMessages.log;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
- * @deprecated Use {@link org.wildfly.security.credential.source.impl.CredentialStoreCredentialSource} instead
+ * @deprecated Use {@link org.wildfly.security.credential.source.impl.CredentialStoreCredentialSource org.wildfly.security.credential.source.impl.CredentialStoreCredentialSource} instead
  */
 @Deprecated
 public final class CredentialStoreCredentialSource implements CredentialSource {
