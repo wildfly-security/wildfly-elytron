@@ -254,6 +254,10 @@ public class OidcClientConfiguration {
 
     private String getDiscoveryUrl() {
         if (providerUrl != null) {
+            // specific OpenID provider configuration found
+            if(providerUrl.contains(DISCOVERY_PATH)) {
+                return providerUrl;
+            }
             // generic OpenID provider configuration found
             return getUrl(providerUrl, DISCOVERY_PATH);
         } else if (authServerBaseUrl != null) {
