@@ -18,7 +18,7 @@ https://hacktoberfest.com/[Hacktoberfest] takes places annually during the month
 
 2. Submit 4 approved PRs against participating project repositories during the month of October
 
-3. You'll have the option to have a tree planted in your name and you can obtain a unique digital reward. Visit the https://hacktoberfest.com/participation/[Hacktoberfest site] for more information.
+3. You’ll unlock a digital badge when you register for Hacktoberfest, and level it up with each of your four pull/merge requests accepted during Hacktoberfest. Visit the https://hacktoberfest.com/participation/[Hacktoberfest site] for more information.
 
 == Getting Started
 
