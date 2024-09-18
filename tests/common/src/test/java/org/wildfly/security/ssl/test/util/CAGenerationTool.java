@@ -431,7 +431,13 @@ public class CAGenerationTool implements Closeable {
         LADYBUG("OU=Wildfly, O=Wildfly, C=CA, ST=Wildfly, CN=Ladybug", SECOND_CA, false,
                 "ladybug.keystore"),
         GREENJUNE("OU=Wildfly, O=Wildfly, C=CA, ST=Wildfly, CN=Green June", SECOND_CA, false,
-                "greenjune.keystore");
+                "greenjune.keystore"),
+        OCSP_STAPLING_GOOD("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedServerGood", CA, false,
+                "ocsp-stapling-checked-good.keystore"),
+        OCSP_STAPLING_REVOKED("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedServerRevoked", CA, false,
+                "ocsp-stapling-checked-revoked.keystore"),
+        OCSP_STAPLING_UNKNOWN("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedServerUnknown", CA, false,
+                "ocsp-stapling-checked-unknown.keystore");
 
         private final X500Principal principal;
         private final Identity signedBy;

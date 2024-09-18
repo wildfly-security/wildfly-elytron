@@ -20,7 +20,7 @@
 
 <!-- Configuration for the SSLAuthenticationTest -->
 <configuration>
-    <authentication-client xmlns="urn:elytron:client:1.7">
+    <authentication-client xmlns="urn:elytron:client:preview:1.8">
         <key-stores>
             <key-store name="ca" type="PKCS12" provider="SUN">
                 <file name="target/test-classes/pkcs12/ca.truststore"/>
@@ -60,6 +60,22 @@
             </key-store>
             <key-store name="greenjune" type="PKCS12" provider="SUN">
                 <file name="target/test-classes/pkcs12/greenjune.keystore" />
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
+            <key-store name="beetles" type="PKCS12" provider="SUN">
+                <file name="target/test-classes/pkcs12/beetles.keystore" />
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
+            <key-store name="ocsp-stapling-checked-good" type="pkcs12" provider="SUN">
+                <file name="target/test-classes/pkcs12/ocsp-stapling-checked-good.keystore"/>
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
+            <key-store name="ocsp-stapling-checked-revoked" type="pkcs12" provider="SUN">
+                <file name="target/test-classes/pkcs12/ocsp-stapling-checked-revoked.keystore"/>
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
+            <key-store name="ocsp-stapling-checked-unknown" type="pkcs12" provider="SUN">
+                <file name="target/test-classes/pkcs12/ocsp-stapling-checked-unknown.keystore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
         </key-stores>
@@ -206,6 +222,53 @@
                 </key-store-ssl-certificate>
                 <trust-store key-store-name="ca"/>
             </ssl-context>
+            <ssl-context name="one-way-ocsp-stapling-good-ssl">
+                <providers>
+                    <global/>
+                </providers>
+                <trust-store key-store-name="ocsp-stapling-checked-good"/>
+                <accept-ocsp-stapling accept-ocsp="true" responder-keystore="beetles" responder-certificate="ocspResponder"/>
+            </ssl-context>
+            <ssl-context name="two-way-ocsp-stapling-good-ssl">
+                <providers>
+                    <global/>
+                </providers>
+                <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="ocsp-stapling-checked-good"/>
+                <accept-ocsp-stapling accept-ocsp="true" responder-keystore="beetles" responder-certificate="ocspResponder"/>
+            </ssl-context>
+            <ssl-context name="two-way-ocsp-stapling-revoked-ssl">
+                <providers>
+                    <global/>
+                </providers>
+                <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="ocsp-stapling-checked-revoked"/>
+                <accept-ocsp-stapling accept-ocsp="true" responder-keystore="beetles" responder-certificate="ocspResponder"/>
+            </ssl-context>
+            <ssl-context name="two-way-ocsp-stapling-unknown-ssl">
+                <providers>
+                    <global/>
+                </providers>
+                <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="ocsp-stapling-checked-unknown"/>
+                <accept-ocsp-stapling accept-ocsp="true" soft-fail="false" responder-keystore="beetles" responder-certificate="ocspResponder"/>
+            </ssl-context>
+            <ssl-context name="two-way-ocsp-stapling-unknown-soft-fail">
+                <providers>
+                    <global/>
+                </providers>
+                <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="ocsp-stapling-checked-unknown"/>
+                <accept-ocsp-stapling accept-ocsp="true" soft-fail="true" responder-keystore="beetles" responder-certificate="ocspResponder"/>
+            </ssl-context>
         </ssl-contexts>
         <ssl-context-rules>
             <rule use-ssl-context="one-way-ssl">
@@ -255,6 +318,21 @@
             </rule>
             <rule use-ssl-context="two-way-ocsp-unknown-ssl">
                 <match-host name="test-two-way-ocsp-unknown.org"/>
+            </rule>
+            <rule use-ssl-context="two-way-ocsp-stapling-good-ssl">
+                <match-host name="test-two-way-ocsp-stapling-good.org"/>
+            </rule>
+            <rule use-ssl-context="one-way-ocsp-stapling-good-ssl">
+                <match-host name="test-one-way-ocsp-stapling-good.org"/>
+            </rule>
+            <rule use-ssl-context="two-way-ocsp-stapling-revoked-ssl">
+                <match-host name="test-two-way-ocsp-stapling-revoked.org"/>
+            </rule>
+            <rule use-ssl-context="two-way-ocsp-stapling-unknown-ssl">
+                <match-host name="test-two-way-ocsp-stapling-unknown.org"/>
+            </rule>
+            <rule use-ssl-context="two-way-ocsp-stapling-unknown-soft-fail">
+                <match-host name="test-two-way-ocsp-stapling-unknown-soft-fail.org"/>
             </rule>
         </ssl-context-rules>
     </authentication-client>
