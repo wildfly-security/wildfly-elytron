@@ -59,7 +59,7 @@ public class SSLServerSocketTestInstance {
     }
 
     public void run() {
-        String password = "secret";
+        String password = "Elytron";
         SSLContext sslContext = DynamicSSLTestUtils.createSSLContext(this.keystorePath, this.truststorePath, password);
         try {
             SSLServerSocketFactory sslServerSocketFactory = sslContext.getServerSocketFactory();
