@@ -49,7 +49,9 @@
         query = "";
         
         for(const term of searchTerms) {
-            query += ` +${term}`
+            if (term.length > 0) {
+                query += "+" + term.trim() + " "
+            }
         }
 
         return query.trim();
