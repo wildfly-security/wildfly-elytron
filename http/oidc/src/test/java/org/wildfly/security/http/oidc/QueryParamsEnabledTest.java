@@ -79,6 +79,13 @@ public class QueryParamsEnabledTest extends QueryParamsBaseTest {
         performAuthentication(getOidcConfigurationInputStreamWithProviderUrl(), KeycloakConfiguration.ALICE,
                 KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_MOVED_TEMPORARILY, originalUrl,
                 expectedUrlAfterRedirect, CLIENT_PAGE_TEXT);
+
+        queryParams = "?url=http%3A%2F%2Flocalhost%2F%3Fone%3Dabc%26two%3Ddef&three=ghi";
+        originalUrl = getClientUrl() + queryParams;
+        expectedUrlAfterRedirect = originalUrl;
+        performAuthentication(getOidcConfigurationInputStreamWithProviderUrl(), KeycloakConfiguration.ALICE,
+                KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_MOVED_TEMPORARILY, originalUrl,
+                expectedUrlAfterRedirect, CLIENT_PAGE_TEXT);
     }
 
 }
