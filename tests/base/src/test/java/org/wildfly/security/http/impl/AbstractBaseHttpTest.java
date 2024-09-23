@@ -535,6 +535,11 @@ public class AbstractBaseHttpTest {
                 } else if (callback instanceof AuthorizeCallback) {
                     if (token != null) {
                         ((AuthorizeCallback) callback).setAuthorized(true);
+                    } else if(username.equalsIgnoreCase("unauthorizedUser")){
+                        ((AuthorizeCallback) callback).setAuthorized(false);
+                    } else if(username.equals(((AuthorizeCallback) callback).getAuthenticationID()) &&
+                       username.equals(((AuthorizeCallback) callback).getAuthorizationID())) {
+                        ((AuthorizeCallback) callback).setAuthorized(true);
                     } else {
                         if (username.equals(((AuthorizeCallback) callback).getAuthenticationID()) &&
                                 username.equals(((AuthorizeCallback) callback).getAuthorizationID())) {
