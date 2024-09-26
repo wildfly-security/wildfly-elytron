@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        java: ['11', '17', '21', '22']
+        java: ['11', '17', '21']
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK ${{ matrix.java }}
