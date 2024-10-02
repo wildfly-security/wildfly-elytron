@@ -96,11 +96,10 @@
         <version.org.xipki.pki.ocsp-server>3.0.0</version.org.xipki.pki.ocsp-server>
         <version.org.bitbucket.b_c.jose4j>0.9.6</version.org.bitbucket.b_c.jose4j>
         <version.org.testcontainers.testcontainers>1.15.3</version.org.testcontainers.testcontainers>
-        <version.org.keycloak>25.0.2</version.org.keycloak>
+        <version.org.keycloak>25.0.5</version.org.keycloak>
         <version.io.rest-assured>5.5.0</version.io.rest-assured>
         <version.net.sourceforge.htmlunit.htmlunit>2.40.0</version.net.sourceforge.htmlunit.htmlunit>
         <version.org.apache.santuario>2.3.0</version.org.apache.santuario>
-        <version.org.keycloak.keycloak-services>23.0.7</version.org.keycloak.keycloak-services>
         <version.org.aesh>2.7</version.org.aesh>
         <version.org.xnio>3.8.16.Final</version.org.xnio>
 
@@ -1272,7 +1271,7 @@
             <dependency>
                 <groupId>org.keycloak</groupId>
                 <artifactId>keycloak-services</artifactId>
-                <version>${version.org.keycloak.keycloak-services}</version>
+                <version>${version.org.keycloak}</version>
                 <scope>test</scope>
             </dependency>
 
