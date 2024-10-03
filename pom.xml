@@ -72,10 +72,10 @@
         <version.org.apache.httpcomponents.httpclient>4.5.14</version.org.apache.httpcomponents.httpclient>
         <version.org.apache.httpcomponents.httpcore>4.4.16</version.org.apache.httpcomponents.httpcore>
         <version.org.eclipse.parsson.jakarta.json>1.1.5</version.org.eclipse.parsson.jakarta.json>
-        <version.org.jboss.logging>3.5.3.Final</version.org.jboss.logging>
+        <version.org.jboss.logging>3.6.1.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.1.19.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.6.Final</version.org.jboss.logmanager.log4j-jboss>
-        <version.org.jboss.logging.tools>2.2.1.Final</version.org.jboss.logging.tools>
+        <version.org.jboss.logging.tools>3.0.1.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.12.2.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.2.0.Final</version.org.jboss.slf4j>
         <version.jakarta.json.jakarta-json-api>2.1.2</version.jakarta.json.jakarta-json-api>
