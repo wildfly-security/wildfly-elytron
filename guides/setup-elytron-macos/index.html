@@ -287,10 +287,36 @@ echo ‘export PATH=”/usr/local/opt/openjdk@11/bin:$PATH”’ &gt;&gt; ~/.zsh
 </div>
 </li>
 <li>
-<p>Follow the instructions from the output you receive to create the symbolic link and add the path to the environment variables.</p>
+<p>Follow the instructions from the output you receive to create the symbolic link:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">sudo ln -sfn /usr/local/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Set <code>JAVA_HOME</code>:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">echo ‘export JAVA_HOME="/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home"’ &gt;&gt; ~/.zshrc</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Add the path to <code>JAVA_HOME</code> to the environment variables:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">echo ‘export PATH=”/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home/bin:$PATH”’ &gt;&gt; ~/.zshrc</code></pre>
+</div>
+</div>
 </li>
 <li>
 <p>Lastly, run <code>source &lt;config file&gt;</code>, substituting in your config file, to load the changes into the terminal.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">source ~/.zshrc</code></pre>
+</div>
+</div>
 </li>
 </ol>
 </div>
