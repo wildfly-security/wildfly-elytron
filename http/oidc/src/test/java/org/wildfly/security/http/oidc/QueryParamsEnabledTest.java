@@ -81,4 +81,25 @@ public class QueryParamsEnabledTest extends QueryParamsBaseTest {
                 expectedUrlAfterRedirect, CLIENT_PAGE_TEXT);
     }
 
+
+    /**
+     * Reproducer for ELY-2792 - Spaces in query parameters are not correctly encoded for OIDC redirects
+     */
+    @Test
+    public void testSuccessfulAuthenticationWithSpaceInQueryParamValueWithSystemPropertyEnabled() throws Exception {
+        String queryParams = "?myparam=a+b";
+        String originalUrl = getClientUrl() + queryParams;
+        String expectedUrlAfterRedirect = originalUrl;
+        performAuthentication(getOidcConfigurationInputStreamWithProviderUrl(), KeycloakConfiguration.ALICE,
+                KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_MOVED_TEMPORARILY, originalUrl,
+                expectedUrlAfterRedirect, CLIENT_PAGE_TEXT);
+
+        queryParams = "?one=a+c&two=def&three=ghi";
+        originalUrl = getClientUrl() + queryParams;
+        expectedUrlAfterRedirect = originalUrl;
+        performAuthentication(getOidcConfigurationInputStreamWithProviderUrl(), KeycloakConfiguration.ALICE,
+                KeycloakConfiguration.ALICE_PASSWORD, true, HttpStatus.SC_MOVED_TEMPORARILY, originalUrl,
+                expectedUrlAfterRedirect, CLIENT_PAGE_TEXT);
+    }
+
 }
