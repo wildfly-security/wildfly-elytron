@@ -470,7 +470,7 @@ public class DEREncoder implements ASN1Encoder {
 
     @Override
     public void flush() {
-        while (states.size() != 0) {
+        while (!states.isEmpty()) {
             EncoderState lastState = states.peekLast();
             if (lastState.getTag() == SEQUENCE_TYPE) {
                 endSequence();
