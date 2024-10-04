@@ -435,7 +435,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
             return false;
         }
         UnixSHACryptPasswordImpl other = (UnixSHACryptPasswordImpl) obj;
-        return iterationCount == other.iterationCount && algorithm.equals(other.algorithm) && Arrays.equals(hash, other.hash) && Arrays.equals(salt, other.salt);
+        return iterationCount == other.iterationCount && algorithm.equals(other.algorithm) && MessageDigest.isEqual(hash, other.hash) && MessageDigest.isEqual(salt, other.salt);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {
