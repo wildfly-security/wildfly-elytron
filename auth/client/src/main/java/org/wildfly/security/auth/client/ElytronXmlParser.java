@@ -3466,7 +3466,7 @@ public final class ElytronXmlParser {
                 default: throw reader.unexpectedAttribute(i);
             }
         }
-        if (mechanismOids.size() == 0) {
+        if (mechanismOids.isEmpty()) {
             mechanismOids.add(GSSCredentialSecurityFactory.KERBEROS_V5);
             mechanismOids.add(GSSCredentialSecurityFactory.SPNEGO);
         }
