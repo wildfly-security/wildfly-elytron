@@ -54,9 +54,30 @@ because this is an alternate version of another formula.
 If you need to have openjdk@11 first in your PATH, run:
 echo ‘export PATH=”/usr/local/opt/openjdk@11/bin:$PATH”’ >> ~/.zshrc
 ----
-    .. Follow the instructions from the output you receive to create the symbolic link and add the path to the environment variables.
-
+    .. Follow the instructions from the output you receive to create the symbolic link:
++
+[source,zsh]
+----
+sudo ln -sfn /usr/local/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk
+----
+    .. Set `JAVA_HOME`:
++
+[source,zsh]
+----
+echo ‘export JAVA_HOME="/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home"’ >> ~/.zshrc
+----
+    .. Add the path to `JAVA_HOME` to the environment variables:
++
+[source,zsh]
+----
+echo ‘export PATH=”/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home/bin:$PATH”’ >> ~/.zshrc
+----
     .. Lastly, run `source <config file>`, substituting in your config file, to load the changes into the terminal.
++
+[source,zsh]
+----
+source ~/.zshrc
+----
 . Now run `java --version` again. You should now successfully see the Java 11 version that was installed.
 
 == Installing Maven
