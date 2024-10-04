@@ -18,7 +18,7 @@
 
 package org.wildfly.security.x500;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEqual;
 
 import java.util.Arrays;
 
