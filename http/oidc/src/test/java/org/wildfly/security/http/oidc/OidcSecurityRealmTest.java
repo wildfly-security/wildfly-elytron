@@ -34,7 +34,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.wildfly.security.auth.SupportLevel.POSSIBLY_SUPPORTED;
 import static org.wildfly.security.auth.SupportLevel.UNSUPPORTED;
 import static org.wildfly.security.auth.server.RealmIdentity.NON_EXISTENT;
