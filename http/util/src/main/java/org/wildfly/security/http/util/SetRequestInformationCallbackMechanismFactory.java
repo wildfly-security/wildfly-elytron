@@ -17,11 +17,7 @@
  */
 package org.wildfly.security.http.util;
 
-import org.wildfly.security.auth.callback.RequestInformationCallback;
-import org.wildfly.security.http.HttpAuthenticationException;
-import org.wildfly.security.http.HttpServerAuthenticationMechanism;
-import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
-import org.wildfly.security.http.HttpServerRequest;
+import static org.wildfly.common.Assert.checkNotNullParam;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -31,7 +27,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import static org.wildfly.common.Assert.checkNotNullParam;
+import org.wildfly.security.auth.callback.RequestInformationCallback;
+import org.wildfly.security.http.HttpAuthenticationException;
+import org.wildfly.security.http.HttpServerAuthenticationMechanism;
+import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
+import org.wildfly.security.http.HttpServerRequest;
 
 /**
  * A wrapper {@link HttpServerAuthenticationMechanismFactory} that sets the request information using the current authentication request.
