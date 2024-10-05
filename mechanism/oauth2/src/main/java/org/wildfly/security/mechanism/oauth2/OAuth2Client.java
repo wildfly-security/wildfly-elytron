@@ -18,6 +18,11 @@
 
 package org.wildfly.security.mechanism.oauth2;
 
+import static org.wildfly.common.Assert.assertTrue;
+
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
+
 import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.callback.CredentialCallback;
@@ -26,11 +31,6 @@ import org.wildfly.security.mechanism._private.ElytronMessages;
 import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.sasl.util.StringPrep;
-
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.UnsupportedCallbackException;
-
-import static org.wildfly.common.Assert.assertTrue;
 
 /**
  * Implementation of the client side of the OAuth2 SASL mechanism.
