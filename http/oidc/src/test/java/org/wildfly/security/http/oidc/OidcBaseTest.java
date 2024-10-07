@@ -21,9 +21,14 @@ package org.wildfly.security.http.oidc;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.http.oidc.Oidc.OIDC_NAME;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +59,7 @@ import org.wildfly.security.http.impl.AbstractBaseHttpTest;
 import org.wildfly.security.jose.util.JsonSerialization;
 
 import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
+import com.gargoylesoftware.htmlunit.TextPage;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
@@ -64,6 +70,7 @@ import io.restassured.RestAssured;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 
 /**
@@ -74,9 +81,10 @@ import okhttp3.mockwebserver.RecordedRequest;
 public class OidcBaseTest extends AbstractBaseHttpTest {
 
     public static final String CLIENT_ID = "test-webapp";
-    public static final String CLIENT_SECRET = "secret";
+    public static final String CLIENT_SECRET = "longerclientsecretthatisstleast256bitslong";
     public static KeycloakContainer KEYCLOAK_CONTAINER;
     public static final String TEST_REALM = "WildFly";
+    public static final String TEST_REALM_WITH_SCOPES = "WildFlyScopes";
     public static final String TENANT1_REALM = "tenant1";
     public static final String TENANT2_REALM = "tenant2";
     public static final String KEYCLOAK_USERNAME = "username";
@@ -91,6 +99,13 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     public static final String TENANT1_ENDPOINT = "tenant1";
     public static final String TENANT2_ENDPOINT = "tenant2";
     protected HttpServerAuthenticationMechanismFactory oidcFactory;
+
+    public enum RequestObjectErrorType {
+        INVALID_ALGORITHM,
+        MISSING_CLIENT_SECRET,
+        INVALID_REQUEST_FORMAT,
+        MISSING_ENC_VALUE
+    }
 
     @AfterClass
     public static void generalCleanup() throws Exception {
@@ -131,15 +146,26 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
         }
     }
     protected CallbackHandler getCallbackHandler() {
-       return getCallbackHandler(false, null);
+       return getCallbackHandler(false, null, null);
+    }
+
+    protected CallbackHandler getCallbackHandler(String expectedPrincipal) {
+        return getCallbackHandler(false, null, expectedPrincipal);
     }
 
     protected CallbackHandler getCallbackHandler(boolean checkScope, String expectedScopes) {
+        return getCallbackHandler(checkScope, expectedScopes, null);
+    }
+
+    protected CallbackHandler getCallbackHandler(boolean checkScope, String expectedScopes, String expectedPrincipal) {
         return callbacks -> {
             for(Callback callback : callbacks) {
                 if (callback instanceof EvidenceVerifyCallback) {
                     Evidence evidence = ((EvidenceVerifyCallback) callback).getEvidence();
                     ((EvidenceVerifyCallback) callback).setVerified(evidence.getDecodedPrincipal() != null);
+                    if (expectedPrincipal != null) {
+                        assertEquals(expectedPrincipal, evidence.getDecodedPrincipal().getName());
+                    }
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     // NO-OP
                 } else if (callback instanceof IdentityCredentialCallback) {
@@ -322,5 +348,82 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
                 assertTrue(jwtClaims.getClaimValueAsString("preferred_username").contains(KeycloakConfiguration.ALICE));
             }
         }
+    }
+
+    // Note: The tests will fail if `localhost` is not listed first in `/etc/hosts` file for the loopback addresses (IPv4 and IPv6).
+    protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
+        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, getClientUrl(), expectedLocation,
+                clientPageText, null, false);
+    }
+
+    protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+                                         int expectedDispatcherStatusCode, String clientUrl, String expectedLocation, String clientPageText) throws Exception {
+        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, clientUrl, expectedLocation,
+                clientPageText, null, false);
+    }
+
+    protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak, int expectedDispatcherStatusCode,
+                                         String expectedLocation, String clientPageText, String expectedScope, boolean checkInvalidScopeError) throws Exception {
+        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, getClientUrl(), expectedLocation, clientPageText,
+                expectedScope, checkInvalidScopeError);
+    }
+
+    private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+                                       int expectedDispatcherStatusCode, String clientUrl, String expectedLocation, String clientPageText,
+                                       String expectedScope, boolean checkInvalidScopeError) throws Exception {
+        try {
+            Map<String, Object> props = new HashMap<>();
+            OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(oidcConfig);
+            assertEquals(OidcClientConfiguration.RelativeUrlsUsed.NEVER, oidcClientConfiguration.getRelativeUrls());
+
+            OidcClientContext oidcClientContext = new OidcClientContext(oidcClientConfiguration);
+            oidcFactory = new OidcMechanismFactory(oidcClientContext);
+            HttpServerAuthenticationMechanism mechanism;
+            if (expectedScope == null) {
+                mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, getCallbackHandler());
+            } else {
+                mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, getCallbackHandler(true, expectedScope));
+            }
+
+            URI requestUri = new URI(clientUrl);
+            TestingHttpServerRequest request = new TestingHttpServerRequest(null, requestUri);
+            mechanism.evaluateRequest(request);
+            TestingHttpServerResponse response = request.getResponse();
+            assertEquals(loginToKeycloak ? HttpStatus.SC_MOVED_TEMPORARILY : HttpStatus.SC_FORBIDDEN, response.getStatusCode());
+            assertEquals(Status.NO_AUTH, request.getResult());
+            if (expectedScope != null) {
+                assertTrue(response.getFirstResponseHeaderValue("Location").contains("scope=" + expectedScope));
+            }
+
+            if (loginToKeycloak) {
+                client.setDispatcher(createAppResponse(mechanism, expectedDispatcherStatusCode, expectedLocation, clientPageText));
+
+                if (checkInvalidScopeError) {
+                    WebClient webClient = getWebClient();
+                    TextPage keycloakLoginPage = webClient.getPage(response.getLocation());
+                    assertTrue(keycloakLoginPage.getWebResponse().getWebRequest().toString().contains("error_description=Invalid+scopes"));
+                } else {
+                    TextPage page = loginToKeycloak(username, password, requestUri, response.getLocation(),
+                            response.getCookies()).click();
+                    assertTrue(page.getContent().contains(clientPageText));
+                }
+            }
+        } finally {
+            client.setDispatcher(new QueueDispatcher());
+        }
+    }
+
+    protected InputStream getOidcConfigurationInputStreamWithProviderUrl() {
+        String oidcConfig = "{\n" +
+                "    \"" + Oidc.RESOURCE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + Oidc.PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + Oidc.PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
+                "    \"" + Oidc.SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + Oidc.CREDENTIALS + "\" : {\n" +
+                "        \"" + Oidc.ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    }\n" +
+                "}";
+        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
     }
 }

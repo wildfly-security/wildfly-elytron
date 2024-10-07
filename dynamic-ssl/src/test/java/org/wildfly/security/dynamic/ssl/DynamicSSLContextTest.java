@@ -330,7 +330,7 @@ public class DynamicSSLContextTest {
         SSLSocketFactory socketFactory = dynamicSSLContext.getSocketFactory();
 
         AuthenticationContext.empty().withSsl(MatchRule.ALL.matchPort(10001), () -> DynamicSSLTestUtils
-                .createSSLContext(RESOURCES + "client1.keystore.jks", RESOURCES + "client1.truststore.jks", "secret")).run(() -> {
+                .createSSLContext(RESOURCES + "client1.keystore.jks", RESOURCES + "client1.truststore.jks", "Elytron")).run(() -> {
             try {
                 Socket clientSslSocket = socketFactory.createSocket("localhost", 10001);
                 checkOutputIsOK((SSLSocket) clientSslSocket);
@@ -341,7 +341,7 @@ public class DynamicSSLContextTest {
         });
 
         AuthenticationContext.empty().withSsl(MatchRule.ALL.matchPort(10002), () -> DynamicSSLTestUtils
-                .createSSLContext(RESOURCES + "client2.keystore.jks", RESOURCES + "client2.truststore.jks", "secret")).run(() -> {
+                .createSSLContext(RESOURCES + "client2.keystore.jks", RESOURCES + "client2.truststore.jks", "Elytron")).run(() -> {
             try {
                 Socket clientSslSocket = socketFactory.createSocket("localhost", 10002);
                 checkOutputIsOK((SSLSocket) clientSslSocket);
@@ -352,7 +352,7 @@ public class DynamicSSLContextTest {
         });
 
         AuthenticationContext.empty().withSsl(MatchRule.ALL.matchPort(10003), () -> DynamicSSLTestUtils
-                .createSSLContext(RESOURCES + "client3.keystore.jks", RESOURCES + "client3.truststore.jks", "secret")).run(() -> {
+                .createSSLContext(RESOURCES + "client3.keystore.jks", RESOURCES + "client3.truststore.jks", "Elytron")).run(() -> {
             try {
                 Socket clientSslSocket = socketFactory.createSocket("localhost", 10003);
                 checkOutputIsOK((SSLSocket) clientSslSocket);
@@ -371,7 +371,7 @@ public class DynamicSSLContextTest {
         SSLContext previousDefaultSSLContext = SSLContext.getDefault();
         SSLContext.setDefault(dynamicSSLContext);
         AuthenticationContext.empty().withSsl(MatchRule.ALL.matchPort(10000), () -> DynamicSSLTestUtils
-                .createSSLContext(RESOURCES + "client1.keystore.jks", RESOURCES + "client1.truststore.jks", "secret")).run(() -> {
+                .createSSLContext(RESOURCES + "client1.keystore.jks", RESOURCES + "client1.truststore.jks", "Elytron")).run(() -> {
             try {
                 Socket clientSslSocket = socketFactory.createSocket("localhost", 12345);
                 checkOutputIsOK((SSLSocket) clientSslSocket);

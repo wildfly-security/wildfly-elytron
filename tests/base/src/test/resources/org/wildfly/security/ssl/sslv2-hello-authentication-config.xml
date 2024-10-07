@@ -17,14 +17,17 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
+
+<!-- Configuration for the SSLv2HelloAuthenticationTest-->
 <configuration>
     <authentication-client xmlns="urn:elytron:client:1.6">
         <key-stores>
-            <key-store name="scarab" type="JKS">
-                <file name="target/test-classes/ca/jks/scarab.keystore"/>
+            <key-store name="scarab" type="PKCS12" provider="SUN">
+                <file name="target/test-classes/ca/pkcs12/scarab.keystore"/>
+                <key-store-clear-password password="Elytron"/>
             </key-store>
-            <key-store name="ladybird" type="JKS">
-                <file name="target/test-classes/ca/jks/ladybird.keystore"/>
+            <key-store name="ladybird" type="PKCS12" provider="SUN">
+                <file name="target/test-classes/ca/pkcs12/ladybird.keystore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
         </key-stores>

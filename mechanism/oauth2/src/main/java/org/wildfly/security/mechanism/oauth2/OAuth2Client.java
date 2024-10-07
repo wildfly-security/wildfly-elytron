@@ -18,6 +18,11 @@
 
 package org.wildfly.security.mechanism.oauth2;
 
+import static org.wildfly.common.Assert.assertTrue;
+
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
+
 import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.callback.CredentialCallback;
@@ -27,12 +32,9 @@ import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.sasl.util.StringPrep;
 
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.UnsupportedCallbackException;
-
-import static org.wildfly.common.Assert.assertTrue;
-
 /**
+ * Implementation of the client side of the OAuth2 SASL mechanism.
+ *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 public class OAuth2Client {
@@ -43,12 +45,26 @@ public class OAuth2Client {
     private final String authorizationId;
     private ElytronMessages log;
 
+    /**
+     * Constructs a new {@code OAuth2Client} instance.
+     *
+     * @param authorizationId the ID of the user to be authorized.
+     * @param callbackHandler the callback handler for verifying the Bearer token.
+     * @param log the logger to use.
+     */
     public OAuth2Client(String authorizationId, CallbackHandler callbackHandler, ElytronMessages log) {
         this.authorizationId = authorizationId;
         this.callbackHandler = callbackHandler;
         this.log = log;
     }
 
+    /**
+     * Gets the initial response message from the client that will be sent to the server.
+     * It retrieves the Bearer token from a callback and constructs an encoded message that includes the token.
+     *
+     * @return encoded message that includes the Bearer token.
+     * @throws AuthenticationMechanismException if an error occurs during the callback or the token is {@code null}.
+     */
     public OAuth2InitialClientMessage getInitialResponse() throws AuthenticationMechanismException {
         final CredentialCallback credentialCallback = new CredentialCallback(BearerTokenCredential.class);
 
@@ -80,13 +96,19 @@ public class OAuth2Client {
         return new OAuth2InitialClientMessage(null, null, encoded.toArray());
     }
 
+    /**
+     * Handles the server's response to the initial client message.
+     *
+     * @param serverMessage the byte array containing the server's response.
+     * @return {@code null} if the response was successful, aborting the authentication otherwise.
+     */
     public byte[] handleServerResponse(byte[] serverMessage) {
         // got a successful response
         if (serverMessage.length == 0) {
             return null;
         }
 
-        // otherwise, server responded with a error message
+        // otherwise, server responded with an error message
         try {
             String errorMessage = ByteIterator.ofBytes(serverMessage).asUtf8String().base64Decode().asUtf8String().drainToString();
             log.debugf("Got error message from server [%s].", errorMessage);

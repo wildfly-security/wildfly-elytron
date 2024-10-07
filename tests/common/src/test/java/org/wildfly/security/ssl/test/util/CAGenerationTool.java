@@ -55,7 +55,8 @@ import org.wildfly.security.x500.cert.X509CertificateBuilder;
 import org.wildfly.security.x500.cert.X509CertificateExtension;
 
 /**
- * A tool for generating a complete set of certificates backed by a generated certificate authority.
+ * A tool for generating a complete set of certificates backed by a generated
+ * certificate authority.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
@@ -65,12 +66,13 @@ public class CAGenerationTool implements Closeable {
 
     private static final String BEETLES_STORE = "beetles.keystore";
     private static final String KEY_ALGORITHM = "RSA";
-    private static final String KEYSTORE_TYPE = "JKS"; // TODO Switch to PKCS#12
+    private static final String KEYSTORE_TYPE = "PKCS12";
     private static final int OCSP_PORT = 4854;
-    private static final char[] PASSWORD = "Elytron".toCharArray();
+    static final char[] PASSWORD = "Elytron".toCharArray();
 
     private static final Set<Identity> BEETLES = Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(Identity.LADYBIRD, Identity.SCARAB, Identity.DUNG, Identity.FIREFLY)));
+            .unmodifiableSet(
+                    new HashSet<>(Arrays.asList(Identity.LADYBIRD, Identity.SCARAB, Identity.DUNG, Identity.FIREFLY)));
     private static final Predicate<Identity> INCLUDE_IN_BEETLES = BEETLES::contains;
 
     private final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
@@ -78,6 +80,8 @@ public class CAGenerationTool implements Closeable {
     private final Map<Identity, X509Certificate> certificateMap = new HashMap<>();
 
     private final File workingDir;
+
+    private volatile boolean closed = false;
 
     protected CAGenerationTool(Builder builder) throws Exception {
         // Ensure we have the directory created to hold the resulting KeyStores
@@ -108,13 +112,58 @@ public class CAGenerationTool implements Closeable {
         }
     }
 
+    public DefinedIdentity getDefinedIdentity(final Identity identity) {
+        if (identity.isCertificateAuthority()) {
+            return getDefinedCAIdentity(identity);
+        }
+
+        if (!certificateMap.containsKey(identity)) {
+            throw new IllegalStateException(String.format("Identity %s has not been created.", identity.toString()));
+        }
+
+        X509Certificate certificate = certificateMap.get(identity);
+
+        return new DefinedIdentity(this, identity, certificate);
+    }
+
+    public DefinedCAIdentity getDefinedCAIdentity(final Identity identity) {
+        if (!identity.isCertificateAuthority()) {
+            throw new IllegalStateException(
+                    String.format("Identity %s is not a CertificateAuthority", identity.toString()));
+        }
+
+        if (!caMap.containsKey(identity)) {
+            throw new IllegalStateException(String.format("Identity %s has not been created.", identity.toString()));
+        }
+
+        CAState caState = caMap.get(identity);
+        return new DefinedCAIdentity(this, identity, caState.issuerCertificate, caState.signingKey);
+    }
+
+    public KeyStore getBeetlesKeyStore() {
+        return loadKeyStore(new File(workingDir, BEETLES_STORE));
+    }
+
+    public String getKeyStoreType() {
+        return KEYSTORE_TYPE;
+    }
+
+    /**
+     * @deprecated Use {@link CommonIdentity#getCertificate()} instead.
+     */
+    @Deprecated()
     public X509Certificate getCertificate(final Identity identity) {
         return certificateMap.get(identity);
     }
 
+    /**
+     * @deprecated Use {@link DefinedCAIdentity#getPrivateKey()} instead.
+     */
+    @Deprecated()
     public PrivateKey getPrivateKey(final Identity identity) {
         if (!identity.isCertificateAuthority()) {
-            throw new IllegalStateException(String.format("Identity %s if not a CertificateAuthority", identity.toString()));
+            throw new IllegalStateException(
+                    String.format("Identity %s if not a CertificateAuthority", identity.toString()));
         }
 
         return caMap.computeIfAbsent(identity, this::createCA).signingKey;
@@ -126,7 +175,8 @@ public class CAGenerationTool implements Closeable {
         Identity signedBy = identity.getSignedBy();
         if (signedBy == null) {
             // As a root CA it will require a self signed certificate.
-            SelfSignedX509CertificateAndSigningKey issuerSelfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
+            SelfSignedX509CertificateAndSigningKey issuerSelfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey
+                    .builder()
                     .setDn(identity.getPrincipal())
                     .setKeyAlgorithmName(KEY_ALGORITHM)
                     .setSignatureAlgorithmName(SIGNATURE_ALGORTHM)
@@ -147,8 +197,8 @@ public class CAGenerationTool implements Closeable {
                         .setSerialNumber(BigInteger.valueOf(signerState.serialNumber++))
                         .addExtension(new BasicConstraintsExtension(false, true, -1))
                         .addExtension(new AuthorityInformationAccessExtension(Collections.singletonList(
-                                new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
-                        )))
+                                new AccessDescription(OID_AD_OCSP,
+                                        new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp")))))
                         .build();
 
                 caState.issuerCertificate = intermediateIssuerCertificate;
@@ -175,24 +225,31 @@ public class CAGenerationTool implements Closeable {
         return caState;
     }
 
-    public X509Certificate createIdentity(final String alias, final X500Principal principal, final String keyStoreName,
-            final Identity ca, final X509CertificateExtension... extensions) {
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+    private X509Certificate createCustomCertificate(final Identity ca, final X500Principal principal,
+            final KeyPair keyPair, final X509CertificateExtension... extensions) throws CertificateException{
+
         CAState caState = caMap.computeIfAbsent(ca, this::createCA);
 
+        X509CertificateBuilder certificateBuilder = new X509CertificateBuilder()
+                .setIssuerDn(ca.getPrincipal())
+                .setSubjectDn(principal)
+                .setSignatureAlgorithmName(SIGNATURE_ALGORTHM)
+                .setSigningKey(caState.signingKey)
+                .setPublicKey(keyPair.getPublic())
+                .setSerialNumber(BigInteger.valueOf(caState.serialNumber++))
+                .addExtension(new BasicConstraintsExtension(false, false, -1));
+        for (X509CertificateExtension currentExtension : extensions) {
+            certificateBuilder.addExtension(currentExtension);
+        }
+
+        return certificateBuilder.build();
+    }
+
+    CustomIdentity createCustomIdentity(final String alias, final X500Principal principal, final String keyStoreName,
+            final Identity ca, final X509CertificateExtension... extensions) {
         try {
-            X509CertificateBuilder certificateBuilder = new X509CertificateBuilder()
-                    .setIssuerDn(ca.getPrincipal())
-                    .setSubjectDn(principal)
-                    .setSignatureAlgorithmName(SIGNATURE_ALGORTHM)
-                    .setSigningKey(caState.signingKey)
-                    .setPublicKey(keyPair.getPublic())
-                    .setSerialNumber(BigInteger.valueOf(caState.serialNumber++))
-                    .addExtension(new BasicConstraintsExtension(false, false, -1));
-            for (X509CertificateExtension currentExtension : extensions) {
-                certificateBuilder.addExtension(currentExtension);
-            }
-            X509Certificate builtCertificate = certificateBuilder.build();
+            KeyPair keyPair = keyPairGenerator.generateKeyPair();
+            X509Certificate builtCertificate = createCustomCertificate(ca, principal, keyPair, extensions);
 
             File keyStoreFile = new File(workingDir, keyStoreName);
             KeyStore keyStore = createEmptyKeyStore();
@@ -201,9 +258,55 @@ public class CAGenerationTool implements Closeable {
             certificates.add(builtCertificate);
 
             Identity caIdentity = ca;
+            CAState caState;
+
             do {
-                caState = caMap.get(caIdentity); // We just created a signed cert above, the complete chain must be present.
-                keyStore.setCertificateEntry(caIdentity.toString(), caState.issuerCertificate); // This could be removed as the cert chain is added to the Entry.
+                caState = caMap.get(caIdentity); // We just created a signed cert above, the complete chain must be
+                                                 // present.
+                certificates.add(caState.issuerCertificate);
+                caIdentity = caIdentity.getSignedBy();
+            } while (caIdentity != null);
+
+            keyStore.setKeyEntry(alias, keyPair.getPrivate(), PASSWORD,
+                    certificates.toArray(new X509Certificate[certificates.size()]));
+            try (OutputStream out = new FileOutputStream(keyStoreFile)) {
+                keyStore.store(out, PASSWORD);
+            }
+
+            return new CustomIdentity(this, builtCertificate, keyStoreFile);
+
+        } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException e) {
+            throw new RuntimeException("Umnable to create identity", e);
+        }
+    }
+
+    /**
+     * @deprecated Use
+     *             {@link #createIdentity(String, X500Principal, String, X509CertificateExtension...)}
+     *             instead.
+     */
+    @Deprecated
+    public X509Certificate createIdentity(final String alias, final X500Principal principal, final String keyStoreName,
+            final Identity ca, final X509CertificateExtension... extensions) {
+        try {
+            KeyPair keyPair = keyPairGenerator.generateKeyPair();
+            X509Certificate builtCertificate = createCustomCertificate(ca, principal, keyPair, extensions);
+
+            File keyStoreFile = new File(workingDir, keyStoreName);
+            KeyStore keyStore = createEmptyKeyStore();
+
+            List<X509Certificate> certificates = new ArrayList<>();
+            certificates.add(builtCertificate);
+
+            Identity caIdentity = ca;
+            CAState caState;
+
+            do {
+                caState = caMap.get(caIdentity); // We just created a signed cert above, the complete chain must be
+                                                 // present.
+                keyStore.setCertificateEntry(caIdentity.toString(), caState.issuerCertificate); // This could be removed
+                                                                                                // as the cert chain is
+                                                                                                // added to the Entry.
                 certificates.add(caState.issuerCertificate);
                 caIdentity = caIdentity.getSignedBy();
             } while (caIdentity != null);
@@ -220,7 +323,8 @@ public class CAGenerationTool implements Closeable {
         }
     }
 
-    public X509Certificate createSelfSignedIdentity(final String alias, final X500Principal principal, final String keyStoreName) {
+    private X509Certificate createSelfSignedIdentity(final String alias, final X500Principal principal,
+            final String keyStoreName) {
         SelfSignedX509CertificateAndSigningKey selfSignedIdentity = SelfSignedX509CertificateAndSigningKey.builder()
                 .setDn(principal)
                 .setKeyAlgorithmName(KEY_ALGORITHM)
@@ -256,7 +360,7 @@ public class CAGenerationTool implements Closeable {
     private static KeyStore createEmptyKeyStore() {
         try {
             KeyStore ks = KeyStore.getInstance(KEYSTORE_TYPE);
-            ks.load(null,null);
+            ks.load(null, null);
 
             return ks;
         } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
@@ -264,7 +368,15 @@ public class CAGenerationTool implements Closeable {
         }
     }
 
-    private static KeyStore loadKeyStore(final File location) {
+    File getKeyStoreFile(Identity identity) {
+        return new File(workingDir, identity.getKeyStoreName());
+    }
+
+    KeyStore loadKeyStore(final Identity identity) {
+        return loadKeyStore(getKeyStoreFile(identity));
+    }
+
+    static KeyStore loadKeyStore(final File location) {
         try (InputStream caTrustStoreFile = new FileInputStream(location)) {
             KeyStore keyStore = KeyStore.getInstance(KEYSTORE_TYPE);
             keyStore.load(caTrustStoreFile, PASSWORD);
@@ -275,8 +387,15 @@ public class CAGenerationTool implements Closeable {
         }
     }
 
+    void assertNotClosed() {
+        if (closed) {
+            throw new IllegalStateException("The CAGenerationTool is closed.");
+        }
+    }
+
     @Override
     public void close() throws IOException {
+        closed = true;
         workingDir.delete();
     }
 
@@ -306,7 +425,8 @@ public class CAGenerationTool implements Closeable {
                 CA, true, null),
         ROVE("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Rove",
                 INTERMEDIATE, false, "rove.keystore"),
-        SECOND_CA("CN=Wildfly CA, ST=Wildfly, C=CA, EMAILADDRESS=admin@wildfly.org O=Another Root Certificate Authority",
+        SECOND_CA(
+                "CN=Wildfly CA, ST=Wildfly, C=CA, EMAILADDRESS=admin@wildfly.org O=Another Root Certificate Authority",
                 null, true, "ca.truststore2"),
         LADYBUG("OU=Wildfly, O=Wildfly, C=CA, ST=Wildfly, CN=Ladybug", SECOND_CA, false,
                 "ladybug.keystore"),
@@ -318,8 +438,9 @@ public class CAGenerationTool implements Closeable {
         private final boolean ca;
         private final String keyStoreName;
 
-        private Identity(final String distinguishedName, final Identity signedBy, final boolean ca, final String keyStoreName) {
-            this.principal =  new X500Principal(distinguishedName);
+        private Identity(final String distinguishedName, final Identity signedBy, final boolean ca,
+                final String keyStoreName) {
+            this.principal = new X500Principal(distinguishedName);
             this.signedBy = signedBy;
             this.ca = ca;
             this.keyStoreName = keyStoreName;

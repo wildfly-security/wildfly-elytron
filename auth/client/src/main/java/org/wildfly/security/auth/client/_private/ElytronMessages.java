@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.client._private;
 
+import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
@@ -128,6 +129,10 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1137, value = "Invalid key store entry type for alias \"%s\" (expected %s, got %s)")
     ConfigXMLParseException xmlInvalidKeyStoreEntryType(@Param Location location, String alias, Class<?> expectedClass,
             Class<?> actualClass);
+
+    @LogMessage(level = INFO)
+    @Message(id = 1138, value = "No Keystore password specified \"%s\"")
+    void noKeystorePasswordSpecified(Location location);
 
     @Message(id = 1139, value = "Failed to create credential store")
     ConfigXMLParseException xmlFailedToCreateCredentialStore(@Param Location location, @Cause Throwable cause);

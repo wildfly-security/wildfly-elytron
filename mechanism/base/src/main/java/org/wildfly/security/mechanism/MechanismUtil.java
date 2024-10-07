@@ -37,7 +37,7 @@ import org.wildfly.security.password.PasswordFactory;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  *
- * @deprecated Should not be part of public API. Moved into internal {@link org.wildfly.security.mechanism._private.MechanismUtil}.
+ * @deprecated Should not be part of public API. Moved into internal {@link org.wildfly.security.mechanism._private.MechanismUtil org.wildfly.security.mechanism._private.MechanismUtil}.
  */
 @Deprecated
 public final class MechanismUtil {
@@ -57,6 +57,7 @@ public final class MechanismUtil {
      * @param providers the security providers to use with the {@link PasswordFactory}
      * @param <S> the password type
      * @return the password
+     * @throws AuthenticationMechanismException if there is an error retrieving the password
      */
     @Deprecated
     public static <S extends Password> S getPasswordCredential(String userName, CallbackHandler callbackHandler, Class<S> passwordType, String passwordAlgorithm, AlgorithmParameterSpec matchParameters, AlgorithmParameterSpec generateParameters, Supplier<Provider[]> providers) throws AuthenticationMechanismException {
@@ -78,6 +79,7 @@ public final class MechanismUtil {
      * @param <S> the password type
      * @param log mechanism specific logger
      * @return the password
+     * @throws AuthenticationMechanismException if there is an error retrieving the password
      */
     @Deprecated
     public static <S extends Password> S getPasswordCredential(String userName, CallbackHandler callbackHandler, Class<S> passwordType, String passwordAlgorithm, AlgorithmParameterSpec matchParameters, AlgorithmParameterSpec generateParameters, Supplier<Provider[]> providers, ElytronMessages log) throws AuthenticationMechanismException {

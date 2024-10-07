@@ -46,7 +46,7 @@ import org.wildfly.security.password.interfaces.DigestPassword;
  * {@link HttpServerAuthenticationMechanismFactory} for obtaining configured mechanisms.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
- * @deprecated Use {@link org.wildfly.security.auth.server.http.HttpAuthenticationFactory} instead
+ * @deprecated Use {@link org.wildfly.security.auth.server.http.HttpAuthenticationFactory org.wildfly.security.auth.server.http.HttpAuthenticationFactory} instead
  */
 @Deprecated
 public final class HttpAuthenticationFactory extends AbstractMechanismAuthenticationFactory<HttpServerAuthenticationMechanism, HttpServerAuthenticationMechanismFactory, HttpAuthenticationException> {

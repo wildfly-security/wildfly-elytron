@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.password.impl;
 
-import java.util.concurrent.ThreadLocalRandom;
+import org.wildfly.common.Assert;
 
 /**
  * Helper utility methods for operations on passwords.
@@ -27,6 +27,8 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 final class PasswordUtil {
 
+    private static final ThreadLocalSecureRandom THREAD_LOCAL_SECURE_RANDOM = new ThreadLocalSecureRandom();
+
     /**
      * Generate a random salt as byte array.
      *
@@ -35,7 +37,22 @@ final class PasswordUtil {
      */
     public static byte[] generateRandomSalt(int saltSize) {
         byte[] randomSalt = new byte[saltSize];
-        ThreadLocalRandom.current().nextBytes(randomSalt);
+        THREAD_LOCAL_SECURE_RANDOM.get().nextBytes(randomSalt);
         return randomSalt;
+    }
+
+    /**
+     * Generate a random salt as int.
+     *
+     * @return a byte array representing the random salt
+     */
+    static int generateRandomSaltInt() {
+        byte[] saltBytes = generateRandomSalt(4);
+        return convertBytesToInt(saltBytes);
+    }
+
+    static int convertBytesToInt(byte[] saltBytes) {
+        Assert.assertTrue(saltBytes.length == 4);
+        return (saltBytes[0] & 0xff) << 24 | (saltBytes[1] & 0xff) << 16 | (saltBytes[2] & 0xff) << 8 | saltBytes[3] & 0xff;
     }
 }

@@ -31,7 +31,7 @@ import java.security.spec.AlgorithmParameterSpec;
  * A credential source which is backed by a credential security factory.
  *
  * @author <a href="mailto:mmazanek@redhat.com">Martin Mazanek</a>
- * @deprecated Use {@link org.wildfly.security.credential.source.impl.FactoryCredentialSource} instead
+ * @deprecated Use {@link org.wildfly.security.credential.source.impl.FactoryCredentialSource org.wildfly.security.credential.source.impl.FactoryCredentialSource} instead
  */
 @Deprecated
 public class FactoryCredentialSource implements CredentialSource {

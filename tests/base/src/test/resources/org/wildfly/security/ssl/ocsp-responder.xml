@@ -19,7 +19,7 @@
     <signers>
         <signer name="signer1">
             <type>JKS</type>
-            <key>password=Elytron,keystore=file:target/test-classes/jks/ocsp-responder.keystore</key>
+            <key>password=Elytron,keystore=file:target/test-classes/pkcs12/ocsp-responder.keystore</key>
             <algorithms>
                 <algorithm>SHA256withRSA</algorithm>
             </algorithms>

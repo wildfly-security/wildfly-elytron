@@ -30,7 +30,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -72,11 +71,11 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
     }
 
     BSDUnixDESCryptPasswordImpl(final ClearPasswordSpec passwordSpec) throws InvalidKeySpecException {
-        this(passwordSpec.getEncodedPassword(), ThreadLocalRandom.current().nextInt() & 0xffffff, DEFAULT_ITERATION_COUNT);
+        this(passwordSpec.getEncodedPassword(), PasswordUtil.generateRandomSaltInt() & 0xffffff, DEFAULT_ITERATION_COUNT);
     }
 
     BSDUnixDESCryptPasswordImpl(final char[] password, final Charset hashCharset) throws InvalidKeySpecException, InvalidParameterSpecException {
-        this(password, ThreadLocalRandom.current().nextInt() & 0xffffff, DEFAULT_ITERATION_COUNT, hashCharset);
+        this(password, PasswordUtil.generateRandomSaltInt() & 0xffffff, DEFAULT_ITERATION_COUNT, hashCharset);
     }
 
     BSDUnixDESCryptPasswordImpl(final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec, final Charset hashCharset) throws InvalidKeySpecException, InvalidParameterSpecException {
@@ -84,7 +83,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
     }
 
     BSDUnixDESCryptPasswordImpl(final char[] password, final IteratedPasswordAlgorithmSpec spec, final Charset hashCharset) throws InvalidKeySpecException, InvalidParameterSpecException {
-        this(password, ThreadLocalRandom.current().nextInt() & 0xffffff, spec.getIterationCount(), hashCharset);
+        this(password, PasswordUtil.generateRandomSaltInt() & 0xffffff, spec.getIterationCount(), hashCharset);
     }
 
     BSDUnixDESCryptPasswordImpl(final char[] password, final SaltedPasswordAlgorithmSpec spec, final Charset hashCharset) throws InvalidKeySpecException, InvalidParameterSpecException {

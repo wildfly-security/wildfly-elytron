@@ -44,7 +44,10 @@ import java.security.Principal;
 import java.util.Arrays;
 import java.util.function.Function;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>

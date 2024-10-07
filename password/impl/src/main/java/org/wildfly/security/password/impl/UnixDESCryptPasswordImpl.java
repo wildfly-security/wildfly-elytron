@@ -31,7 +31,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -68,11 +67,11 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
     }
 
     UnixDESCryptPasswordImpl(final ClearPasswordSpec spec) throws InvalidKeySpecException, InvalidKeyException {
-        this((short) (ThreadLocalRandom.current().nextInt() & 0xfff), spec.getEncodedPassword());
+        this((short) (PasswordUtil.generateRandomSaltInt() & 0xfff), spec.getEncodedPassword());
     }
 
     UnixDESCryptPasswordImpl(final char[] passwordChars, final Charset hashCharset) throws InvalidKeyException {
-        this((short) (ThreadLocalRandom.current().nextInt() & 0xfff), passwordChars, hashCharset);
+        this((short) (PasswordUtil.generateRandomSaltInt() & 0xfff), passwordChars, hashCharset);
     }
 
     UnixDESCryptPasswordImpl(final char[] passwordChars, SaltedPasswordAlgorithmSpec algorithmSpec, final Charset hashCharset) throws InvalidParameterSpecException, InvalidKeyException {

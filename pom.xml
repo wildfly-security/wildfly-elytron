@@ -31,7 +31,7 @@
 
     <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-elytron-parent</artifactId>
-    <version>2.4.2.CR1-SNAPSHOT</version>
+    <version>2.6.1.CR1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>WildFly Elytron Parent</name>
@@ -56,11 +56,12 @@
 
     <properties>
         <jdk.min.version>11</jdk.min.version>
+        <version-javadoc-plugin>3.7.0</version-javadoc-plugin>
         <version.com.fasterxml.jackson>2.17.0</version.com.fasterxml.jackson>
         <version.com.fasterxml.jackson.databind>${version.com.fasterxml.jackson}</version.com.fasterxml.jackson.databind>
         <version.commons-cli>1.6.0</version.commons-cli>
         <version.jakarta.enterprise>4.0.1</version.jakarta.enterprise>
-        <version.org.apache.commons>3.14.0</version.org.apache.commons>
+        <version.org.apache.commons>3.15.0</version.org.apache.commons>
         <version.org.apache.directory.server>2.0.0.AM27</version.org.apache.directory.server>
         <version.org.apache.directory.api>2.1.6</version.org.apache.directory.api>
         <version.org.apache.kerby>2.0.3</version.org.apache.kerby>
@@ -70,35 +71,38 @@
         <version.org.apache.sshd.common>2.12.0</version.org.apache.sshd.common>
         <version.org.apache.httpcomponents.httpclient>4.5.14</version.org.apache.httpcomponents.httpclient>
         <version.org.apache.httpcomponents.httpcore>4.4.16</version.org.apache.httpcomponents.httpcore>
+        <version.org.eclipse.parsson.jakarta.json>1.1.5</version.org.eclipse.parsson.jakarta.json>
         <version.org.jboss.logging>3.5.3.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.1.19.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.6.Final</version.org.jboss.logmanager.log4j-jboss>
         <version.org.jboss.logging.tools>2.2.1.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.12.2.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.2.0.Final</version.org.jboss.slf4j>
-        <version.jakarta.json.jakarta-json-api>2.0.0</version.jakarta.json.jakarta-json-api>
+        <version.jakarta.json.jakarta-json-api>2.1.2</version.jakarta.json.jakarta-json-api>
         <version.jakarta.servlet.jakarta-servlet-api>5.0.0</version.jakarta.servlet.jakarta-servlet-api>
         <version.org.jboss.threads>3.5.1.Final</version.org.jboss.threads>
         <version.org.kohsuke.metainf-services.metainf-services>1.11</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.13.1</version.junit.junit>
         <version.jmockit>1.34</version.jmockit>
         <version.hsqldb>2.7.1</version.hsqldb>
-        <version.org.glassfish.jakarta.json>2.0.0</version.org.glassfish.jakarta.json>
         <version.net.minidev.json-smart>2.4.9</version.net.minidev.json-smart>
-        <version.com.nimbusds.nimbus-jose-jwt>9.31</version.com.nimbusds.nimbus-jose-jwt>
+        <version.com.nimbusds.nimbus-jose-jwt>9.37.3</version.com.nimbusds.nimbus-jose-jwt>
         <version.com.squareup.okhttp3.mockwebserver>3.8.1</version.com.squareup.okhttp3.mockwebserver>
         <version.org.wildfly.checkstyle-config>1.0.8.Final</version.org.wildfly.checkstyle-config>
         <version.org.wildfly.client.config>1.0.1.Final</version.org.wildfly.client.config>
         <version.org.wildfly.common>1.6.0.Final</version.org.wildfly.common>
-        <version.commons-io.commons-io>2.7</version.commons-io.commons-io>
+        <version.commons-io.commons-io>2.16.1</version.commons-io.commons-io>
         <version.org.mock-server.mockserver-netty>5.4.1</version.org.mock-server.mockserver-netty>
         <version.org.xipki.pki.ocsp-server>3.0.0</version.org.xipki.pki.ocsp-server>
         <version.org.bitbucket.b_c.jose4j>0.9.6</version.org.bitbucket.b_c.jose4j>
         <version.org.testcontainers.testcontainers>1.15.3</version.org.testcontainers.testcontainers>
-        <version.org.keycloak>18.0.2</version.org.keycloak>
-        <version.io.rest-assured>4.3.3</version.io.rest-assured>
+        <version.org.keycloak>25.0.2</version.org.keycloak>
+        <version.io.rest-assured>5.5.0</version.io.rest-assured>
         <version.net.sourceforge.htmlunit.htmlunit>2.40.0</version.net.sourceforge.htmlunit.htmlunit>
         <version.org.apache.santuario>2.3.0</version.org.apache.santuario>
+        <version.org.keycloak.keycloak-services>23.0.7</version.org.keycloak.keycloak-services>
+        <version.org.aesh>2.7</version.org.aesh>
+        <version.org.xnio>3.8.16.Final</version.org.xnio>
 
         <test.level>INFO</test.level>
         <!-- Checkstyle configuration -->
@@ -254,11 +258,119 @@
                 <!-- Javadoc -->
                 <plugin>
                     <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${version-javadoc-plugin}</version>
                     <configuration>
+                        <additionalDependencies>
+                            <additionalDependency>
+                                <groupId>org.wildfly.common</groupId>
+                                <artifactId>wildfly-common</artifactId>
+                                <version>${version.org.wildfly.common}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.jboss.logging</groupId>
+                                <artifactId>jboss-logging</artifactId>
+                                <version>${version.org.jboss.logging}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.jboss.logging</groupId>
+                                <artifactId>jboss-logging-annotations</artifactId>
+                                <version>${version.org.jboss.logging.tools}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.jboss.logmanager</groupId>
+                                <artifactId>jboss-logmanager</artifactId>
+                                <version>${version.org.jboss.logmanager}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.wildfly.security</groupId>
+                                <artifactId>wildfly-elytron-credential-source-impl</artifactId>
+                                <version>${project.version}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.wildfly.security</groupId>
+                                <artifactId>wildfly-elytron-ssh-util</artifactId>
+                                <version>${project.version}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.wildfly.client</groupId>
+                                <artifactId>wildfly-client-config</artifactId>
+                                <version>${version.org.wildfly.client.config}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.wildfly.security</groupId>
+                                <artifactId>wildfly-elytron-provider-util</artifactId>
+                                <version>${project.version}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.kohsuke.metainf-services</groupId>
+                                <artifactId>metainf-services</artifactId>
+                                <version>${version.org.kohsuke.metainf-services.metainf-services}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.apache.httpcomponents</groupId>
+                                <artifactId>httpcore</artifactId>
+                                <version>${version.org.apache.httpcomponents.httpcore}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.apache.httpcomponents</groupId>
+                                <artifactId>httpclient</artifactId>
+                                <version>${version.org.apache.httpcomponents.httpclient}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.bitbucket.b_c</groupId>
+                                <artifactId>jose4j</artifactId>
+                                <version>${version.org.bitbucket.b_c.jose4j}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>com.fasterxml.jackson.core</groupId>
+                                <artifactId>jackson-databind</artifactId>
+                                <version>${version.com.fasterxml.jackson.databind}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>com.fasterxml.jackson.core</groupId>
+                                <artifactId>jackson-annotations</artifactId>
+                                <version>${version.com.fasterxml.jackson}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>com.fasterxml.jackson.core</groupId>
+                                <artifactId>jackson-core</artifactId>
+                                <version>${version.com.fasterxml.jackson}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>jakarta.servlet</groupId>
+                                <artifactId>jakarta.servlet-api</artifactId>
+                                <version>${version.jakarta.servlet.jakarta-servlet-api}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>jakarta.json</groupId>
+                                <artifactId>jakarta.json-api</artifactId>
+                                <version>${version.jakarta.json.jakarta-json-api}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>commons-cli</groupId>
+                                <artifactId>commons-cli</artifactId>
+                                <version>${version.commons-cli}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.apache.commons</groupId>
+                                <artifactId>commons-lang3</artifactId>
+                                <version>${version.org.apache.commons}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.apache.sshd</groupId>
+                                <artifactId>sshd-common</artifactId>
+                                <version>${version.org.apache.sshd.common}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.jboss.modules</groupId>
+                                <artifactId>jboss-modules</artifactId>
+                                <version>${version.org.jboss.modules}</version>
+                            </additionalDependency>
+                        </additionalDependencies>
                         <notimestamp>true</notimestamp>
                         <doclint>none</doclint>
                         <show>protected</show>
-                        <source>8</source> <!-- See https://bugs.openjdk.java.net/browse/JDK-8212233 -->
+                        <release>11</release>
                         <sourcepath>
                             ${project.basedir}/asn1/src/main/java/;
                             ${project.basedir}/audit/src/main/java/;
@@ -1000,6 +1112,11 @@
                 <artifactId>jose4j</artifactId>
                 <version>${version.org.bitbucket.b_c.jose4j}</version>
             </dependency>
+            <dependency>
+                <groupId>org.aesh</groupId>
+                <artifactId>aesh</artifactId>
+                <version>${version.org.aesh}</version>
+            </dependency>
 
             <!--
                   Test Scope Only
@@ -1131,7 +1248,7 @@
             <dependency>
                 <groupId>org.jboss.xnio</groupId>
                 <artifactId>xnio-api</artifactId>
-                <version>3.8.8.Final</version>
+                <version>${version.org.xnio}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -1152,6 +1269,12 @@
                 <version>${version.org.bouncycastle}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-services</artifactId>
+                <version>${version.org.keycloak.keycloak-services}</version>
+                <scope>test</scope>
+            </dependency>
 
             <!-- HSQL Database-->
             <dependency>
@@ -1162,9 +1285,9 @@
             </dependency>
 
             <dependency>
-                <groupId>org.glassfish</groupId>
+                <groupId>org.eclipse.parsson</groupId>
                 <artifactId>jakarta.json</artifactId>
-                <version>${version.org.glassfish.jakarta.json}</version>
+                <version>${version.org.eclipse.parsson.jakarta.json}</version>
                 <scope>test</scope>
             </dependency>
 

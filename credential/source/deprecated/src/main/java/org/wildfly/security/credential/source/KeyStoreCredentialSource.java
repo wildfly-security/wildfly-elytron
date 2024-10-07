@@ -43,7 +43,7 @@ import org.wildfly.security.x500.X500;
  * A credential source which is backed by a key store entry.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @deprecated Use {@link org.wildfly.security.credential.source.impl.KeyStoreCredentialSource} instead
+ * @deprecated Use {@link org.wildfly.security.credential.source.impl.KeyStoreCredentialSource org.wildfly.security.credential.source.impl.KeyStoreCredentialSource} instead
  */
 @Deprecated
 public final class KeyStoreCredentialSource implements CredentialSource {

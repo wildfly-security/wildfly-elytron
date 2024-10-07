@@ -20,8 +20,6 @@
 package org.wildfly.security.dynamic.ssl;
 
 import org.junit.Assert;
-import org.wildfly.security.x500.cert.BasicConstraintsExtension;
-import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -33,16 +31,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+
+import org.wildfly.security.ssl.test.util.CAGenerationTool;
+import org.wildfly.security.x500.cert.X509CertificateExtension;
 
 /**
  * Utility class for DynamicSSLContextTest class.
@@ -54,10 +50,9 @@ public class DynamicSSLTestUtils {
     private static final String CLIENT_ALIAS = "client";
     private static final String LOCALHOST_ALIAS = "localhost";
     private static final String KEYSTORE_TYPE = "JKS";
-    private static final String SHA_1_WITH_RSA = "SHA1withRSA";
     private static final String TLS_PROTOCOL_VERSION = "TLSv1.2";
     public static final String KEY_MANAGER_FACTORY_ALGORITHM = "SunX509";
-    private static char[] PASSWORD = "secret".toCharArray();
+    private static char[] PASSWORD = "Elytron".toCharArray();
     private static File KEYSTORES_DIR = new File("./target/keystores");
 
     private static String CLIENT1_KEYSTORE_FILENAME =  "client1.keystore.jks";
@@ -92,6 +87,7 @@ public class DynamicSSLTestUtils {
 
             KeyStore trustStore = KeyStore.getInstance(KEYSTORE_TYPE);
             trustStore.load(new FileInputStream(truststorePath), password.toCharArray());
+
             // Create trust manager
             TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KEY_MANAGER_FACTORY_ALGORITHM);
             trustManagerFactory.init(trustStore);
@@ -112,6 +108,7 @@ public class DynamicSSLTestUtils {
         if (!KEYSTORES_DIR.exists()) {
             KEYSTORES_DIR.mkdirs();
         }
+
         generateTwoWaySSLKeystoresAndTruststores(CLIENT1_KEYSTORE_FILENAME, SERVER1_KEYSTORE_FILENAME, CLIENT1_TRUSTSTORE_FILENAME, SERVER1_TRUSTSTORE_FILENAME);
         generateTwoWaySSLKeystoresAndTruststores(CLIENT2_KEYSTORE_FILENAME, SERVER2_KEYSTORE_FILENAME, CLIENT2_TRUSTSTORE_FILENAME, SERVER2_TRUSTSTORE_FILENAME);
         generateTwoWaySSLKeystoresAndTruststores(CLIENT3_KEYSTORE_FILENAME, SERVER3_KEYSTORE_FILENAME, CLIENT3_TRUSTSTORE_FILENAME, SERVER3_TRUSTSTORE_FILENAME);
@@ -120,57 +117,30 @@ public class DynamicSSLTestUtils {
 
     private static void generateTwoWaySSLKeystoresAndTruststores(String clientKeystoreFilename, String serverKeystoreFilename,
                                                                  String clientTruststoreFilename, String serverTruststoreFilename) throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
-        // Generates client certificate and keystore
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        KeyStore clientKeyStore = KeyStore.getInstance(KEYSTORE_TYPE);
-        clientKeyStore.load(null, null);
-
-        KeyPair clientKeyPair = keyPairGenerator.generateKeyPair();
-        PrivateKey signingKey = clientKeyPair.getPrivate();
-        PublicKey publicKey = clientKeyPair.getPublic();
-
-        X500Principal testClient10DN = new X500Principal("CN=" + CLIENT_ALIAS);
-        X509Certificate clientCertificate = new X509CertificateBuilder()
-                .setIssuerDn(testClient10DN)
-                .setSubjectDn(new X500Principal("OU=Elytron"))
-                .setSignatureAlgorithmName(SHA_1_WITH_RSA)
-                .setSigningKey(signingKey)
-                .setPublicKey(publicKey)
-                .setSerialNumber(new BigInteger("3"))
-                .addExtension(new BasicConstraintsExtension(false, false, -1))
-                .build();
-        clientKeyStore.setKeyEntry(CLIENT_ALIAS, signingKey, PASSWORD, new X509Certificate[]{clientCertificate});
-
-
-        // Generates server certificate and keystore
-        KeyStore serverKeyStore = KeyStore.getInstance(KEYSTORE_TYPE);
-        serverKeyStore.load(null, null);
-
-        KeyPair serverKeyPair = keyPairGenerator.generateKeyPair();
-        PrivateKey serverSigningKey = serverKeyPair.getPrivate();
-        PublicKey serverPublicKey = serverKeyPair.getPublic();
-
-        X500Principal testServer10DN = new X500Principal("CN=" + LOCALHOST_ALIAS);
-        X509Certificate serverCertificate = new X509CertificateBuilder()
-                .setIssuerDn(testServer10DN)
-                .setSubjectDn(new X500Principal("OU=Elytron"))
-                .setSignatureAlgorithmName(SHA_1_WITH_RSA)
-                .setSigningKey(serverSigningKey)
-                .setPublicKey(serverPublicKey)
-                .setSerialNumber(new BigInteger("4"))
-                .addExtension(new BasicConstraintsExtension(false, false, -1))
-                .build();
-        serverKeyStore.setKeyEntry(LOCALHOST_ALIAS, serverSigningKey, PASSWORD, new X509Certificate[]{serverCertificate});
-
-        File clientKeystoreFile = new File(KEYSTORES_DIR, clientKeystoreFilename);
-        try (FileOutputStream clientStream = new FileOutputStream(clientKeystoreFile)) {
-            clientKeyStore.store(clientStream, PASSWORD);
+        CAGenerationTool caGenerationTool = null;
+        try {
+            caGenerationTool = CAGenerationTool.builder()
+                    .setBaseDir(KEYSTORES_DIR.getCanonicalPath())
+                    .setRequestIdentities(CAGenerationTool.Identity.values())
+                    .build();
+        } catch(Exception e) {
+            e.printStackTrace();
+            Assert.fail();
         }
 
-        File serverKeystoreFile = new File(KEYSTORES_DIR, serverKeystoreFilename);
-        try (FileOutputStream serverStream = new FileOutputStream(serverKeystoreFile)) {
-            serverKeyStore.store(serverStream, PASSWORD);
-        }
+        // Generates client certificate
+        X509Certificate clientCertificate = caGenerationTool.createIdentity(CLIENT_ALIAS,
+                new X500Principal("OU=Elytron"),
+                clientKeystoreFilename,
+                CAGenerationTool.Identity.CA,
+                new X509CertificateExtension[]{});
+
+        // Generates server certificate
+        X509Certificate serverCertificate = caGenerationTool.createIdentity(LOCALHOST_ALIAS,
+                new X500Principal("OU=Elytron"),
+                serverKeystoreFilename,
+                CAGenerationTool.Identity.CA,
+                new X509CertificateExtension[]{});
 
         // create truststores
         KeyStore clientTrustStore = KeyStore.getInstance(KEYSTORE_TYPE);
@@ -178,8 +148,9 @@ public class DynamicSSLTestUtils {
 
         KeyStore serverTrustStore = KeyStore.getInstance(KEYSTORE_TYPE);
         serverTrustStore.load(null, null);
-        clientTrustStore.setCertificateEntry(LOCALHOST_ALIAS, serverKeyStore.getCertificate(LOCALHOST_ALIAS));
-        serverTrustStore.setCertificateEntry(CLIENT_ALIAS, clientKeyStore.getCertificate(CLIENT_ALIAS) );
+
+        clientTrustStore.setCertificateEntry(LOCALHOST_ALIAS, serverCertificate);
+        serverTrustStore.setCertificateEntry(CLIENT_ALIAS, clientCertificate);
 
         File clientTrustFile = new File(KEYSTORES_DIR, clientTruststoreFilename);
         try (FileOutputStream clientStream = new FileOutputStream(clientTrustFile)) {

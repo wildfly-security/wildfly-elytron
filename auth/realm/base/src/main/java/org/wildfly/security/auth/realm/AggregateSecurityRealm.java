@@ -79,18 +79,14 @@ public final class AggregateSecurityRealm implements SecurityRealm {
     public RealmIdentity getRealmIdentity(final Evidence evidence) throws RealmUnavailableException {
         boolean ok = false;
         final RealmIdentity authenticationIdentity = authenticationRealm.getRealmIdentity(evidence);
-        if (authenticationIdentity.exists()) {
-            log.tracef("Authentication identity for principal [%s] found.", evidence.getDecodedPrincipal());
-        }
+        log.tracef("Authentication identity for principal [%s] obtained.", evidence.getDecodedPrincipal());
         final RealmIdentity[] authorizationIdentities = new RealmIdentity[authorizationRealms.length];
         try {
             for (int i = 0; i < authorizationIdentities.length; i++) {
                 SecurityRealm authorizationRealm = authorizationRealms[i];
                 authorizationIdentities[i] = (authorizationRealm == authenticationRealm) ? authenticationIdentity
                         : getAuthorizationIdentity(authorizationRealm, evidence, principalTransformer, authenticationIdentity);
-                if (authorizationIdentities[i].exists()) {
-                    log.tracef("Authorization identity for principal [%s] found.", evidence.getDecodedPrincipal());
-                }
+                log.tracef("Authorization identity for principal [%s] obtained.", evidence.getDecodedPrincipal());
             }
 
             final Identity identity = new Identity(authenticationIdentity, authorizationIdentities);
@@ -111,9 +107,7 @@ public final class AggregateSecurityRealm implements SecurityRealm {
     public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
         boolean ok = false;
         final RealmIdentity authenticationIdentity = authenticationRealm.getRealmIdentity(principal);
-        if (authenticationIdentity.exists()) {
-            log.tracef("Authentication identity for principal [%s] found.", principal);
-        }
+        log.tracef("Authentication identity for principal [%s] obtained.", principal);
         Principal authorizationPrincipal = principal;
         if (principalTransformer != null) {
             authorizationPrincipal = principalTransformer.apply(authorizationPrincipal);
@@ -125,9 +119,7 @@ public final class AggregateSecurityRealm implements SecurityRealm {
             for (int i = 0; i < authorizationIdentities.length; i++) {
                 SecurityRealm authorizationRealm = authorizationRealms[i];
                 authorizationIdentities[i] = (authorizationRealm == authenticationRealm) && (principalTransformer == null) ? authenticationIdentity : authorizationRealm.getRealmIdentity(authorizationPrincipal);
-                if (authorizationIdentities[i].exists()) {
-                    log.tracef("Authorization identity for principal [%s] found.", principal);
-                }
+                log.tracef("Authorization identity for principal [%s] obtained.", principal);
             }
 
             final Identity identity = new Identity(authenticationIdentity, authorizationIdentities);

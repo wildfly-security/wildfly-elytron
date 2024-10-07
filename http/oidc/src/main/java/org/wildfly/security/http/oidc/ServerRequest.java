@@ -25,13 +25,14 @@ import static org.wildfly.security.http.oidc.Oidc.GRANT_TYPE;
 import static org.wildfly.security.http.oidc.Oidc.KEYCLOAK_CLIENT_CLUSTER_HOST;
 import static org.wildfly.security.http.oidc.Oidc.PASSWORD;
 import static org.wildfly.security.http.oidc.Oidc.REDIRECT_URI;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST;
 import static org.wildfly.security.http.oidc.Oidc.USERNAME;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -46,6 +47,8 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.wildfly.security.jose.util.JsonSerialization;
 
 /**
@@ -273,5 +276,35 @@ public class ServerRequest {
             tokenResponse = JsonSerialization.readValue(is, AccessAndIDTokenResponse.class);
         }
         return tokenResponse;
+    }
+
+    public static String getRequestUri(String request, OidcClientConfiguration deployment) throws OidcException {
+        if (deployment.getPushedAuthorizationRequestEndpoint() == null) {
+            throw log.pushedAuthorizationRequestEndpointNotAvailable();
+        }
+        HttpPost parRequest = new HttpPost(deployment.getPushedAuthorizationRequestEndpoint());
+        List<NameValuePair> formParams = new ArrayList<NameValuePair>();
+        formParams.add(new BasicNameValuePair(REQUEST, request));
+        ClientCredentialsProviderUtils.setClientCredentials(deployment, parRequest, formParams);
+
+        UrlEncodedFormEntity form = new UrlEncodedFormEntity(formParams, StandardCharsets.UTF_8);
+        parRequest.setEntity(form);
+
+        HttpResponse response;
+        try {
+            response = deployment.getClient().execute(parRequest);
+        } catch (Exception e) {
+            throw log.failedToSendPushedAuthorizationRequest(e);
+        }
+        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED) {
+            EntityUtils.consumeQuietly(response.getEntity());
+            throw log.unexpectedResponseCodeFromOidcProvider(response.getStatusLine().getStatusCode());
+        }
+        try (InputStream inputStream = response.getEntity().getContent()) {
+            JwtClaims jwt = JwtClaims.parse(readString(inputStream, StandardCharsets.UTF_8));
+            return jwt.getClaimValueAsString("request_uri");
+        } catch (IOException | InvalidJwtException e) {
+            throw log.failedToDecodeRequestUri(e);
+        }
     }
 }

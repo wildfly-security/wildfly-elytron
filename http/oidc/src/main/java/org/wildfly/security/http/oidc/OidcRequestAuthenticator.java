@@ -18,11 +18,17 @@
 
 package org.wildfly.security.http.oidc;
 
+import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA256;
+import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA384;
+import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA512;
+import static org.jose4j.jws.AlgorithmIdentifiers.NONE;
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
+import static org.wildfly.security.http.oidc.Oidc.ALLOW_QUERY_PARAMS_PROPERTY_NAME;
 import static org.wildfly.security.http.oidc.Oidc.CLIENT_ID;
 import static org.wildfly.security.http.oidc.Oidc.CODE;
 import static org.wildfly.security.http.oidc.Oidc.DOMAIN_HINT;
 import static org.wildfly.security.http.oidc.Oidc.ERROR;
+import static org.wildfly.security.http.oidc.Oidc.ISSUER;
 import static org.wildfly.security.http.oidc.Oidc.KC_IDP_HINT;
 import static org.wildfly.security.http.oidc.Oidc.LOGIN_HINT;
 import static org.wildfly.security.http.oidc.Oidc.MAX_AGE;
@@ -30,19 +36,29 @@ import static org.wildfly.security.http.oidc.Oidc.OIDC_SCOPE;
 import static org.wildfly.security.http.oidc.Oidc.PROMPT;
 import static org.wildfly.security.http.oidc.Oidc.REDIRECT_URI;
 import static org.wildfly.security.http.oidc.Oidc.RESPONSE_TYPE;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST;
+import static org.wildfly.security.http.oidc.Oidc.REQUEST_URI;
 import static org.wildfly.security.http.oidc.Oidc.SCOPE;
 import static org.wildfly.security.http.oidc.Oidc.SESSION_STATE;
 import static org.wildfly.security.http.oidc.Oidc.STATE;
 import static org.wildfly.security.http.oidc.Oidc.UI_LOCALES;
+import static org.wildfly.security.http.oidc.Oidc.ClientCredentialsProviderType.SECRET;
+
+import static org.wildfly.security.http.oidc.Oidc.logToken;
 import static org.wildfly.security.http.oidc.Oidc.generateId;
 import static org.wildfly.security.http.oidc.Oidc.getQueryParamValue;
-import static org.wildfly.security.http.oidc.Oidc.logToken;
 import static org.wildfly.security.http.oidc.Oidc.stripQueryParam;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -50,10 +66,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.message.BasicNameValuePair;
+import org.jose4j.jwa.AlgorithmConstraints;
+import org.jose4j.jwe.JsonWebEncryption;
+import org.jose4j.jws.JsonWebSignature;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.keys.HmacKey;
+import org.jose4j.lang.JoseException;
 import org.wildfly.security.http.HttpConstants;
 
 /**
@@ -73,6 +95,17 @@ public class OidcRequestAuthenticator {
     protected AuthChallenge challenge;
     protected String refreshToken;
     protected String strippedOauthParametersRequestUri;
+
+    static final boolean ALLOW_QUERY_PARAMS_PROPERTY;
+
+    static {
+        ALLOW_QUERY_PARAMS_PROPERTY = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+            @Override
+            public Boolean run() {
+                return Boolean.parseBoolean(System.getProperty(ALLOW_QUERY_PARAMS_PROPERTY_NAME, "false"));
+            }
+        });
+    }
 
     public OidcRequestAuthenticator(RequestAuthenticator requestAuthenticator, OidcHttpFacade facade, OidcClientConfiguration deployment, int sslRedirectPort, OidcTokenStore tokenStore) {
         this.reqAuthenticator = requestAuthenticator;
@@ -186,16 +219,71 @@ public class OidcRequestAuthenticator {
                 return null;
             }
 
-            URIBuilder redirectUriBuilder = new URIBuilder(deployment.getAuthUrl())
-                    .addParameter(RESPONSE_TYPE, CODE)
-                    .addParameter(CLIENT_ID, deployment.getResourceName())
-                    .addParameter(REDIRECT_URI, rewrittenRedirectUri(url))
-                    .addParameter(STATE, state);
-            redirectUriBuilder.addParameters(forwardedQueryParams);
+            String redirectUri = rewrittenRedirectUri(url);
+            URIBuilder redirectUriBuilder = new URIBuilder(deployment.getAuthUrl());
+            redirectUriBuilder.addParameter(RESPONSE_TYPE, CODE)
+                    .addParameter(CLIENT_ID, deployment.getResourceName());
+
+            switch (deployment.getAuthenticationRequestFormat()) {
+                case REQUEST:
+                    if (deployment.getRequestParameterSupported()) {
+                        // add request objects into request parameter
+                        try {
+                            createRequestWithRequestParameter(REQUEST, redirectUriBuilder, redirectUri, state, forwardedQueryParams);
+                        } catch (IOException | JoseException e) {
+                            throw log.unableToCreateRequestWithRequestParameter(e);
+                        }
+                    } else {
+                        // send request as usual
+                        createOAuthRequest(redirectUriBuilder, redirectUri, state, forwardedQueryParams);
+                        log.requestParameterNotSupported();
+                    }
+                    break;
+                case REQUEST_URI:
+                    if (deployment.getRequestUriParameterSupported()) {
+                        try {
+                            createRequestWithRequestParameter(REQUEST_URI, redirectUriBuilder, redirectUri, state, forwardedQueryParams);
+                        } catch (IOException | JoseException e) {
+                            throw log.unableToCreateRequestUriWithRequestParameter(e);
+                        }
+                    } else {
+                        // send request as usual
+                        createOAuthRequest(redirectUriBuilder, redirectUri, state, forwardedQueryParams);
+                        log.requestParameterNotSupported();
+                    }
+                    break;
+                default:
+                    createOAuthRequest(redirectUriBuilder, redirectUri, state, forwardedQueryParams);
+                    break;
+            }
             return redirectUriBuilder.build().toString();
         } catch (URISyntaxException e) {
             throw log.unableToCreateRedirectResponse(e);
         }
+    }
+
+    protected URIBuilder createOAuthRequest(URIBuilder redirectUriBuilder, String redirectUri, String state, List<NameValuePair> forwardedQueryParams) {
+        redirectUriBuilder.addParameter(REDIRECT_URI, redirectUri)
+                .addParameter(STATE, state)
+                .addParameters(forwardedQueryParams);
+        return redirectUriBuilder;
+    }
+
+    protected URIBuilder createRequestWithRequestParameter(String requestFormat, URIBuilder redirectUriBuilder, String redirectUri, String state, List<NameValuePair> forwardedQueryParams) throws JoseException, IOException {
+        String request = convertToRequestParameter(redirectUriBuilder, redirectUri, state, forwardedQueryParams);
+
+        switch (requestFormat) {
+            case REQUEST:
+                redirectUriBuilder.addParameter(REDIRECT_URI, redirectUri)
+                        .addParameter(REQUEST, request);
+                break;
+            case REQUEST_URI:
+                String request_uri = ServerRequest.getRequestUri(request, deployment);
+                redirectUriBuilder.addParameter("request_uri", request_uri)
+                        .addParameter(REDIRECT_URI, redirectUri);
+                break;
+        }
+        return redirectUriBuilder;
     }
 
     protected int getSSLRedirectPort() {
@@ -375,11 +463,15 @@ public class OidcRequestAuthenticator {
     private static String stripOauthParametersFromRedirect(String uri) {
         uri = stripQueryParam(uri, CODE);
         uri = stripQueryParam(uri, STATE);
-        return stripQueryParam(uri, SESSION_STATE);
+        uri = stripQueryParam(uri, SESSION_STATE);
+        return stripQueryParam(uri, ISSUER);
     }
 
     private String rewrittenRedirectUri(String originalUri) {
         Map<String, String> rewriteRules = deployment.getRedirectRewriteRules();
+        if (ALLOW_QUERY_PARAMS_PROPERTY && (rewriteRules == null || rewriteRules.isEmpty())) {
+            return originalUri;
+        }
         try {
             URL url = new URL(originalUri);
             Map.Entry<String, String> rule = null;
@@ -440,6 +532,94 @@ public class OidcRequestAuthenticator {
     private void addScopes(String scopes, Set<String> allScopes) {
         if (scopes != null && !scopes.isEmpty()) {
             allScopes.addAll(Arrays.asList(scopes.split("\\s+")));
+        }
+    }
+
+    private String convertToRequestParameter(URIBuilder redirectUriBuilder, String redirectUri, String state, List<NameValuePair> forwardedQueryParams) throws JoseException, IOException {
+        redirectUriBuilder.addParameter(SCOPE, OIDC_SCOPE);
+
+        JwtClaims jwtClaims = new JwtClaims();
+        jwtClaims.setIssuer(deployment.getResourceName());
+        jwtClaims.setAudience(deployment.getIssuerUrl());
+
+        for ( NameValuePair parameter: forwardedQueryParams) {
+            jwtClaims.setClaim(parameter.getName(), parameter.getValue());
+        }
+        jwtClaims.setClaim(STATE, state);
+        jwtClaims.setClaim(REDIRECT_URI, redirectUri);
+        jwtClaims.setClaim(RESPONSE_TYPE, CODE);
+        jwtClaims.setClaim(CLIENT_ID, deployment.getResourceName());
+
+        // sign JWT first before encrypting
+        JsonWebSignature signedRequest = signRequest(jwtClaims, deployment);
+
+        // Encrypting optional
+        if (deployment.getRequestObjectEncryptionAlgValue() != null && !deployment.getRequestObjectEncryptionAlgValue().isEmpty() &&
+            deployment.getRequestObjectEncryptionEncValue() != null && !deployment.getRequestObjectEncryptionEncValue().isEmpty()) {
+            return encryptRequest(signedRequest).getCompactSerialization();
+        } else {
+            return signedRequest.getCompactSerialization();
+        }
+    }
+
+    private static KeyPair getkeyPair(OidcClientConfiguration deployment) throws IOException {
+        if (!deployment.getRequestObjectSigningAlgorithm().equals(NONE) && deployment.getRequestObjectSigningKeyStoreFile() == null){
+            throw log.invalidKeyStoreConfiguration();
+        } else {
+            return JWTSigningUtils.loadKeyPairFromKeyStore(deployment.getRequestObjectSigningKeyStoreFile(),
+                    deployment.getRequestObjectSigningKeyStorePassword(), deployment.getRequestObjectSigningKeyPassword(),
+                    deployment.getRequestObjectSigningKeyAlias(), deployment.getRequestObjectSigningKeyStoreType());
+        }
+    }
+
+    private static JsonWebSignature signRequest(JwtClaims jwtClaims, OidcClientConfiguration deployment) throws IOException, JoseException {
+        JsonWebSignature jsonWebSignature = new JsonWebSignature();
+        jsonWebSignature.setPayload(jwtClaims.toJson());
+
+        if (!deployment.getRequestObjectSigningAlgValuesSupported().contains(deployment.getRequestObjectSigningAlgorithm())) {
+            throw log.invalidRequestObjectSignatureAlgorithm();
+        } else {
+            if (deployment.getRequestObjectSigningAlgorithm().equals(NONE)) { //unsigned
+                jsonWebSignature.setAlgorithmConstraints(AlgorithmConstraints.NO_CONSTRAINTS);
+                jsonWebSignature.setAlgorithmHeaderValue(NONE);
+            } else if (deployment.getRequestObjectSigningAlgorithm().equals(HMAC_SHA256)
+                    || deployment.getRequestObjectSigningAlgorithm().equals(HMAC_SHA384)
+                    || deployment.getRequestObjectSigningAlgorithm().equals(HMAC_SHA512)) { //signed with symmetric key
+                jsonWebSignature.setAlgorithmHeaderValue(deployment.getRequestObjectSigningAlgorithm());
+                String secretKey = (String) deployment.getResourceCredentials().get(SECRET.getValue());
+                if (secretKey == null) {
+                    throw log.clientSecretNotConfigured();
+                } else {
+                    Key key = new HmacKey(secretKey.getBytes(StandardCharsets.UTF_8));   //the client secret is a shared secret between the server and the client
+                    jsonWebSignature.setKey(key);
+                }
+            } else { //signed with asymmetric key
+                KeyPair keyPair = getkeyPair(deployment);
+                jsonWebSignature.setKey(keyPair.getPrivate());
+                jsonWebSignature.setAlgorithmHeaderValue(deployment.getRequestObjectSigningAlgorithm());
+            }
+            if (!deployment.getRequestObjectSigningAlgorithm().equals(NONE))
+                jsonWebSignature.sign();
+            else
+                log.unsignedRequestObjectIsUsed();
+            return jsonWebSignature;
+        }
+    }
+
+    private JsonWebEncryption encryptRequest(JsonWebSignature signedRequest) throws JoseException, IOException {
+        if (!deployment.getRequestObjectEncryptionAlgValuesSupported().contains(deployment.getRequestObjectEncryptionAlgValue())) {
+            throw log.invalidRequestObjectEncryptionAlgorithm();
+        } else if (!deployment.getRequestObjectEncryptionEncValuesSupported().contains(deployment.getRequestObjectEncryptionEncValue())) {
+            throw log.invalidRequestObjectEncryptionEncValue();
+        } else {
+            JsonWebEncryption jsonEncryption = new JsonWebEncryption();
+            jsonEncryption.setPayload(signedRequest.getCompactSerialization());
+            jsonEncryption.setAlgorithmConstraints(new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.PERMIT, deployment.getRequestObjectEncryptionAlgValue(), deployment.getRequestObjectEncryptionEncValue()));
+            jsonEncryption.setAlgorithmHeaderValue(deployment.getRequestObjectEncryptionAlgValue());
+            jsonEncryption.setEncryptionMethodHeaderParameter(deployment.getRequestObjectEncryptionEncValue());
+            PublicKey encPublicKey = deployment.getEncryptionPublicKeyLocator().getPublicKey(null, deployment);
+            jsonEncryption.setKey(encPublicKey);
+            return jsonEncryption;
         }
     }
 }

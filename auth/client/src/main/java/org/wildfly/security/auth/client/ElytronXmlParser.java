@@ -3466,7 +3466,7 @@ public final class ElytronXmlParser {
                 default: throw reader.unexpectedAttribute(i);
             }
         }
-        if (mechanismOids.size() == 0) {
+        if (mechanismOids.isEmpty()) {
             mechanismOids.add(GSSCredentialSecurityFactory.KERBEROS_V5);
             mechanismOids.add(GSSCredentialSecurityFactory.SPNEGO);
         }
@@ -3649,6 +3649,9 @@ public final class ElytronXmlParser {
         public KeyStore get() throws ConfigXMLParseException {
             try {
                 KeyStore keyStore = delegateFactory.get();
+                if (passwordFactory == null || passwordFactory.get() == null) {
+                    xmlLog.noKeystorePasswordSpecified(location);
+                }
                 try (InputStream fis = createStream()) {
                     keyStore.load(fis, passwordFactory == null ? null : passwordFactory.get());
                 }

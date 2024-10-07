@@ -275,8 +275,7 @@ public class AggregateRealmEvidenceTest {
 
         builder.setSignatureAlgorithmName("SHA256withRSA");
         builder.setPublicKey(keyPair.getPublic());
-        final X509Certificate orderedCertificate = builder.build();
-        return orderedCertificate;
+        return builder.build();
     }
 
     private Path getRootPath(String path, boolean deleteIfExists) throws Exception {
