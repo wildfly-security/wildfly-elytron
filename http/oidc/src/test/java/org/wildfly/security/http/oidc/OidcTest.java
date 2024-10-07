@@ -584,7 +584,7 @@ public class OidcTest extends OidcBaseTest {
     private void performTenantRequest(String username, String password, String tenant, String otherTenant, boolean useAuthServerUrl) throws Exception {
         try {
             Map<String, Object> props = new HashMap<>();
-            Map<String, Object> sessionScopeAttachments = new HashMap<>();
+            Map<String, Object> attachments = new HashMap<>();
             String clientPageText = getClientPageTestForTenant(tenant);
             String expectedLocation = getClientUrlForTenant(tenant);
 
@@ -604,14 +604,14 @@ public class OidcTest extends OidcBaseTest {
             assertEquals(Status.NO_AUTH, request.getResult());
 
             // log into Keycloak, we should then be redirected back to the tenant upon successful authentication
-            client.setDispatcher(createAppResponse(mechanism, HttpStatus.SC_MOVED_TEMPORARILY, expectedLocation, clientPageText, sessionScopeAttachments));
+            client.setDispatcher(createAppResponse(mechanism, HttpStatus.SC_MOVED_TEMPORARILY, expectedLocation, clientPageText, attachments));
             TextPage page = loginToKeycloak(username, password, requestUri, response.getLocation(),
                     response.getCookies()).click();
             assertTrue(page.getContent().contains(clientPageText));
 
             if (otherTenant != null) {
                 // attempt to access the other tenant
-                client.setDispatcher(createAppResponse(mechanism, clientPageText, sessionScopeAttachments, otherTenant, tenant.equals(otherTenant)));
+                client.setDispatcher(createAppResponse(mechanism, clientPageText, attachments, otherTenant, tenant.equals(otherTenant)));
                 WebClient webClient = getWebClient();
                 page = webClient.getPage(getClientUrlForTenant(otherTenant));
                 if (otherTenant.equals(tenant)) {

@@ -36,6 +36,7 @@ import java.util.List;
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
 public class AuthenticatedActionsHandler {
+
     private OidcClientConfiguration deployment;
     private OidcHttpFacade facade;
 
@@ -52,6 +53,7 @@ public class AuthenticatedActionsHandler {
             queryBearerToken();
             return true;
         }
+
         return false;
     }
 

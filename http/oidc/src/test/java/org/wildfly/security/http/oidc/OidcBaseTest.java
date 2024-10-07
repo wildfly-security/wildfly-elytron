@@ -212,7 +212,7 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     }
 
     protected static Dispatcher createAppResponse(HttpServerAuthenticationMechanism mechanism, int expectedStatusCode, String expectedLocation, String clientPageText,
-                                                  Map<String, Object> sessionScopeAttachments) {
+                                                  Map<String, Object> attachments) {
         return new Dispatcher() {
             @Override
             public MockResponse dispatch(RecordedRequest recordedRequest) throws InterruptedException {
@@ -225,8 +225,8 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
                         TestingHttpServerResponse response = request.getResponse();
                         assertEquals(expectedStatusCode, response.getStatusCode());
                         assertEquals(expectedLocation, response.getLocation());
-                        for (String key : request.getSessionScopeAttachments().keySet()) {
-                            sessionScopeAttachments.put(key, request.getSessionScopeAttachments().get(key));
+                        for (String key : request.getAttachments().keySet()) {
+                            attachments.put(key, request.getAttachments().get(key));
                         }
                         return new MockResponse().setBody(clientPageText);
                     } catch (Exception e) {
@@ -240,7 +240,7 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     }
 
     protected static Dispatcher createAppResponse(HttpServerAuthenticationMechanism mechanism, String clientPageText,
-                                                  Map<String, Object> sessionScopeAttachments, String tenant, boolean sameTenant) {
+                                                  Map<String, Object> attachments, String tenant, boolean sameTenant) {
         return new Dispatcher() {
             @Override
             public MockResponse dispatch(RecordedRequest recordedRequest) throws InterruptedException {
@@ -248,7 +248,7 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
                 if (path.contains("/" + CLIENT_APP + "/" + tenant)) {
                     try {
                         TestingHttpServerRequest request = new TestingHttpServerRequest(new String[0],
-                                new URI(recordedRequest.getRequestUrl().toString()), sessionScopeAttachments);
+                                new URI(recordedRequest.getRequestUrl().toString()), attachments);
                         mechanism.evaluateRequest(request);
                         TestingHttpServerResponse response = request.getResponse();
                         if (sameTenant) {
@@ -291,7 +291,10 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     }
 
     protected HtmlInput loginToKeycloak(String username, String password, URI requestUri, String location, List<HttpServerCookie> cookies) throws IOException {
-        WebClient webClient = getWebClient();
+        return loginToKeycloak(getWebClient(), username, password, requestUri, location, cookies);
+    }
+
+    protected HtmlInput loginToKeycloak(WebClient webClient, String username, String password, URI requestUri, String location, List<HttpServerCookie> cookies) throws IOException {
         if (cookies != null) {
             for (HttpServerCookie cookie : cookies) {
                 webClient.addCookie(getCookieString(cookie), requestUri.toURL(), null);
