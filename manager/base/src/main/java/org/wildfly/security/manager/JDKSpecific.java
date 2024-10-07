@@ -17,42 +17,43 @@
  */
 package org.wildfly.security.manager;
 
-import sun.reflect.Reflection;
+import static java.security.AccessController.doPrivileged;
+
+import java.lang.StackWalker.Option;
+import java.security.PrivilegedAction;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * JDK-specific classes which are replaced for different JDK major versions. This class is for JDK 8.
+ * JDK-specific classes which are replaced for different JDK major versions. This class is for JDK 9.
  * @author <a href="mailto:jucook@redhat.com">Justin Cook</a>
  */
 final class JDKSpecific {
 
-    private static boolean active;
-    private static int offset;
+    /*
+     * Using StackWalker the OFFSET is the minimum number of StackFrames, the first will always be
+     * JDKSpecific,getCallerClass(int), the second will always be the caller of this class.
+     */
+    private static final int OFFSET = 2;
 
-    static {
+    public static Class<?> getCallerClass(int n){
+        // Although we know WildFlySecurityManager is making the call it may not be the actual SecurityManager
+        // so we need to use doPrivileged instead of a doUnchecked unless we can be sure checking has been switched off.
+        final StackWalker stackWalker = WildFlySecurityManager.isChecking() ?
+                doPrivileged((PrivilegedAction<StackWalker>)JDKSpecific::getStackWalker) : getStackWalker();
 
-        boolean active = false;
-        int offset = 0;
-        try {
-            // JDK-8014925 - An additional Reflection call may be on the call stack so check the offset needed.
-            active = Reflection.getCallerClass(1) == WildFlySecurityManager.class || Reflection.getCallerClass(2) == WildFlySecurityManager.class;
-            offset = Reflection.getCallerClass(1) == Reflection.class ? 2 : 1;
-        } catch (Throwable ignored) {}
-
-        JDKSpecific.active = active;
-        // JDKSpecific.getCallerClass will also add 1 to the stack.
-        JDKSpecific.offset = offset + 1;
+        List<StackWalker.StackFrame> frames = stackWalker.walk(s ->
+                s.limit(n + OFFSET).collect(Collectors.toList())
+        );
+        return frames.get(frames.size() - 1).getDeclaringClass();
     }
 
-    public static Class<?> getCallerClass(int n) {
-        if (active) {
-            return Reflection.getCallerClass(n + offset);
-        } else {
-            throw new IllegalStateException("sun.reflect.Reflect.getCallerClass(int) not available.");
-        }
+    private static StackWalker getStackWalker() {
+        return StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE);
     }
 
     public static boolean usingStackWalker() {
-        return false;
+        return true;
     }
 
 }
