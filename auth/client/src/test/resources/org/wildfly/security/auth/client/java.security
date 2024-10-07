@@ -1,3 +1,4 @@
 security.provider.1=org.wildfly.security.auth.client.WildFlyElytronClientDefaultSSLContextProvider file:./src/test/resources/org/wildfly/security/auth/client/test-wildfly-config-client-default-sslcontext.xml
 security.provider.2=SUN
-security.provider.3=SunJSSE
+security.provider.3=SunRsaSign
+security.provider.4=SunJSSE
