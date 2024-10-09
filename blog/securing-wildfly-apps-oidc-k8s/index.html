@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Securing WildFly Apps with OIDC on Kubernetes</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Securing WildFly Apps with OIDC on Kubernetes | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="Securing WildFly Apps with OIDC on Kubernetes" />
+<meta name="author" content="Ashwin Mehendale" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="You can secure your WildFly applications deployed on Kubernetes with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OpenID providers. This guide shows how to secure an example application deployed to WildFly on a Kubernetes cluster running on your local machine, with OIDC using Keycloak as the OpenID provider." />
+<meta property="og:description" content="You can secure your WildFly applications deployed on Kubernetes with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OpenID providers. This guide shows how to secure an example application deployed to WildFly on a Kubernetes cluster running on your local machine, with OIDC using Keycloak as the OpenID provider." />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-k8s/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-k8s/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2024-10-08T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="twitter:title" content="Securing WildFly Apps with OIDC on Kubernetes" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Ashwin Mehendale"},"dateModified":"2024-10-08T00:00:00+00:00","datePublished":"2024-10-08T00:00:00+00:00","description":"You can secure your WildFly applications deployed on Kubernetes with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OpenID providers. This guide shows how to secure an example application deployed to WildFly on a Kubernetes cluster running on your local machine, with OIDC using Keycloak as the OpenID provider.","headline":"Securing WildFly Apps with OIDC on Kubernetes","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-k8s/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-k8s/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link highlight-button Open Source Day-menuitem" href="/wildfly-elytron/OSD/">Open Source Day</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link highlight-button Hacktoberfest-menuitem" href="/wildfly-elytron/hacktoberfest/">Hacktoberfest</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+                    
+                    
+                    
+                    
+                         <a class="mdl-navigation__link CVE Reporting-menuitem" href="/wildfly-elytron/security/">CVE Reporting</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link highlight-sidebar Open Source Day-menuitem" href="/wildfly-elytron/OSD/">Open Source Day</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link highlight-sidebar Hacktoberfest-menuitem" href="/wildfly-elytron/hacktoberfest/">Hacktoberfest</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link CVE Reporting-menuitem" href="/wildfly-elytron/security/">CVE Reporting</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Securing WildFly Apps with OIDC on Kubernetes</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/e792a4261507d430e9ac7d1f8abcdcc1">
+        
+        <p class="byline">
+          By <a href="https://github.com/theashiot">Ashwin Mehendale</a> | October 08, 2024
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/oidc"> #oidc</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/kubernetes"> #kubernetes</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/keycloak"> #keycloak</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/adapter"> #adapter</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/galleon-pack"> #galleon-pack</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-k8s/&title=Securing WildFly Apps with OIDC on Kubernetes" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Securing WildFly Apps with OIDC on Kubernetes&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-k8s/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-k8s/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-k8s/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Securing WildFly Apps with OIDC on Kubernetes&amp;body=Securing WildFly Apps with OIDC on Kubernetes https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-k8s/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>You can secure your WildFly applications deployed on Kubernetes with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OpenID providers. This guide shows how to secure an example application deployed to WildFly on a Kubernetes cluster running on your local machine, with OIDC using Keycloak as the OpenID provider.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#example-application">Example Application</a></li>
+<li><a href="#start-keycloak">Start Keycloak</a></li>
+<li><a href="#configure-keycloak">Configure Keycloak</a></li>
+<li><a href="#build-a-docker-image-of-the-application">Build a docker image of the application</a></li>
+<li><a href="#push-the-just-created-image-to-a-container-registry">Push the just created image to a container registry</a></li>
+<li><a href="#add-helm-configuration">Add Helm Configuration</a></li>
+<li><a href="#deploy-the-example-application-to-kubernetes">Deploy the Example Application to Kubernetes</a>
+<ul class="sectlevel2">
+<li><a href="#behind-the-scenes">Behind the Scenes</a></li>
+</ul>
+</li>
+<li><a href="#set-up-access-to-the-application">Set up access to the application</a></li>
+<li><a href="#finish-configuring-keycloak">Finish Configuring Keycloak</a></li>
+<li><a href="#access-the-application">Access the Application</a></li>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#resources">Resources</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>Prerequisites</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To follow along with this guide, you will need:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Roughly 15 minutes.</p>
+</li>
+<li>
+<p><a href="https://docs.docker.com/engine/install/">Docker</a> or <a href="https://podman.io/docs/installation">Podman</a>.</p>
+</li>
+<li>
+<p>A Kubernetes cluster.</p>
+<div class="paragraph">
+<p>You can use a local Kubernetes cluster such as <a href="https://minikube.sigs.k8s.io/docs/">minikube</a>, or <a href="https://kind.sigs.k8s.io/">kind</a>.</p>
+</div>
+<div class="paragraph">
+<p>The steps provided in this guide use minikube.</p>
+</div>
+</li>
+<li>
+<p>Kubernetes command-line tool, <a href="https://kubernetes.io/docs/tasks/tools/">kubectl</a>.</p>
+</li>
+<li>
+<p>A public container registry to host your application&#8217;s Docker image.</p>
+<div class="paragraph">
+<p>For example, <a href="https://hub.docker.com/">Docker
+Hub</a>.</p>
+</div>
+</li>
+<li>
+<p><a href="https://helm.sh/docs/intro/install/">Helm Chart</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="example-application"><a class="anchor" href="#example-application"></a>Example Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We use a simple web application in this guide that consists of a single <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-oidc/src/main/java/org/wildfly/security/examples/SecuredServlet.java">servlet</a>. We show how to secure this servlet using OIDC. We will use the example in the <a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/main/simple-webapp-oidc">simple-webapp-oidc</a> directory in the <a href="https://github.com/wildfly-security-incubator/elytron-examples">elytron-examples</a> repository.</p>
+</div>
+<div class="paragraph">
+<p>To obtain this example, clone the elytron-examples repository to your local machine:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">git clone git@github.com:wildfly-security-incubator/elytron-examples.git</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="start-keycloak"><a class="anchor" href="#start-keycloak"></a>Start Keycloak</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We will be using Keycloak as our OpenID provider.</p>
+</div>
+<div class="paragraph">
+<p>Follow the instructions, up until "Log in to the Admin Console", provided in the <a href="https://www.keycloak.org/getting-started/getting-started-kube">Get started with Keycloak on Kubernetes</a> guide. This guide uses Keycloak with Ingress add-on enabled.</p>
+</div>
+<div class="paragraph">
+<p>Make note of the initial admin user&#8217;s username, password, and the Keycloak Admin Console URL. You will require these values in the the next step.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configure-keycloak"><a class="anchor" href="#configure-keycloak"></a>Configure Keycloak</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To create a realm in Keycloak, add a user and role to the realm, and create a client with which to secure your application, follow these steps:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Log into the Keycloak Admin Console using the username and password you specified earlier.</p>
+</li>
+<li>
+<p>Create a new realm called <strong>myrealm</strong>. For more information, see the Keycloak documentation about <a href="https://www.keycloak.org/docs/latest/server_admin/#proc-creating-a-realm_server_administration_guide">creating a realm</a>. Note that</p>
+</li>
+<li>
+<p>Add a role called <strong>user</strong>. This role will be required to access our simple web application. For more information, see the Keycloak documentation about <a href="https://www.keycloak.org/docs/latest/server_admin/#proc-creating-realm-roles_server_administration_guide">creating a realm role</a>.</p>
+</li>
+<li>
+<p>Add a new user named <strong>alice</strong>. Set an <strong>email</strong> address for this new user, we&#8217;ll use <strong>alice@example.org</strong>. For more information, see the Keycloak documentation about <a href="https://www.keycloak.org/docs/latest/server_admin/#proc-creating-user_server_administration_guide">creating a user</a>.</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Set a password for the user alice. For more information, see the Keycloak documentation about <a href="https://www.keycloak.org/docs/latest/server_admin/#ref-user-credentials_server_administration_guide">defining user credentials</a>.</p>
+</li>
+<li>
+<p>Assign alice the <code>user</code> role From the <strong>Role Mapping</strong> tab. For more information, see the Keycloak documentation about <a href="https://www.keycloak.org/docs/latest/server_admin/#proc-assigning-role-mappings_server_administration_guide">assigning role mappings</a> to a user.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Create a new client as follows:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Click the <strong>General Settings</strong> image in the top left hand corner of the admin console.</p>
+</li>
+<li>
+<p>Click the <strong>Clients</strong> menu item.</p>
+</li>
+<li>
+<p>Click the <strong>Create client</strong> button.</p>
+</li>
+<li>
+<p>On the <strong>Create client</strong> page set the <strong>Client type</strong> to <strong>OpenID Connect</strong>.</p>
+</li>
+<li>
+<p>Set the <strong>Client id</strong> as <strong>myclient</strong>.</p>
+</li>
+<li>
+<p>Click the <strong>Next</strong> button.</p>
+</li>
+<li>
+<p>On the <strong>Capability config</strong> page, select the checkboxes for <strong>Standard flow</strong> and <strong>Direct access grants</strong>.</p>
+</li>
+<li>
+<p>Click the <strong>Next</strong> button.</p>
+</li>
+<li>
+<p>On the <strong>Login settings</strong> page no action is needed at this time.</p>
+</li>
+<li>
+<p>Click the <strong>Save</strong> button to save the client.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="build-a-docker-image-of-the-application"><a class="anchor" href="#build-a-docker-image-of-the-application"></a>Build a docker image of the application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To build a Docker image from your application so that you can push it to a container repository, such as Docker Hub, follow these steps:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Navigate to the <code>simple-webapp-oidc</code> directory.</p>
+</li>
+<li>
+<p>Create a docker image.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">mvn package wildfly:image -Popenshift
+ ...
+[INFO] Successfully tagged localhost/simple-webapp-oidc:latest
+[INFO] acd8c6c41788a99c5b22d2c6b2e42ce024a89e2eb4fe5b4d721f9b56796e95bc
+[INFO] Successfully built application image simple-webapp-oidc:latest</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Verify that you see the image in Docker images.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">docker images
+...
+REPOSITORY                       TAG         IMAGE ID      CREATED        SIZE
+localhost/simple-webapp-oidc     latest      acd8c6c41788  3 minutes ago  690 MB</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="push-the-just-created-image-to-a-container-registry"><a class="anchor" href="#push-the-just-created-image-to-a-container-registry"></a>Push the just created image to a container registry</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To push your image to a container registry so that your application is available to Kubernetes clusters, follow these steps:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Log in to the container registry.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">docker login &lt;CONTAINER_REGISTRY&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Substitute &lt;CONTAINER_REGISTRY&gt; as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>For Docker Hub, use <code>docker.io</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Create a new tag for your image.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">docker tag simple-webapp-oidc &lt;TAGGED_IMAGE&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Substitute &lt;TAGGED_IMAGE&gt; as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>For Docker Hub, use <code>&lt;USERNAME&gt;/simple-webapp-oidc</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Push the image to your container registry.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-subs hljs" data-lang="subs">$ docker push &lt;TAGGED_IMAGE&gt;:latest</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Substitute &lt;TAGGED_IMAGE&gt; as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>For Docker Hub, use the form <code>&lt;USERNAME&gt;/simple-webapp-oidc</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="add-helm-configuration"><a class="anchor" href="#add-helm-configuration"></a>Add Helm Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To configure your application for Kubernetes deployment with Helm, follow these steps:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Switch to the <code>charts</code> directory in the <code>simple-webapp-oidc</code> example.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">cd /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-oidc/charts</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Obtain the URL for Keycloak.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">KEYCLOAK_URL=http://$(minikube ip):$(kubectl get services/keycloak -o go-template='{{(index .spec.ports 0).nodePort}}') &amp;&amp;
+echo "" &amp;&amp;
+echo "Keycloak URL:   $KEYCLOAK_URL" &amp;&amp;
+echo ""</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Update the <code>values.yml</code> file.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">image:
+  name: &lt;IMAGE_NAME&gt;
+build:
+  enabled: false # The build part is not needed since we have already built our application with the wildfly-maven-plugin plugin
+deploy:
+  route:
+    enabled: false # the route can be enabled, but only for OpenShift clusters
+  env:
+    - name: OIDC_PROVIDER_URL
+      value: &lt;KEYCLOAK_URL&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Replace &lt;IMAGE_NAME&gt; with the name of the image, as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If you used Docker Hub, add the name in the form <code>&lt;USERNAME&gt;/simple-webapp-oidc</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Replace &lt;KEYCLOAK_URL&gt; with the value you obtained in the previous step.</p>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="deploy-the-example-application-to-kubernetes"><a class="anchor" href="#deploy-the-example-application-to-kubernetes"></a>Deploy the Example Application to Kubernetes</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To deploy your application to Kubernetes with Helm, follow these steps:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If you haven&#8217;t already installed the WildFly Helm chart, install it:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">helm repo add wildfly https://docs.wildfly.org/wildfly-charts/</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>If you&#8217;ve already installed the WildFly Helm Chart, be sure to update it to ensure you have the latest one:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">helm repo update</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Deploy the example application to WildFly on Kubernetes using the WildFly Helm Chart:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">helm install oidc-app -f /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-oidc/charts/values.yaml wildfly/wildfly</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that this command specifies the file we updated, <code>values.yaml</code>, that contains the values needed to build and deploy our application.</p>
+</div>
+<div class="paragraph">
+<p>The application will now begin to build. This will take a couple of minutes.</p>
+</div>
+<div class="paragraph">
+<p>The build can be observed using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc get build -w</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once complete, you can follow the deployment of the application using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc get deployment oidc-app -w</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div class="sect2">
+<h3 id="behind-the-scenes"><a class="anchor" href="#behind-the-scenes"></a>Behind the Scenes</h3>
+<div class="paragraph">
+<p>While our application is building, let&#8217;s take a closer look at our application.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Examine the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-oidc/pom.xml">pom.xml</a> file.</p>
+<div class="paragraph">
+<p>Notice that it contains an <strong>openshift</strong> profile. A profile in Maven lets you create a set of configuration values to customize your application build for different environments. The <strong>openshift</strong> profile in this example defines a configuration that will be used by the WildFly Helm Chart when provisioning the WildFly server on Kubernetes.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;profiles&gt;
+    &lt;profile&gt;
+        &lt;id&gt;openshift&lt;/id&gt;
+        &lt;build&gt;
+            &lt;plugins&gt;
+                &lt;plugin&gt;
+                    &lt;groupId&gt;org.wildfly.plugins&lt;/groupId&gt;
+                    &lt;artifactId&gt;wildfly-maven-plugin&lt;/artifactId&gt;         <i class="conum" data-value="1"></i><b>(1)</b>
+                    &lt;version&gt;${version.wildfly.maven.plugin}&lt;/version&gt;
+                    &lt;configuration&gt;
+                        &lt;feature-packs&gt;
+                            &lt;feature-pack&gt;
+                                &lt;location&gt;org.wildfly:wildfly-galleon-pack:${version.wildfly}&lt;/location&gt;
+                            &lt;/feature-pack&gt;
+                            &lt;feature-pack&gt;
+                                &lt;location&gt;org.wildfly.cloud:wildfly-cloud-galleon-pack:${version.wildfly.cloud.galleon.pack}&lt;/location&gt;
+                            &lt;/feature-pack&gt;
+                        &lt;/feature-packs&gt;
+                        &lt;layers&gt;
+                            &lt;layer&gt;cloud-server&lt;/layer&gt;
+                            &lt;layer&gt;elytron-oidc-client&lt;/layer&gt;           <i class="conum" data-value="2"></i><b>(2)</b>
+                        &lt;/layers&gt;
+                        &lt;filename&gt;simple-webapp-oidc.war&lt;/filename&gt;
+                    &lt;/configuration&gt;
+                    &lt;executions&gt;
+                        &lt;execution&gt;
+                            &lt;goals&gt;
+                                &lt;goal&gt;package&lt;/goal&gt;
+                            &lt;/goals&gt;
+                        &lt;/execution&gt;
+                    &lt;/executions&gt;
+                &lt;/plugin&gt;
+            &lt;/plugins&gt;
+        &lt;/build&gt;
+    &lt;/profile&gt;
+&lt;/profiles&gt;</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><strong>wildfly-maven-plugin</strong> provisions a WildFly server with the specified layers with our application deployed.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><strong>elytron-oidc-client</strong> automatically adds the native OIDC client subsystem to our WildFly installation.</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Examine the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-oidc/src/main/webapp/WEB-INF/web.xml">web.xml</a>.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">...
+    &lt;login-config&gt;
+        &lt;auth-method&gt;OIDC&lt;/auth-method&gt;  <i class="conum" data-value="1"></i><b>(1)</b>
+    &lt;/login-config&gt;
+...</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>When <strong>elytron-oidc-client</strong> subsystem sees <strong>auth-method</strong> is set to <strong>OIDC</strong>, it enables OIDC authentication mechanism for the application.</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Examine the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-oidc/src/main/webapp/WEB-INF/oidc.json">oidc.json</a> file. The <code>oidc.json</code> is used to configure the native OIDC client subsystem.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">{
+    "client-id" : "myclient",                                                         <i class="conum" data-value="1"></i><b>(1)</b>
+    "provider-url" : "${env.OIDC_PROVIDER_URL:http://localhost:8080}/realms/myrealm", <i class="conum" data-value="2"></i><b>(2)</b>
+    "public-client" : "true",                                                         <i class="conum" data-value="3"></i><b>(3)</b>
+    "principal-attribute" : "preferred_username",                                     <i class="conum" data-value="4"></i><b>(4)</b>
+    "ssl-required" : "EXTERNAL"                                                       <i class="conum" data-value="5"></i><b>(5)</b>
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>This is the client we created in Keycloak.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The provider URL, which is the URL for the realm <strong>myrealm</strong> that we created, is specified as an environment variable. We have set its value in the helm configuration.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>When <strong>public-client</strong> set to <strong>true</strong>, client credentials are not sent when communicating with the OpenID provider.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>We specify that the user name of the identity, which in our case is <strong>alice</strong>, is to be used as the principal for the identity.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>When <strong>ssl-required</strong> is set to <strong>EXTERNAL</strong>, only the communication with external clients happens over HTTPs</td>
+</tr>
+</table>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="set-up-access-to-the-application"><a class="anchor" href="#set-up-access-to-the-application"></a>Set up access to the application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Set up access to your application by configuring port-forward in kubernetes.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Get the name of pod for your application:</p>
+<div class="listingblock">
+<div class="content">
+<pre>kubectl get pod
+
+NAME                        READY   STATUS    RESTARTS      AGE
+keycloak-65766c8d6b-tdnhn   1/1     Running   1 (19m ago)   52m
+oidc-app-5d6f9974fd-srvrg   1/1     Running   0             4m</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the example, the pod name is <code>oidc-app-5d6f9974fd-srvrg</code>.</p>
+</div>
+</li>
+<li>
+<p>Set port-forward:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">kubectl port-forward &lt;POD_NAME&gt; 8080:8080</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Replace &lt;POD_NAME&gt; with the pod name obtained in the previous step.</p>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="finish-configuring-keycloak"><a class="anchor" href="#finish-configuring-keycloak"></a>Finish Configuring Keycloak</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click the General Settings image in the top left hand corner of the admin console.</p>
+</li>
+<li>
+<p>Click the <strong>Clients</strong> menu item.</p>
+</li>
+<li>
+<p>Click <strong>myclient</strong> from the list on the <strong>Clients</strong> page.</p>
+</li>
+<li>
+<p>Scroll down to the <strong>Access settings</strong> section on the page.</p>
+</li>
+<li>
+<p>In field, <strong>Valid redirect URIs</strong> set the value to <code><a href="http://localhost:8080/simple-webapp-oidc/secured/*" class="bare">http://localhost:8080/simple-webapp-oidc/secured/*</a></code>.</p>
+</li>
+<li>
+<p>Click the <strong>Save</strong> button at the bottom of the page.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="access-the-application"><a class="anchor" href="#access-the-application"></a>Access the Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To access your application, follow these steps:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>From your browser, navigate to <a href="http://localhost:8080/simple-webapp-oidc" class="bare">http://localhost:8080/simple-webapp-oidc</a>.</p>
+</li>
+<li>
+<p>Click on <strong>Access Secured Servlet</strong>.</p>
+<div class="paragraph">
+<p>You will be redirected to Keycloak to log in.</p>
+</div>
+</li>
+<li>
+<p>Log in using the <strong>alice</strong> user we created earlier.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Upon successful authentication, you will be redirected back to the example application.</p>
+</div>
+<div class="paragraph">
+<p>The example application simply outputs the name of the logged in user.</p>
+</div>
+<div class="paragraph">
+<p>You should see the following output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Secured Servlet
+
+Current Principal 'alice'</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This indicates that we have successfully logged into our application!</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This guide has shown how to secure an application deployed to WildFly on Kubernetes with OIDC. For additional
+information, feel free to check out the resources linked below.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="resources"><a class="anchor" href="#resources"></a>Resources</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://www.wildfly.org/news/2023/06/16/deploy-on-kubernetes-with-helm/">Deploy on Kubernetes with Helm</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/33/Getting_Started_on_OpenShift.html#helm-charts">WildFly Helm Chart</a></p>
+</li>
+<li>
+<p><a href="https://www.keycloak.org/getting-started/getting-started-kube">Get started with Keycloak on Kubernetes</a></p>
+</li>
+<li>
+<p><a href="https://www.keycloak.org/docs/latest/server_admin/index.html">Keycloak Server Administration Guide</a></p>
+</li>
+<li>
+<p><a href="https://www.keycloak.org/docs/latest/securing_apps/#_oidc">Using OpenID Connect to secure applications and services</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Tue, 08 Oct 2024 14:27:20 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 09 Oct 2024 15:01:56 +0000</lastBuildDate>
+        
+        <item>
+            <title>Securing WildFly Apps with OIDC on Kubernetes</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-k8s/
+            </link>
+            <description>
+                You can secure your WildFly applications deployed on Kubernetes with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OpenID providers. This guide shows how to secure an example application deployed to WildFly on a Kubernetes cluster running on your local machine, with OIDC using Keycloak...
+            </description>
+            <pubDate>Tue, 08 Oct 2024 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-k8s/
+            </guid>
+        </item>
         
         <item>
             <title>Using Credential Stores for WildFly Client</title>
@@ -130,20 +144,6 @@
             <pubDate>Tue, 27 Feb 2024 00:00:00 +0000</pubDate>
             <guid>
                 https://www.youtube.com/watch?v=usquALvL2qc
-            </guid>
-        </item>
-        
-        <item>
-            <title>Securing WildFly Applications Using Okta on OpenShift</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/
-            </link>
-            <description>
-                WildFly applications can be secured using OpenID Connect and deployed to OpenShift. By using OIDC to secure applications, you delegate authentication to OIDC providers. The elytron-oidc-client subsystem can be used to secure an application deployed to WildFly using any OpenID Provider. This guide demonstrates how to secure an example application...
-            </description>
-            <pubDate>Wed, 21 Feb 2024 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/
             </guid>
         </item>
         
