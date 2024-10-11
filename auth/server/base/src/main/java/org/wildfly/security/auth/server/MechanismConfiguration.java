@@ -50,7 +50,7 @@ public final class MechanismConfiguration {
     private final Map<String, MechanismRealmConfiguration> mechanismRealms;
     private final CredentialSource serverCredentialSource;
 
-    MechanismConfiguration(final Function<Principal, Principal> preRealmRewriter, final Function<Principal, Principal> postRealmRewriter, final Function<Principal, Principal> finalRewriter, final RealmMapper realmMapper, final Collection<MechanismRealmConfiguration> mechanismRealms, final CredentialSource serverCredentialSource) {
+    MechanismConfiguration(final Function<Principal, Principal> preRealmRewriter, final Function<Principal, Principal> postRealmRewriter, final Function<Principal, Principal> finalRewriter, final RealmMapper realmMapper, final Collection<MechanismRealmConfiguration> mechanismRealms, final CredentialSource serverCredentialSource, final boolean sessionBasedNonceManager) {
         checkNotNullParam("mechanismRealms", mechanismRealms);
         this.preRealmRewriter = preRealmRewriter;
         this.postRealmRewriter = postRealmRewriter;
@@ -167,6 +167,7 @@ public final class MechanismConfiguration {
         private RealmMapper realmMapper;
         private List<MechanismRealmConfiguration> mechanismRealms;
         private CredentialSource serverCredentialSource = CredentialSource.NONE;
+        private boolean useSessionBasedNonceManager = false;
 
         /**
          * Construct a new instance.
@@ -271,6 +272,12 @@ public final class MechanismConfiguration {
             return this;
         }
 
+        public Builder setUseSessionBasedNonceManager(final Boolean useSessionBasedNonceManager) {
+            checkNotNullParam("useSessionBasedNonceManager", useSessionBasedNonceManager);
+            this.useSessionBasedNonceManager = useSessionBasedNonceManager;
+            return this;
+        }
+
         /**
          * Build a new instance.  If no mechanism realms are offered, an empty collection should be provided for
          * {@code mechanismRealms}; otherwise, if the mechanism only supports one realm, the first will be used.  If the
@@ -285,12 +292,12 @@ public final class MechanismConfiguration {
             } else {
                 mechanismRealms = unmodifiableList(asList(mechanismRealms.toArray(NO_REALM_CONFIGS)));
             }
-            return new MechanismConfiguration(preRealmRewriter, postRealmRewriter, finalRewriter, realmMapper, mechanismRealms, serverCredentialSource);
+            return new MechanismConfiguration(preRealmRewriter, postRealmRewriter, finalRewriter, realmMapper, mechanismRealms, serverCredentialSource, useSessionBasedNonceManager);
         }
     }
 
     /**
      * An empty mechanism configuration..
      */
-    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(Function.identity(), Function.identity(), Function.identity(), null, emptyList(), CredentialSource.NONE);
+    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(Function.identity(), Function.identity(), Function.identity(), null, emptyList(), CredentialSource.NONE, false);
 }
