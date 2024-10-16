@@ -12,7 +12,7 @@ jobs:
     # Actions
     steps:
       # First, checkout the code.
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       # Next, execute our custom action to build and deploy the site to the gh-pages branch.
       - uses: ./.github/actions/build-and-deploy-site
         env:
