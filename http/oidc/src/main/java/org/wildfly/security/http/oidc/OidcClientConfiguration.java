@@ -145,13 +145,12 @@ public class OidcClientConfiguration {
     protected JWKEncPublicKeyLocator encryptionPublicKeyLocator;
     private boolean logoutSessionRequired = true;
 
-    private String postLogoutPath;
-    private boolean sessionRequiredOnLogout = true;
-    private String logoutPath = "/logout";
-    private String logoutCallbackPath = "/logout/callback";
+    private String postLogoutRedirectUri;
+    private String logoutPath;
+    private String logoutCallbackPath;
+    private String providerJwtClaimsTyp;
 
-    private int logoutSessionWaitingLimit = 100;
-
+    private int backChannelLogoutSessionInvalidationLimit = Oidc.DEFAULT_BACK_CHANNEL_LOGOUT_SESSION_INVALIDATION_LIMIT;
     public OidcClientConfiguration() {
     }
 
@@ -277,7 +276,7 @@ public class OidcClientConfiguration {
         issuerUrl = authUrlBuilder.clone().path(ServiceUrlConstants.REALM_INFO_PATH).build(getRealm()).toString();
 
         tokenUrl = authUrlBuilder.clone().path(ServiceUrlConstants.TOKEN_PATH).build(getRealm()).toString();
-        logoutUrl = OidcClientUriBuilder.fromUri(authUrlBuilder.clone().path(ServiceUrlConstants.TOKEN_SERVICE_LOGOUT_PATH).build(getRealm()).toString()).buildAsString();
+        endSessionEndpointUrl = OidcClientUriBuilder.fromUri(authUrlBuilder.clone().path(ServiceUrlConstants.TOKEN_SERVICE_LOGOUT_PATH).build(getRealm()).toString()).buildAsString();
         accountUrl = authUrlBuilder.clone().path(ServiceUrlConstants.ACCOUNT_SERVICE_PATH).build(getRealm()).toString();
         registerNodeUrl = authUrlBuilder.clone().path(ServiceUrlConstants.CLIENTS_MANAGEMENT_REGISTER_NODE_PATH).build(getRealm()).toString();
         unregisterNodeUrl = authUrlBuilder.clone().path(ServiceUrlConstants.CLIENTS_MANAGEMENT_UNREGISTER_NODE_PATH).build(getRealm()).toString();
@@ -719,20 +718,12 @@ public class OidcClientConfiguration {
         return tokenSignatureAlgorithm;
     }
 
-    public boolean isSessionRequiredOnLogout() {
-        return sessionRequiredOnLogout;
+    public int getBackChannelLogoutSessionInvalidationLimit() {
+        return backChannelLogoutSessionInvalidationLimit;
     }
 
-    public void setSessionRequiredOnLogout(boolean sessionRequiredOnLogout) {
-        this.sessionRequiredOnLogout = sessionRequiredOnLogout;
-    }
-
-    public int getLogoutSessionWaitingLimit() {
-        return logoutSessionWaitingLimit;
-    }
-
-    public void setLogoutSessionWaitingLimit(int logoutSessionWaitingLimit) {
-        this.logoutSessionWaitingLimit = logoutSessionWaitingLimit;
+    public void setBackChannelLogoutSessionInvalidationLimit(int backChannelLogoutSessionInvalidationLimit) {
+        this.backChannelLogoutSessionInvalidationLimit = backChannelLogoutSessionInvalidationLimit;
     }
 
     public String getAuthenticationRequestFormat() {
@@ -823,12 +814,12 @@ public class OidcClientConfiguration {
         return this.encryptionPublicKeyLocator;
     }
 
-    public void setPostLogoutPath(String postLogoutPath) {
-        this.postLogoutPath = postLogoutPath;
+    public void setPostLogoutRedirectUri(String postLogoutRedirectUri) {
+        this.postLogoutRedirectUri = postLogoutRedirectUri;
     }
 
-    public String getPostLogoutPath() {
-        return postLogoutPath;
+    public String getPostLogoutRedirectUri() {
+        return postLogoutRedirectUri;
     }
 
     public boolean isLogoutSessionRequired() {
@@ -849,5 +840,12 @@ public class OidcClientConfiguration {
 
     public void setLogoutCallbackPath(String logoutCallbackPath) {
         this.logoutCallbackPath = logoutCallbackPath;
+    }
+
+    public String getProviderJwtClaimsTyp() {
+        return this.providerJwtClaimsTyp;
+    }
+    public void setProviderJwtClaimsTyp(String providerJwtClaimsTyp) {
+        this.providerJwtClaimsTyp = providerJwtClaimsTyp;
     }
 }

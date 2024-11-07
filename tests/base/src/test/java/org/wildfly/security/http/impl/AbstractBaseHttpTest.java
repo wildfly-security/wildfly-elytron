@@ -376,11 +376,17 @@ public class AbstractBaseHttpTest {
         }
 
         public HttpScope getScope(Scope scope) {
-
             if (scope.equals(Scope.SSL_SESSION)) {
                 return null;
-            } else {
-                return new HttpScope() {
+            } else if (sessionScope != null) {
+                return sessionScope;
+            }
+            return new HttpScope() {
+
+                @Override
+                public boolean exists() {
+                    return true;
+                }
 
                 @Override
                 public boolean create() {
@@ -411,34 +417,8 @@ public class AbstractBaseHttpTest {
                     } else {
                         return null;
                     }
-
-                    @Override
-                    public boolean supportsAttachments() {
-                        return true;
-                    }
-
-                    @Override
-                    public boolean supportsInvalidation() {
-                        return false;
-                    }
-
-                    @Override
-                    public void setAttachment(String key, Object value) {
-                        if (scope.equals(Scope.SESSION)) {
-                            sessionScopeAttachments.put(key, value);
-                        }
-                    }
-
-                    @Override
-                    public Object getAttachment(String key) {
-                        if (scope.equals(Scope.SESSION)) {
-                            return sessionScopeAttachments.get(key);
-                        } else {
-                            return null;
-                        }
-                    }
-                };
-            }
+                }
+            };
         }
 
         public Collection<String> getScopeIds(Scope scope) {

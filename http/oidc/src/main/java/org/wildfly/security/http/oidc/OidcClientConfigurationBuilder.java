@@ -26,9 +26,6 @@ import static org.wildfly.security.http.oidc.Oidc.AuthenticationRequestFormat.RE
 import static org.wildfly.security.http.oidc.Oidc.SSLRequired;
 import static org.wildfly.security.http.oidc.Oidc.TokenStore;
 import static org.wildfly.security.http.oidc.Oidc.LOGOUT_PATH;
-import static org.wildfly.security.http.oidc.Oidc.LOGOUT_CALLBACK_PATH;
-import static org.wildfly.security.http.oidc.Oidc.POST_LOGOUT_PATH;
-import static org.wildfly.security.http.oidc.Oidc.LOGOUT_SESSION_REQUIRED;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -199,46 +196,35 @@ public class OidcClientConfigurationBuilder {
 
         oidcClientConfiguration.setTokenSignatureAlgorithm(oidcJsonConfiguration.getTokenSignatureAlgorithm());
 
-        String tmpLogoutPath = System.getProperty(LOGOUT_PATH);
+        String tmpLogoutPath = oidcJsonConfiguration.getLogoutPath();
+        log.debugf("LOGOUT_PATH: " + tmpLogoutPath);
         if (tmpLogoutPath != null) {
             if (isValidPath(tmpLogoutPath)) {
                 oidcClientConfiguration.setLogoutPath(tmpLogoutPath);
             } else {
                 throw log.invalidLogoutPath(tmpLogoutPath, LOGOUT_PATH);
             }
+        } else {
+            oidcClientConfiguration.setLogoutPath(Oidc.DEFAULT_LOGOUT_PATH);
         }
 
-
-        String tmpLogoutCallbackPath = System.getProperty(LOGOUT_CALLBACK_PATH);
+        String tmpLogoutCallbackPath = oidcJsonConfiguration.getLogoutCallbackPath();
+        log.debugf("LOGOUT_CALLBACK_PATH: " + tmpLogoutCallbackPath);
         if (tmpLogoutCallbackPath != null) {
-            if (isValidPath(tmpLogoutCallbackPath)
-                    && !tmpLogoutCallbackPath.endsWith(oidcClientConfiguration.getLogoutPath())) {
-                oidcClientConfiguration.setLogoutCallbackPath(tmpLogoutCallbackPath);
-            } else {
-                if (!isValidPath(tmpLogoutCallbackPath)) {
-                    throw log.invalidLogoutPath(tmpLogoutPath, LOGOUT_CALLBACK_PATH);
-                } else {
-                    throw log.invalidLogoutCallbackPath(LOGOUT_CALLBACK_PATH, tmpLogoutCallbackPath,
-                            LOGOUT_PATH, oidcClientConfiguration.getLogoutPath());
-                }
-            }
+            oidcClientConfiguration.setLogoutCallbackPath(tmpLogoutCallbackPath);
+        } else {
+            oidcClientConfiguration.setLogoutCallbackPath(Oidc.DEFAULT_LOGOUT_CALLBACK_PATH);
         }
 
-        String tmpPostLogoutPath = System.getProperty(POST_LOGOUT_PATH);
-        if (tmpPostLogoutPath != null) {
-            if (isValidPath(tmpPostLogoutPath)) {
-                oidcClientConfiguration.setPostLogoutPath(tmpPostLogoutPath);
-            } else {
-                throw log.invalidLogoutPath(tmpLogoutPath, POST_LOGOUT_PATH);
-            }
+        String tmpPostLogoutUri = oidcJsonConfiguration.getPostLogoutRedirectUri();
+        log.debugf("POST_LOGOUT_REDIRECT_URI: " + tmpPostLogoutUri);
+        if (tmpPostLogoutUri != null) {
+            oidcClientConfiguration.setPostLogoutRedirectUri(tmpPostLogoutUri);
         }
 
-        String tmpLogoutSessionRequired = System.getProperty(LOGOUT_SESSION_REQUIRED);
-        if (tmpLogoutSessionRequired != null) {
-            oidcClientConfiguration.setLogoutSessionRequired(
-                    Boolean.valueOf(tmpLogoutSessionRequired));
-        }
-
+        oidcClientConfiguration.setLogoutSessionRequired(oidcJsonConfiguration.isLogoutSessionRequired());
+        oidcClientConfiguration.setBackChannelLogoutSessionInvalidationLimit(oidcJsonConfiguration.getBackChannelLogoutSessionInvalidationLimit());
+        oidcClientConfiguration.setProviderJwtClaimsTyp(oidcJsonConfiguration.getProviderJwtClaimsTyp());
         return oidcClientConfiguration;
     }
 
@@ -282,9 +268,6 @@ public class OidcClientConfigurationBuilder {
 
     private boolean isValidPath(String path) {
         String tmpPath = path.trim();
-        if (tmpPath.length() > 1 && tmpPath.startsWith("/")) {
-            return true;
-        }
-        return false;
+        return tmpPath.length() > 1 && tmpPath.startsWith("/");
     }
 }

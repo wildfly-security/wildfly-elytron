@@ -42,7 +42,7 @@ import org.keycloak.representations.idm.ClientRepresentation;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-public class FrontChannelLogoutTest extends AbstractLogoutTest {
+public class FrontChannelLogoutAbsoluteUrlTest extends AbstractLogoutTest {
 
     @Override
     protected void doConfigureClient(ClientRepresentation client) {
@@ -50,9 +50,8 @@ public class FrontChannelLogoutTest extends AbstractLogoutTest {
         List<String> redirectUris = client.getRedirectUris();
         String redirectUri = redirectUris.get(0);
         OidcClientConfiguration config = new OidcClientConfiguration();
-        config.setLogoutCallbackPath(Oidc.DEFAULT_LOGOUT_CALLBACK_PATH);
-        client.getAttributes().put("frontchannel.logout.url", redirectUri
-                + config.getLogoutCallbackPath());
+        config.setLogoutCallbackPath(redirectUri + Oidc.DEFAULT_LOGOUT_CALLBACK_PATH);
+        client.getAttributes().put("frontchannel.logout.url", config.getLogoutCallbackPath());
     }
 
     @Test

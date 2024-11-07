@@ -35,6 +35,7 @@ import java.security.PrivateKey;
 
 import mockit.Mock;
 import mockit.MockUp;
+import org.jose4j.jwt.JwtClaims;
 
 /**
  * Base test class for typ claim validation tests.
@@ -71,25 +72,36 @@ public class TypClaimValidationBaseTest {
         KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
         HardcodedPublicKeyLocator hardcodedPublicKeyLocator = new HardcodedPublicKeyLocator(keyPair.getPublic());
 
-        OidcClientConfiguration clientConfiguration = new OidcClientConfiguration();
-        clientConfiguration.setClientId("clientWithoutTyp");
-        clientConfiguration.setPublicKeyLocator(hardcodedPublicKeyLocator);
-        clientConfiguration.setProviderUrl(ISSUER_URL);
-        clientConfiguration.setPublicClient(true);
-        clientConfiguration.setPrincipalAttribute("preferred_username");
-        clientConfiguration.setSSLRequired(Oidc.SSLRequired.EXTERNAL);
+        OidcClientConfiguration clientConfiguration = createOidcClientConfiguration(hardcodedPublicKeyLocator);
 
         TokenValidator tokenValidator = TokenValidator.builder(clientConfiguration).build();
-        return tokenValidator.parseAndVerifyToken(createJwt(keyPair, 60, "1"));
+        JsonObjectBuilder claimsBuilder = createClaims(60);
+        return tokenValidator.parseAndVerifyToken(createJwt(keyPair, claimsBuilder, "1", "jwt"));
     }
 
-    private static String createJwt(KeyPair keyPair, int expirationOffset, String kid) throws Exception {
+    protected static JwtClaims testBackChannelLogoutClaim(JsonObjectBuilder claimsBuilder, String audValue) throws Exception {
+        KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+        HardcodedPublicKeyLocator hardcodedPublicKeyLocator = new HardcodedPublicKeyLocator(keyPair.getPublic());
+
+        OidcClientConfiguration clientConfiguration = createOidcClientConfiguration(hardcodedPublicKeyLocator);
+
+        if(audValue != null) {
+            clientConfiguration.setResource(audValue);
+        }
+
+        TokenValidator tokenValidator = TokenValidator.builder(clientConfiguration)
+            .setTokenType("Logout")
+            .build();
+
+        return tokenValidator.parseAndVerifyLogoutToken(createJwt(keyPair, claimsBuilder, "1", "Logout"));
+    }
+
+    private static String createJwt(KeyPair keyPair, JsonObjectBuilder claimsBuilder, String kid, String type) throws Exception {
         PrivateKey privateKey = keyPair.getPrivate();
         JWSSigner signer = new RSASSASigner(privateKey);
-        JsonObjectBuilder claimsBuilder = createClaims(expirationOffset);
 
         JWSHeader.Builder headerBuilder = new JWSHeader.Builder(JWSAlgorithm.RS256)
-                .type(new JOSEObjectType("jwt"));
+            .type(new JOSEObjectType(type));
         if (kid != null) {
             headerBuilder.keyID(kid);
         }
@@ -99,7 +111,7 @@ public class TypClaimValidationBaseTest {
         return jwsObject.serialize();
     }
 
-    private static JsonObjectBuilder createClaims(int expirationOffset) {
+    protected static JsonObjectBuilder createClaims(int expirationOffset) {
         // typ claim not included
         return Json.createObjectBuilder()
                 .add("sub", SUBJECT)
@@ -111,4 +123,14 @@ public class TypClaimValidationBaseTest {
                 .add("preferred_username", "alice");
     }
 
+    private static OidcClientConfiguration createOidcClientConfiguration(HardcodedPublicKeyLocator hardcodedPublicKeyLocator) {
+        OidcClientConfiguration clientConfiguration = new OidcClientConfiguration();
+        clientConfiguration.setClientId("clientWithoutTyp");
+        clientConfiguration.setPublicKeyLocator(hardcodedPublicKeyLocator);
+        clientConfiguration.setProviderUrl(ISSUER_URL);
+        clientConfiguration.setPublicClient(true);
+        clientConfiguration.setPrincipalAttribute("preferred_username");
+        clientConfiguration.setSSLRequired(Oidc.SSLRequired.EXTERNAL);
+        return clientConfiguration;
+    }
 }

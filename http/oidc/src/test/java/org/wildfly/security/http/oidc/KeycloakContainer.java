@@ -18,6 +18,8 @@
 
 package org.wildfly.security.http.oidc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
@@ -27,11 +29,12 @@ import org.testcontainers.containers.wait.strategy.Wait;
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
 public class KeycloakContainer extends GenericContainer<KeycloakContainer> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(KeycloakContainer.class);
     public static final String KEYCLOAK_ADMIN_USER = "admin";
     public static final String KEYCLOAK_ADMIN_PASSWORD = "admin";
 
     private static final String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:24.0.1";
-
     private static final int KEYCLOAK_PORT_HTTP = 8080;
     private static final int KEYCLOAK_PORT_HTTPS = 8443;
     private String relativeUrl;
@@ -64,6 +67,8 @@ public class KeycloakContainer extends GenericContainer<KeycloakContainer> {
         withEnv("KEYCLOAK_ADMIN", KEYCLOAK_ADMIN_USER);
         withEnv("KEYCLOAK_ADMIN_PASSWORD", KEYCLOAK_ADMIN_PASSWORD);
         withCommand("start-dev");
+        // Enable host access so the container can reach back to the host for backchannel logout callbacks
+        withAccessToHost(true);
     }
 
     public String getAuthServerUrl() {
@@ -76,5 +81,9 @@ public class KeycloakContainer extends GenericContainer<KeycloakContainer> {
             url = String.format("http://%s:%s", host, port);
         }
         return url;
+    }
+
+    public void logContainerOutput() {
+        LOGGER.info("Keycloak container logs:\n{}", getLogs());
     }
 }

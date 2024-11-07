@@ -211,11 +211,11 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 23049, value = "Invalid 'auth-server-url' or 'provider-url': '%s'")
     void invalidAuthServerUrlOrProviderUrl(String url);
 
-    @Message(id = 23050, value = "Invalid bearer token claims")
-    OidcException invalidBearerTokenClaims();
-
-    @Message(id = 23051, value = "Invalid bearer token")
+    @Message(id = 23050, value = "Invalid bearer token")
     OidcException invalidBearerToken(@Cause Throwable cause);
+
+    @Message(id = 23051, value = "Invalid token claims")
+    OidcException invalidTokenClaims();
 
     @LogMessage(level = WARN)
     @Message(id = 23052, value = "No trusted certificates in token")
@@ -288,11 +288,46 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 23073, value = "Nonce cookie does not exist")
     String nonceCookieDoesNotExist();
 
-    @Message(id = 23071, value = "%s is not a valid value for %s")
-    RuntimeException invalidLogoutPath(String pathValue, String pathName);
+    @Message(id = 23074, value = "Invalid logout path: %s is not a valid value for %s")
+    IllegalArgumentException invalidLogoutPath(String pathValue, String pathName);
 
-    @Message(id = 23072, value = "The end substring of %s: %s can not be identical to %s: %s")
-    RuntimeException invalidLogoutCallbackPath(String callbackPathTitle, String callbacPathkValue,
-                                               String logoutPathTitle, String logoutPathValue);
+    @Message(id = 23076, value = "Unable to create end session endpoint request: %s . [%s]")
+    RuntimeException unableToCreateEndSessionEndpointRequest(String url, String msg);
+
+    @Message(id = 23077, value = "Back-channel logout request received but can not infer sid from logout token to mark it for invalidation")
+    String sidCanNotBeInferredFromLogoutToken();
+
+    @Message(id = 23078, value = "alg claim can not have value none")
+    String algClaimCanNotHaveValueNone();
+
+    @Message(id = 23079, value = "Nonce claim is not allowed")
+    String nonceClaimIsNotAllowed();
+
+    @Message(id = 23080, value = "An iss claim is required")
+    String anIssClaimIsRequired();
+
+    @Message(id = 23081, value = "No matching value found for %s claim")
+    String noMatchingValueFoundForClaim(String key);
+
+    @Message(id = 23082, value = "Value for iat claim is before allowed time")
+    String valueForIatClaimIsBeforeAllowedTime();
+
+    @Message(id = 23083, value = "Invalid datatype for iat")
+    String invalidDatatypeForIat();
+
+    @Message(id = 23084, value = "Events claim does not contain the required member name")
+    String eventsClaimDoesNotContainTheRequiredMemberName();
+
+    @Message(id = 23085, value = "Required events claim not found")
+    String requiredEventsClaimNotFound();
+
+    @Message(id = 23086, value = "Neither claim sub nor sid is present")
+    String neitherClaimSubNorSidIsPresent();
+
+    @Message(id = 23087, value = "MalformedClaimException: %s")
+    String malformedClaimException(String e);
+
+    @Message(id = 23088, value = "Required logout claim, %s, is missing")
+    String requiredLogoutClaimIsMissing(String e);
 }
 

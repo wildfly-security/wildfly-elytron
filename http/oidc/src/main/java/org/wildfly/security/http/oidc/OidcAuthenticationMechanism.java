@@ -60,7 +60,7 @@ final class OidcAuthenticationMechanism implements HttpServerAuthenticationMecha
 
     @Override
     public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
-        String tmpURI = request.getRequestURI().toString();
+        log.debugf("Evaluating request URI: [%s]",  request.getRequestURI().toString());
         OidcClientContext oidcClientContext = getOidcClientContext(request);
         if (oidcClientContext == null) {
             log.debugf("Ignoring request for path [%s] from mechanism [%s]. No client configuration context found.", request.getRequestURI(), getMechanismName());
@@ -76,7 +76,7 @@ final class OidcAuthenticationMechanism implements HttpServerAuthenticationMecha
         }
 
         RequestAuthenticator authenticator = createRequestAuthenticator(httpFacade, oidcClientConfiguration);
-        if (logoutHandler.isSessionMarkedForInvalidation(httpFacade)) {
+        if (logoutHandler.removeIfSessionMarkedForInvalidation(httpFacade)) {
             // session marked for invalidation, invalidate it
             log.debug("Invalidating pending logout session");
             httpFacade.getTokenStore().logout(false);

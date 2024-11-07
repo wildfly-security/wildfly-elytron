@@ -27,6 +27,7 @@ import static org.wildfly.security.http.oidc.Oidc.ALWAYS_REFRESH_TOKEN;
 import static org.wildfly.security.http.oidc.Oidc.AUTH_SERVER_URL;
 import static org.wildfly.security.http.oidc.Oidc.AUTHENTICATION_REQUEST_FORMAT;
 import static org.wildfly.security.http.oidc.Oidc.AUTODETECT_BEARER_ONLY;
+import static org.wildfly.security.http.oidc.Oidc.BACK_CHANNEL_LOGOUT_SESSION_INVALIDATION_LIMIT;
 import static org.wildfly.security.http.oidc.Oidc.BEARER_ONLY;
 import static org.wildfly.security.http.oidc.Oidc.CLIENT_ID_JSON_VALUE;
 import static org.wildfly.security.http.oidc.Oidc.CLIENT_KEYSTORE;
@@ -45,8 +46,13 @@ import static org.wildfly.security.http.oidc.Oidc.ENABLE_CORS;
 import static org.wildfly.security.http.oidc.Oidc.ENABLE_PKCE;
 import static org.wildfly.security.http.oidc.Oidc.EXPOSE_TOKEN;
 import static org.wildfly.security.http.oidc.Oidc.IGNORE_OAUTH_QUERY_PARAMETER;
+import static org.wildfly.security.http.oidc.Oidc.LOGOUT_PATH;
+import static org.wildfly.security.http.oidc.Oidc.LOGOUT_CALLBACK_PATH;
+import static org.wildfly.security.http.oidc.Oidc.LOGOUT_SESSION_REQUIRED;
 import static org.wildfly.security.http.oidc.Oidc.MIN_TIME_BETWEEN_JWKS_REQUESTS;
+import static org.wildfly.security.http.oidc.Oidc.POST_LOGOUT_REDIRECT_URI;
 import static org.wildfly.security.http.oidc.Oidc.PRINCIPAL_ATTRIBUTE;
+import static org.wildfly.security.http.oidc.Oidc.PROVIDER_JWT_CLAIMS_TYP;
 import static org.wildfly.security.http.oidc.Oidc.PROVIDER_URL;
 import static org.wildfly.security.http.oidc.Oidc.PROXY_URL;
 import static org.wildfly.security.http.oidc.Oidc.PUBLIC_CLIENT;
@@ -108,7 +114,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         AUTHENTICATION_REQUEST_FORMAT, REQUEST_OBJECT_SIGNING_ALGORITHM, REQUEST_OBJECT_ENCRYPTION_ALG_VALUE,
         REQUEST_OBJECT_ENCRYPTION_ENC_VALUE, REQUEST_OBJECT_SIGNING_KEYSTORE_FILE,
         REQUEST_OBJECT_SIGNING_KEYSTORE_PASSWORD,REQUEST_OBJECT_SIGNING_KEY_PASSWORD, REQUEST_OBJECT_SIGNING_KEY_ALIAS,
-        REQUEST_OBJECT_SIGNING_KEYSTORE_TYPE
+        REQUEST_OBJECT_SIGNING_KEYSTORE_TYPE, LOGOUT_PATH, LOGOUT_CALLBACK_PATH, LOGOUT_SESSION_REQUIRED, POST_LOGOUT_REDIRECT_URI,
+        BACK_CHANNEL_LOGOUT_SESSION_INVALIDATION_LIMIT, PROVIDER_JWT_CLAIMS_TYP
 })
 public class OidcJsonConfiguration {
 
@@ -162,6 +169,8 @@ public class OidcJsonConfiguration {
     protected int tokenMinimumTimeToLive = 0;
     @JsonProperty(MIN_TIME_BETWEEN_JWKS_REQUESTS)
     protected int minTimeBetweenJwksRequests = 10;
+    @JsonProperty(POST_LOGOUT_REDIRECT_URI)
+    protected String postLogoutRedirectUri;
     @JsonProperty(PUBLIC_KEY_CACHE_TTL)
     protected int publicKeyCacheTtl = 86400; // 1 day
     // https://tools.ietf.org/html/rfc7636
@@ -169,6 +178,12 @@ public class OidcJsonConfiguration {
     protected boolean pkce = false;
     @JsonProperty(IGNORE_OAUTH_QUERY_PARAMETER)
     protected boolean ignoreOAuthQueryParameter = false;
+    @JsonProperty(LOGOUT_PATH)
+    protected String logoutPath;
+    @JsonProperty(LOGOUT_CALLBACK_PATH)
+    protected String logoutCallbackPath;
+    @JsonProperty(LOGOUT_SESSION_REQUIRED)
+    protected boolean logoutSessionRequired = true;
     @JsonProperty(VERIFY_TOKEN_AUDIENCE)
     protected boolean verifyTokenAudience = false;
     @JsonProperty(CONFIDENTIAL_PORT)
@@ -232,6 +247,11 @@ public class OidcJsonConfiguration {
     @JsonProperty(REQUEST_OBJECT_ENCRYPTION_ENC_VALUE)
     protected String requestObjectEncryptionEncValue;
 
+    @JsonProperty(BACK_CHANNEL_LOGOUT_SESSION_INVALIDATION_LIMIT)
+    protected int backChannelLogoutSessionInvalidationLimit = Oidc.DEFAULT_BACK_CHANNEL_LOGOUT_SESSION_INVALIDATION_LIMIT;
+    @JsonProperty(PROVIDER_JWT_CLAIMS_TYP)
+    protected String providerJwtClaimsTyp;
+
     /**
      * The Proxy url to use for requests to the auth-server, configurable via the adapter config property {@code proxy-url}.
      */
@@ -277,6 +297,7 @@ public class OidcJsonConfiguration {
     public void setRequestObjectSigningKeyStoreFile(String requestObjectSigningKeyStoreFile) {
         this.requestObjectSigningKeyStoreFile = requestObjectSigningKeyStoreFile;
     }
+
     public String getClientKeystore() {
         return clientKeystore;
     }
@@ -441,6 +462,14 @@ public class OidcJsonConfiguration {
         return minTimeBetweenJwksRequests;
     }
 
+    public String getPostLogoutRedirectUri() {
+        return postLogoutRedirectUri;
+    }
+
+    public void setPostLogoutRedirectUri(String postLogoutRedirectUri) {
+        this.postLogoutRedirectUri = postLogoutRedirectUri;
+    }
+
     public void setMinTimeBetweenJwksRequests(int minTimeBetweenJwksRequests) {
         this.minTimeBetweenJwksRequests = minTimeBetweenJwksRequests;
     }
@@ -468,6 +497,30 @@ public class OidcJsonConfiguration {
 
     public void setIgnoreOAuthQueryParameter(boolean ignoreOAuthQueryParameter) {
         this.ignoreOAuthQueryParameter = ignoreOAuthQueryParameter;
+    }
+
+    public String getLogoutPath() {
+        return logoutPath;
+    }
+
+    public void setLogoutPath(String logoutPath) {
+        this.logoutPath = logoutPath;
+    }
+
+    public String getLogoutCallbackPath() {
+        return logoutCallbackPath;
+    }
+
+    public void setLogoutCallbackPath(String logoutCallbackPath) {
+        this.logoutCallbackPath = logoutCallbackPath;
+    }
+
+    public boolean isLogoutSessionRequired() {
+        return logoutSessionRequired;
+    }
+
+    public void setLogoutSessionRequired(boolean logoutSessionRequired) {
+        this.logoutSessionRequired = logoutSessionRequired;
     }
 
     public boolean isVerifyTokenAudience() {
@@ -673,6 +726,7 @@ public class OidcJsonConfiguration {
     public void setScope(String scope) {
         this.scope = scope;
     }
+
     public String getAuthenticationRequestFormat() {
         return authenticationRequestFormat;
     }
@@ -701,8 +755,23 @@ public class OidcJsonConfiguration {
         return requestObjectEncryptionEncValue;
     }
 
-    public void setRequestObjectEncryptionEncValue (String requestObjectEncryptionEncValue) {
+    public void setRequestObjectEncryptionEncValue(String requestObjectEncryptionEncValue) {
         this.requestObjectEncryptionEncValue = requestObjectEncryptionEncValue;
+    }
+
+    public int getBackChannelLogoutSessionInvalidationLimit() {
+        return this.backChannelLogoutSessionInvalidationLimit;
+    }
+
+    public void setBackChannelLogoutSessionInvalidationLimit(int backChannelLogoutSessionInvalidationLimit) {
+        this.backChannelLogoutSessionInvalidationLimit = backChannelLogoutSessionInvalidationLimit;
+    }
+
+    public String getProviderJwtClaimsTyp() {
+        return this.providerJwtClaimsTyp;
+    }
+    public void setProviderJwtClaimsTyp(String providerJwtClaimsTyp) {
+        this.providerJwtClaimsTyp = providerJwtClaimsTyp;
     }
 }
 

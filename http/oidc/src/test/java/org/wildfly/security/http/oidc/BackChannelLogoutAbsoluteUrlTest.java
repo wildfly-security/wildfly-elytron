@@ -21,20 +21,18 @@ package org.wildfly.security.http.oidc;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.List;
 
 import org.htmlunit.Page;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.htmlunit.WebClient;
 import org.apache.http.HttpStatus;
 import org.junit.Test;
 import org.keycloak.representations.idm.ClientRepresentation;
 
-public class BackChannelLogoutTest extends AbstractLogoutTest {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(BackChannelLogoutTest.class);
+public class BackChannelLogoutAbsoluteUrlTest extends AbstractLogoutTest {
 
     @Override
     protected void doConfigureClient(ClientRepresentation client) {
@@ -42,17 +40,18 @@ public class BackChannelLogoutTest extends AbstractLogoutTest {
         String redirectUri = redirectUris.get(0);
 
         OidcClientConfiguration config = new OidcClientConfiguration();
-        config.setLogoutCallbackPath(Oidc.DEFAULT_LOGOUT_CALLBACK_PATH);
+        config.setLogoutCallbackPath(rewriteHost(redirectUri)+ Oidc.DEFAULT_LOGOUT_CALLBACK_PATH);
         client.setFrontchannelLogout(false);
         client.getAttributes().put("backchannel.logout.session.required", "true");
-        String backchannelLogoutUrl = rewriteHost(redirectUri) + config.getLogoutCallbackPath();
-        LOGGER.info("Configured backchannel logout URL: {}", backchannelLogoutUrl);
-        client.getAttributes().put("backchannel.logout.url", backchannelLogoutUrl);
+        client.getAttributes().put("backchannel.logout.url", config.getLogoutCallbackPath());
     }
 
     private static String rewriteHost(String redirectUri) {
-        // Use host.testcontainers.internal to allow the Keycloak container to reach back to the host
-        return redirectUri.replace("localhost", "host.testcontainers.internal");
+        try {
+            return redirectUri.replace("localhost", InetAddress.getLocalHost().getHostAddress());
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
@@ -74,9 +73,6 @@ public class BackChannelLogoutTest extends AbstractLogoutTest {
 
         // logged out after finishing the redirections during logout
         assertUserAuthenticated();
-        // Increase timeout to allow time for Keycloak to complete the backchannel logout callback
-        // The backchannel logout requires Keycloak to POST to the callback URL before responding to the browser
-        webClient.getOptions().setTimeout(60000); // 60 seconds
         webClient.getPage(getClientUrl() + getClientConfig().getLogoutPath());
         assertUserNotAuthenticated();
     }

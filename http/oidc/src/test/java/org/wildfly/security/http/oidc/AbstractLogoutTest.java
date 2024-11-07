@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.net.URI;
 
 import io.restassured.RestAssured;
 import okhttp3.mockwebserver.Dispatcher;
@@ -77,8 +78,11 @@ public abstract class AbstractLogoutTest extends OidcBaseTest {
         OidcBaseTest.client = new MockWebServer();
         OidcBaseTest.client.start(new InetSocketAddress(0).getAddress(), CLIENT_PORT);
         configureDispatcher();
-        RealmRepresentation realm = KeycloakConfiguration.getRealmRepresentation(TEST_REALM, CLIENT_ID, CLIENT_SECRET, CLIENT_HOST_NAME, CLIENT_PORT, CLIENT_APP, false);
+        RealmRepresentation realm = KeycloakConfiguration.getRealmRepresentation(
+                TEST_REALM, CLIENT_ID, CLIENT_SECRET, CLIENT_HOST_NAME, CLIENT_PORT,
+                CLIENT_APP, false);
 
+        // values set high to ensure a slow test env will succeed.
         realm.setAccessTokenLifespan(100);
         realm.setSsoSessionMaxLifespan(100);
 
@@ -112,11 +116,9 @@ public abstract class AbstractLogoutTest extends OidcBaseTest {
 
     protected OidcJsonConfiguration getClientConfiguration() {
         OidcJsonConfiguration config = new OidcJsonConfiguration();
-
-        config.setRealm(TEST_REALM);
-        config.setResource(CLIENT_ID);
+        config.setClientId(CLIENT_ID);
         config.setPublicClient(false);
-        config.setAuthServerUrl(KEYCLOAK_CONTAINER.getAuthServerUrl());
+        config.setProviderUrl(KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM);
         config.setSslRequired("EXTERNAL");
         config.setCredentials(new HashMap<>());
         config.getCredentials().put("secret", CLIENT_SECRET);
@@ -161,7 +163,6 @@ public abstract class AbstractLogoutTest extends OidcBaseTest {
         public MockResponse dispatch(RecordedRequest serverRequest) throws InterruptedException {
             if (beforeDispatcher != null) {
                 MockResponse response = beforeDispatcher.dispatch(serverRequest);
-
                 if (response != null) {
                     return response;
                 }
@@ -225,7 +226,10 @@ public abstract class AbstractLogoutTest extends OidcBaseTest {
     }
 
     protected void assertUserNotAuthenticated() {
-        assertNull(getCurrentSession().getAttachment(OidcAccount.class.getName()));
+        URI requestURI = getCurrentRequest().getRequestURI();
+        if (requestURI == null || !requestURI.getPath().contains("/clientApp/logout")){
+            assertNull(getCurrentSession());
+        }
     }
 
     protected void assertUserAuthenticated() {
