@@ -60,10 +60,12 @@ final class LogoutHandler {
     });
 
     boolean tryLogout(OidcHttpFacade facade) {
+        log.trace("## LogoutHandler.tryLogout ENTERED");
         RefreshableOidcSecurityContext securityContext = getSecurityContext(facade);
 
         if (securityContext == null) {
             // no active session
+            log.trace("## LogoutHandler.tryLogout no active session");
             return false;
         }
 
@@ -75,15 +77,19 @@ final class LogoutHandler {
         }
 
         if (isRpInitiatedLogoutUri(facade)) {
+            log.trace("## LogoutHandler.tryLogout isRpInitiatedLogoutUri");
             redirectEndSessionEndpoint(facade);
             return true;
         }
 
         if (isLogoutCallbackUri(facade)) {
+            log.trace("## LogoutHandler.tryLogout isLogoutCallbackUri");
             if (isFrontChannel(facade)) {
+                log.trace("## LogoutHandler.tryLogout isFrontChannel");
                 handleFrontChannelLogoutRequest(facade);
                 return true;
             } else {
+                log.trace("## LogoutHandler.tryLogout !isFrontChannel");
                 // we have an active session, should have received a GET logout request
                 facade.getResponse().setStatus(HttpStatus.SC_METHOD_NOT_ALLOWED);
                 facade.authenticationFailed();
@@ -94,11 +100,16 @@ final class LogoutHandler {
     }
 
     boolean tryBackChannelLogout(OidcHttpFacade facade) {
+        log.trace("## LogoutHandler.tryBackChannelLogout ENTERED");
+        log.trace(facade.rlsGetSessionIds());
         if (isLogoutCallbackUri(facade)) {
+            log.trace("## LogoutHandler.tryBackChannelLogout  isLogoutCallbackUri");
             if (isBackChannel(facade)) {
+                log.trace("## LogoutHandler.tryBackChannelLogout  isBackChannel");
                 handleBackChannelLogoutRequest(facade);
                 return true;
             } else {
+                log.trace("## LogoutHandler.tryBackChannelLogout  ! isBackChannel");
                 // no active session, should have received a POST logout request
                 facade.getResponse().setStatus(HttpStatus.SC_METHOD_NOT_ALLOWED);
                 facade.authenticationFailed();
@@ -222,11 +233,15 @@ final class LogoutHandler {
 
     private boolean isLogoutCallbackUri(OidcHttpFacade facade) {
         String path = facade.getRequest().getRelativePath();
+        log.trace("## LogoutHandler.isLogoutCallbackUri  path: "
+        + path + ",  logoutCallbackUri: " + getLogoutCallbackUri(facade));
         return path.endsWith(getLogoutCallbackUri(facade));
     }
 
     private boolean isRpInitiatedLogoutUri(OidcHttpFacade facade) {
         String path = facade.getRequest().getRelativePath();
+        log.trace("## LogoutHandler.isRpInitiatedLogoutUri  path: "
+        + path + ",  logoutUri: " + getLogoutUri(facade));
         return path.endsWith(getLogoutUri(facade));
     }
 

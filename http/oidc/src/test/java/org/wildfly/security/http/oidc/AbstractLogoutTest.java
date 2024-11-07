@@ -76,7 +76,7 @@ public abstract class AbstractLogoutTest extends OidcBaseTest {
     }
 
     @Before
-    public void onBefore() throws IOException {
+    public void onBefore() throws Exception {
         OidcBaseTest.client = new MockWebServer();
         OidcBaseTest.client.start(new InetSocketAddress(0).getAddress(), CLIENT_PORT);
         configureDispatcher();
