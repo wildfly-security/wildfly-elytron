@@ -117,19 +117,19 @@ public class TokenValidator {
     /**
      * Parse and verify the given bearer token.
      *
-     * @param bearerToken the bearer token
+     * @param token the bearer token
      * @return the {@code AccessToken} if the bearer token was valid
      * @throws OidcException if the bearer token is invalid
      */
-    public AccessToken parseAndVerifyToken(final String bearerToken) throws OidcException {
-        return new AccessToken(verify(bearerToken));
+    public AccessToken parseAndVerifyToken(final String token) throws OidcException {
+        return new AccessToken(verify(token));
     }
 
-    public JwtClaims verify(String bearerToken) throws OidcException {
+    public JwtClaims verify(String token) throws OidcException {
         JwtClaims jwtClaims;
 
         try {
-            JwtContext jwtContext = setVerificationKey(bearerToken, jwtConsumerBuilder);
+            JwtContext jwtContext = setVerificationKey(token, jwtConsumerBuilder);
             jwtConsumerBuilder.setRequireSubject();
 
             if (! DISABLE_TYP_CLAIM_VALIDATION_PROPERTY) {
@@ -145,10 +145,10 @@ public class TokenValidator {
             jwtConsumerBuilder.build().processContext(jwtContext);
             jwtClaims = jwtContext.getJwtClaims();
             if (jwtClaims == null) {
-                throw log.invalidBearerTokenClaims();
+                throw log.invalidTokenClaims();
             }
         } catch (InvalidJwtException e) {
-            log.tracef("Problem parsing bearer token: " + bearerToken, e);
+            log.tracef("Problem parsing bearer token: " + token, e);
             throw log.invalidBearerToken(e);
         }
         return jwtClaims;

@@ -195,7 +195,6 @@ public class OidcRequestAuthenticator {
     protected String getRedirectUri(String state, String sessionRandomValueHash) {
         String url = getRequestUrl();
         log.debugf("callback uri: %s", url);
-
         try {
             if (! facade.getRequest().isSecure() && deployment.getSSLRequired().isRequired(facade.getRequest().getRemoteAddr())) {
                 int port = getSSLRedirectPort();

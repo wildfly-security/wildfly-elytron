@@ -45,21 +45,29 @@ public class OidcSessionTokenStore implements OidcTokenStore {
     @Override
     public void checkCurrentToken() {
         HttpScope session = httpFacade.getScope(Scope.SESSION);
-        if (session == null || ! session.exists()) return;
+        if (session == null || ! session.exists()) {
+            return;
+        }
         RefreshableOidcSecurityContext securityContext = (RefreshableOidcSecurityContext) session.getAttachment(OidcSecurityContext.class.getName());
-        if (securityContext == null) return;
+        if (securityContext == null) {
+            return;
+        }
 
         // just in case session got serialized
         if (securityContext.getOidcClientConfiguration() == null) {
             securityContext.setCurrentRequestInfo(httpFacade.getOidcClientConfiguration(), this);
         }
 
-        if (securityContext.isActive() && ! securityContext.getOidcClientConfiguration().isAlwaysRefreshToken()) return;
+        if (securityContext.isActive() && ! securityContext.getOidcClientConfiguration().isAlwaysRefreshToken()) {
+            return;
+        }
 
         // FYI: A refresh requires same scope, so same roles will be set.  Otherwise, refresh will fail and token will
         // not be updated
         boolean success = securityContext.refreshToken(false);
-        if (success && securityContext.isActive()) return;
+        if (success && securityContext.isActive()) {
+            return;
+        }
 
         // Refresh failed, so user is already logged out from keycloak. Cleanup and expire our session
         session.setAttachment(OidcSecurityContext.class.getName(), null);
@@ -132,7 +140,6 @@ public class OidcSessionTokenStore implements OidcTokenStore {
                 }
             });
         }
-
         session.setAttachment(OidcAccount.class.getName(), account);
         session.setAttachment(OidcSecurityContext.class.getName(), account.getOidcSecurityContext());
 

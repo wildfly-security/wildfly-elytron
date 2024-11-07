@@ -32,7 +32,7 @@ import org.apache.http.HttpStatus;
 import org.junit.Test;
 import org.keycloak.representations.idm.ClientRepresentation;
 
-public class BackChannelLogoutTest extends AbstractLogoutTest {
+public class BackChannelLogoutAbsoluteUrlTest extends AbstractLogoutTest {
 
     @Override
     protected void doConfigureClient(ClientRepresentation client) {
@@ -40,11 +40,10 @@ public class BackChannelLogoutTest extends AbstractLogoutTest {
         String redirectUri = redirectUris.get(0);
 
         OidcClientConfiguration config = new OidcClientConfiguration();
-        config.setLogoutCallbackPath(Oidc.DEFAULT_LOGOUT_CALLBACK_PATH);
+        config.setLogoutCallbackPath(rewriteHost(redirectUri)+ Oidc.DEFAULT_LOGOUT_CALLBACK_PATH);
         client.setFrontchannelLogout(false);
         client.getAttributes().put("backchannel.logout.session.required", "true");
-        client.getAttributes().put("backchannel.logout.url", rewriteHost(redirectUri)
-                + config.getLogoutCallbackPath());
+        client.getAttributes().put("backchannel.logout.url", config.getLogoutCallbackPath());
     }
 
     private static String rewriteHost(String redirectUri) {

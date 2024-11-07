@@ -353,12 +353,21 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     }
 
     protected HtmlInput loginToKeycloak(String username, String password, URI requestUri, String location, List<HttpServerCookie> cookies) throws IOException {
-
         return loginToKeycloak(username, password, requestUri, location, cookies, true);
     }
 
     protected HtmlInput loginToKeycloak(String username, String password, URI requestUri, String location, List<HttpServerCookie> cookies, boolean keycloakClientExists) throws IOException {
-        WebClient webClient = getWebClient();
+        return loginToKeycloak(getWebClient(), username, password, requestUri, location, cookies, keycloakClientExists);
+    }
+
+    protected HtmlInput loginToKeycloak(WebClient webClient, String username, String password, URI requestUri,
+                                        String location, List<HttpServerCookie> cookies) throws IOException {
+        return loginToKeycloak(webClient, username, password, requestUri, location, cookies, true);
+    }
+
+    protected HtmlInput loginToKeycloak(WebClient webClient, String username, String password, URI requestUri,
+                                        String location, List<HttpServerCookie> cookies, boolean keycloakClientExists) throws IOException {
+
 
         if (cookies != null) {
             for (HttpServerCookie cookie : cookies) {

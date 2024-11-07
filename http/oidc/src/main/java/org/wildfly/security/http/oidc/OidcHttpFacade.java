@@ -545,21 +545,4 @@ public class OidcHttpFacade {
             return path;
         }
     }
-
-    // rls debug only
-    public String rlsGetSessionIds() {
-        Collection<String> sessions = request.getScopeIds(Scope.SESSION);
-        if (sessions == null) {
-            return "## OidcHttpFacade  Scope.SESSION sessionIds is null.";
-        } else if (sessions.isEmpty()){
-            return "Scope.SESSION sessionIds is empty.";
-        }
-        StringBuffer sb = new StringBuffer();
-            sb.append("Scope.SESSION sessionIds: [");
-        for (String s : sessions) {
-            sb.append(s + ", ");
-        }
-        sb.append("]\n");
-        return sb.toString();
-    }
 }

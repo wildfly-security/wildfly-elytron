@@ -211,11 +211,11 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 23049, value = "Invalid 'auth-server-url' or 'provider-url': '%s'")
     void invalidAuthServerUrlOrProviderUrl(String url);
 
-    @Message(id = 23050, value = "Invalid bearer token claims")
-    OidcException invalidBearerTokenClaims();
-
-    @Message(id = 23051, value = "Invalid bearer token")
+    @Message(id = 23050, value = "Invalid bearer token")
     OidcException invalidBearerToken(@Cause Throwable cause);
+
+    @Message(id = 23051, value = "Invalid token claims")
+    OidcException invalidTokenClaims();
 
     @LogMessage(level = WARN)
     @Message(id = 23052, value = "No trusted certificates in token")
@@ -288,11 +288,13 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 23073, value = "Nonce cookie does not exist")
     String nonceCookieDoesNotExist();
 
-    @Message(id = 23071, value = "%s is not a valid value for %s")
-    RuntimeException invalidLogoutPath(String pathValue, String pathName);
+    @Message(id = 23074, value = "Invalid logout path: %s is not a valid value for %s")
+    IllegalArgumentException invalidLogoutPath(String pathValue, String pathName);
 
-    @Message(id = 23072, value = "The end substring of %s: %s can not be identical to %s: %s")
-    RuntimeException invalidLogoutCallbackPath(String callbackPathTitle, String callbacPathkValue,
-                                               String logoutPathTitle, String logoutPathValue);
+    @Message(id = 23076, value = "Unable to create end session endpoint request: %s . [%s]")
+    RuntimeException unableToCreateEndSessionEndpointRequest(String url, String msg);
+
+    @Message(id = 23077, value = "Back-channel logout request received but can not infer sid from logout token to mark it for invalidation")
+    String sidCanNotBeInferredFromLogoutToken();
 }
 

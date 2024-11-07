@@ -112,7 +112,6 @@ public class RefreshableOidcSecurityContext extends OidcSecurityContext {
             }
             if (isActive() && isTokenTimeToLiveSufficient(this.token)) return true;
         }
-
         if (this.clientConfiguration == null || refreshToken == null) return false;
 
         if (log.isTraceEnabled()) {

@@ -31,7 +31,6 @@ public class KeycloakContainer extends GenericContainer<KeycloakContainer> {
     public static final String KEYCLOAK_ADMIN_PASSWORD = "admin";
 
     private static final String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:24.0.1";
-
     private static final int KEYCLOAK_PORT_HTTP = 8080;
     private static final int KEYCLOAK_PORT_HTTPS = 8443;
     private String relativeUrl;

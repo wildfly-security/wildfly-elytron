@@ -1,1 +1,1 @@
-src/main/resources/META-INF/LICENSE.txt
+./src/main/resources/META-INF/LICENSE.txt
