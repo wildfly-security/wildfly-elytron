@@ -143,14 +143,12 @@ public class OidcClientConfiguration {
     protected String requestObjectSigningKeyAlias;
     protected String requestObjectSigningKeyStoreType;
     protected JWKEncPublicKeyLocator encryptionPublicKeyLocator;
+    private boolean logoutSessionRequired = true;
 
-    private String postLogoutUri;
-
+    private String postLogoutPath;
     private boolean sessionRequiredOnLogout = true;
-
-    private String logoutUrl = "/logout";
-
-    private String logoutCallbackUrl = "/logout/callback";
+    private String logoutPath = "/logout";
+    private String logoutCallbackPath = "/logout/callback";
 
     private int logoutSessionWaitingLimit = 100;
 
@@ -351,6 +349,10 @@ public class OidcClientConfiguration {
     public String getEndSessionEndpointUrl() {
         resolveUrls();
         return endSessionEndpointUrl;
+    }
+
+    public String getLogoutPath() {
+        return logoutPath;
     }
 
     public String getAccountUrl() {
@@ -717,6 +719,22 @@ public class OidcClientConfiguration {
         return tokenSignatureAlgorithm;
     }
 
+    public boolean isSessionRequiredOnLogout() {
+        return sessionRequiredOnLogout;
+    }
+
+    public void setSessionRequiredOnLogout(boolean sessionRequiredOnLogout) {
+        this.sessionRequiredOnLogout = sessionRequiredOnLogout;
+    }
+
+    public int getLogoutSessionWaitingLimit() {
+        return logoutSessionWaitingLimit;
+    }
+
+    public void setLogoutSessionWaitingLimit(int logoutSessionWaitingLimit) {
+        this.logoutSessionWaitingLimit = logoutSessionWaitingLimit;
+    }
+
     public String getAuthenticationRequestFormat() {
         return authenticationRequestFormat;
     }
@@ -805,42 +823,31 @@ public class OidcClientConfiguration {
         return this.encryptionPublicKeyLocator;
     }
 
-    public void setPostLogoutUri(String postLogoutUri) {
-        this.postLogoutUri = postLogoutUri;
+    public void setPostLogoutPath(String postLogoutPath) {
+        this.postLogoutPath = postLogoutPath;
     }
 
-    public String getPostLogoutUri() {
-        return postLogoutUri;
+    public String getPostLogoutPath() {
+        return postLogoutPath;
     }
 
-    public boolean isSessionRequiredOnLogout() {
-        return sessionRequiredOnLogout;
+    public boolean isLogoutSessionRequired() {
+        return logoutSessionRequired;
     }
 
-    public void setSessionRequiredOnLogout(boolean sessionRequiredOnLogout) {
-        this.sessionRequiredOnLogout = sessionRequiredOnLogout;
+    public void setLogoutSessionRequired(boolean logoutSessionRequired) {
+        this.logoutSessionRequired = logoutSessionRequired;
     }
 
-    public String getLogoutUrl() {
-        return logoutUrl;
+    public void setLogoutPath(String logoutPath) {
+        this.logoutPath = logoutPath;
     }
 
-    public void setLogoutUrl(String logoutUrl) {
-        this.logoutUrl = logoutUrl;
+    public String getLogoutCallbackPath() {
+        return logoutCallbackPath;
     }
 
-    public String getLogoutCallbackUrl() {
-        return logoutCallbackUrl;
-    }
-
-    public void setLogoutCallbackUrl(String logoutCallbackUrl) {
-        this.logoutCallbackUrl = logoutCallbackUrl;
-    }
-    public int getLogoutSessionWaitingLimit() {
-        return logoutSessionWaitingLimit;
-    }
-
-    public void setLogoutSessionWaitingLimit(int logoutSessionWaitingLimit) {
-        this.logoutSessionWaitingLimit = logoutSessionWaitingLimit;
+    public void setLogoutCallbackPath(String logoutCallbackPath) {
+        this.logoutCallbackPath = logoutCallbackPath;
     }
 }

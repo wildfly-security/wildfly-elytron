@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2017 Red Hat, Inc., and individual contributors
+ * Copyright 2024 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,9 +27,7 @@ import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.cert.Certificate;
@@ -158,7 +156,7 @@ public class AbstractBaseHttpTest {
         private URI requestURI;
         private List<HttpServerCookie> cookies;
         private String requestMethod = "GET";
-        private Map<String, List<String>> requestHeaders = new HashMap<>();HEAD
+        private Map<String, List<String>> requestHeaders = new HashMap<>();
         private X500Principal testPrincipal = null;
         private Map<String, Object> sessionScopeAttachments = new HashMap<>();
         private Map<Scope, HttpScope> scopes = new HashMap<>();
@@ -189,6 +187,7 @@ public class AbstractBaseHttpTest {
             this.requestURI = requestURI;
             this.cookies = new ArrayList<>();
         }
+
         public TestingHttpServerRequest(String[] authorization, URI requestURI, Map<String, Object> sessionScopeAttachments) {
             if (authorization != null) {
                 requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
@@ -228,10 +227,6 @@ public class AbstractBaseHttpTest {
         }
 
         public TestingHttpServerRequest(String[] authorization, URI requestURI, String cookie) {
-            this(authorization, requestURI, cookie, null);
-        }
-
-        public TestingHttpServerRequest(String[] authorization, URI requestURI, String cookie, HttpScope sessionScope) {
             if (authorization != null) {
                 requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
             }
@@ -252,14 +247,14 @@ public class AbstractBaseHttpTest {
                     }
                 }
             }
-            this.sessionScope = sessionScope;
         }
 
-        public TestingHttpServerRequest(RecordedRequest serverRequest, HttpScope sessionScope) throws URISyntaxException {
-            this(new String[0], new URI(serverRequest.getRequestUrl().toString()), serverRequest.getHeader("Cookie"), sessionScope);
-            this.requestMethod = serverRequest.getMethod();
-            this.body = serverRequest.getBody().readUtf8();
-            this.contentType = serverRequest.getHeader("Content-Type");
+        public TestingHttpServerRequest(RecordedRequest request, HttpScope sessionScope) {
+            this(new String[0], request.getRequestUrl().uri(), request.getHeader("Cookie"));
+            this.requestMethod = request.getMethod();
+            this.body = request.getBody().readUtf8();
+            this.contentType = request.getHeader("Content-Type");
+            this.sessionScope = sessionScope;
         }
 
         public Status getResult() {
@@ -333,11 +328,7 @@ public class AbstractBaseHttpTest {
         }
 
         public String getRequestPath() {
-            try {
-                return requestURI.toURL().getPath();
-            } catch (MalformedURLException cause) {
-                throw new RuntimeException("Mal-formed request URL", cause);
-            }
+            return requestURI.getPath();
         }
 
         public Map<String, List<String>> getParameters() {
@@ -391,14 +382,34 @@ public class AbstractBaseHttpTest {
             } else {
                 return new HttpScope() {
 
-                    @Override
-                    public boolean exists() {
-                        return true;
-                    }
+                @Override
+                public boolean create() {
+                    return false;
+                }
 
-                    @Override
-                    public boolean create() {
-                        return false;
+                @Override
+                public boolean supportsAttachments() {
+                    return true;
+                }
+
+                @Override
+                public boolean supportsInvalidation() {
+                    return false;
+                }
+
+                @Override
+                public void setAttachment(String key, Object value) {
+                    if (scope.equals(Scope.SESSION)) {
+                        sessionScopeAttachments.put(key, value);
+                    }
+                }
+
+                @Override
+                public Object getAttachment(String key) {
+                    if (scope.equals(Scope.SESSION)) {
+                        return sessionScopeAttachments.get(key);
+                    } else {
+                        return null;
                     }
 
                     @Override
@@ -435,10 +446,7 @@ public class AbstractBaseHttpTest {
         }
 
         public HttpScope getScope(Scope scope, String id) {
-            if (Scope.SESSION.equals(scope) && sessionScope != null) {
-                return sessionScope;
-            }
-            return scopes.get(scope);
+            throw new IllegalStateException();
         }
 
         public void setRemoteUser(String remoteUser) {

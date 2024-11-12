@@ -287,5 +287,12 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 23073, value = "Nonce cookie does not exist")
     String nonceCookieDoesNotExist();
+
+    @Message(id = 23071, value = "%s is not a valid value for %s")
+    RuntimeException invalidLogoutPath(String pathValue, String pathName);
+
+    @Message(id = 23072, value = "The end substring of %s: %s can not be identical to %s: %s")
+    RuntimeException invalidLogoutCallbackPath(String callbackPathTitle, String callbacPathkValue,
+                                               String logoutPathTitle, String logoutPathValue);
 }
 

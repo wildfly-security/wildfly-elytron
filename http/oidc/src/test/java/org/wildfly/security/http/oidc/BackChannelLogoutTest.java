@@ -29,25 +29,21 @@ import java.util.List;
 import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import org.apache.http.HttpStatus;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.keycloak.representations.idm.ClientRepresentation;
 
 public class BackChannelLogoutTest extends AbstractLogoutTest {
-
-    @BeforeClass
-    public static void setUp() {
-        IS_BACK_CHANNEL_TEST = true;
-    }
 
     @Override
     protected void doConfigureClient(ClientRepresentation client) {
         List<String> redirectUris = client.getRedirectUris();
         String redirectUri = redirectUris.get(0);
 
+        OidcClientConfiguration config = new OidcClientConfiguration();
         client.setFrontchannelLogout(false);
         client.getAttributes().put("backchannel.logout.session.required", "true");
-        client.getAttributes().put("backchannel.logout.url", rewriteHost(redirectUri) + BACK_CHANNEL_LOGOUT_URL);
+        client.getAttributes().put("backchannel.logout.url", rewriteHost(redirectUri)
+                + config.getLogoutCallbackPath());
     }
 
     private static String rewriteHost(String redirectUri) {
@@ -76,8 +72,8 @@ public class BackChannelLogoutTest extends AbstractLogoutTest {
 
         // logged out after finishing the redirections during frontchannel logout
         assertUserAuthenticated();
-        webClient.getPage(getClientUrl() + "/logout");
-        //assertUserAuthenticated();
+        webClient.getPage(getClientUrl() + getClientConfig().getLogoutPath());
+        assertUserAuthenticated();
         webClient.getPage(getClientUrl());
         assertUserNotAuthenticated();
     }

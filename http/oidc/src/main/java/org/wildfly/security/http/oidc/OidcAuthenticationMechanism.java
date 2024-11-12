@@ -60,8 +60,6 @@ final class OidcAuthenticationMechanism implements HttpServerAuthenticationMecha
 
     @Override
     public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
-        log.trace("## OidcAuthenticationMechanism.evaluateRequest requestURI: " +
-                request.getRequestURI().toString());
         String tmpURI = request.getRequestURI().toString();
         OidcClientContext oidcClientContext = getOidcClientContext(request);
         if (oidcClientContext == null) {
@@ -73,7 +71,6 @@ final class OidcAuthenticationMechanism implements HttpServerAuthenticationMecha
         OidcHttpFacade httpFacade = new OidcHttpFacade(request, oidcClientContext, callbackHandler);
         OidcClientConfiguration oidcClientConfiguration = httpFacade.getOidcClientConfiguration();
         if (! oidcClientConfiguration.isConfigured()) {
-            log.trace("## OidcAuthenticationMechanism.evaluateRequest  !isConfigured()");
             request.noAuthenticationInProgress();
             return;
         }
@@ -89,35 +86,21 @@ final class OidcAuthenticationMechanism implements HttpServerAuthenticationMecha
 
         AuthOutcome outcome = authenticator.authenticate();
         if (AuthOutcome.AUTHENTICATED.equals(outcome)) {
-            log.trace("## OidcAuthenticationMechanism.evaluateRequest  AuthOutcome.AUTHENTICATED outcome");
             if (new AuthenticatedActionsHandler(oidcClientConfiguration, httpFacade).handledRequest()
-                    || logoutHandler.tryLogout(httpFacade)) {
-                log.trace("## OidcAuthenticationMechanism.evaluateRequest  call authenticationInProgress()");
+            ) {
                 httpFacade.authenticationInProgress();
             } else {
-                log.trace("## OidcAuthenticationMechanism.evaluateRequest  call authenticationComplete()");
                 httpFacade.authenticationComplete();
             }
             return;
         }
 
-        if (AuthOutcome.NOT_ATTEMPTED.equals(outcome)) {
-            log.trace("## OidcAuthenticationMechanism.evaluateRequest  AuthOutcome.NOT_ATTEMPTED");
-            if (logoutHandler.tryBackChannelLogout(httpFacade)) {
-                log.trace("## OidcAuthenticationMechanism.evaluateRequest  tryBackChannelLogout returned true");
-                httpFacade.authenticationInProgress();
-                return;
-            }
-        }
-
         AuthChallenge challenge = authenticator.getChallenge();
         if (challenge != null) {
-            log.trace("## OidcAuthenticationMechanism.evaluateRequest  challenge != null");
             httpFacade.noAuthenticationInProgress(challenge);
             return;
         }
         if (Oidc.AuthOutcome.FAILED.equals(outcome)) {
-            log.trace("## OidcAuthenticationMechanism.evaluateRequest  AuthOutcome.FAILED");
             httpFacade.getResponse().setStatus(HttpStatus.SC_FORBIDDEN);
             httpFacade.authenticationFailed();
             return;

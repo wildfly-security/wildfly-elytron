@@ -55,6 +55,7 @@ public class RequestAuthenticator {
     public AuthOutcome authenticate() {
         AuthOutcome authenticate = doAuthenticate();
         if (AuthOutcome.AUTHENTICATED.equals(authenticate) && !facade.isAuthorized()) {
+            log.trace("## RequestAutenticator.authenticate AUTHENTICATED but NOT Autorized");
             return AuthOutcome.FAILED;
         }
         return authenticate;

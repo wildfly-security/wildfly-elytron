@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2021 Red Hat, Inc., and individual contributors
+ * Copyright 2024 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import java.util.List;
  */
 public class AuthenticatedActionsHandler {
 
+    private static LogoutHandler logoutHandler = new LogoutHandler();
     private OidcClientConfiguration deployment;
     private OidcHttpFacade facade;
 
@@ -51,6 +52,10 @@ public class AuthenticatedActionsHandler {
         String requestUri = facade.getRequest().getURI();
         if (requestUri.endsWith(KEYCLOAK_QUERY_BEARER_TOKEN)) {
             queryBearerToken();
+            return true;
+        }
+
+        if (logoutHandler.tryLogout(facade)) {
             return true;
         }
 

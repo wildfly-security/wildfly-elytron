@@ -50,7 +50,9 @@ public class FrontChannelLogoutTest extends AbstractLogoutTest {
         List<String> redirectUris = client.getRedirectUris();
         String redirectUri = redirectUris.get(0);
 
-        client.getAttributes().put("frontchannel.logout.url", redirectUri + "/logout/callback");
+        OidcClientConfiguration ocConfig = new OidcClientConfiguration();
+        client.getAttributes().put("frontchannel.logout.url", redirectUri
+                + ocConfig.getLogoutCallbackPath());
     }
 
     @Test
@@ -71,14 +73,14 @@ public class FrontChannelLogoutTest extends AbstractLogoutTest {
 
         // logged out after finishing the redirections during frontchannel logout
         assertUserAuthenticated();
-        webClient.getPage(getClientUrl() + "/logout");
+        webClient.getPage(getClientUrl() + getClientConfig().getLogoutPath());
         assertUserNotAuthenticated();
     }
 
     @Test
     public void testRPInitiatedLogoutWithPostLogoutUri() throws Exception {
         OidcClientConfiguration oidcClientConfiguration = getClientConfig();
-        oidcClientConfiguration.setPostLogoutUri("/post-logout");
+        oidcClientConfiguration.setPostLogoutPath("/post-logout");
         configureDispatcher(oidcClientConfiguration, new Dispatcher() {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
