@@ -87,12 +87,19 @@ final class OidcAuthenticationMechanism implements HttpServerAuthenticationMecha
         AuthOutcome outcome = authenticator.authenticate();
         if (AuthOutcome.AUTHENTICATED.equals(outcome)) {
             if (new AuthenticatedActionsHandler(oidcClientConfiguration, httpFacade).handledRequest()
-            ) {
+                    || logoutHandler.tryLogout(httpFacade)) {
                 httpFacade.authenticationInProgress();
             } else {
                 httpFacade.authenticationComplete();
             }
             return;
+        }
+
+        if (AuthOutcome.NOT_ATTEMPTED.equals(outcome)) {
+            if (logoutHandler.tryBackChannelLogout(httpFacade)) {
+                httpFacade.authenticationInProgress();
+                return;
+            }
         }
 
         AuthChallenge challenge = authenticator.getChallenge();

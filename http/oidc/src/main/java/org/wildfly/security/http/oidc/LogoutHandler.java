@@ -61,7 +61,6 @@ final class LogoutHandler {
 
     boolean tryLogout(OidcHttpFacade facade) {
         RefreshableOidcSecurityContext securityContext = getSecurityContext(facade);
-
         if (securityContext == null) {
             // no active session
             return false;
@@ -80,8 +79,14 @@ final class LogoutHandler {
         }
 
         if (isLogoutCallbackPath(facade)) {
-            handleLogoutRequest(facade);
-            return true;
+            if (isFrontChannel(facade)) {
+                handleFrontChannelLogoutRequest(facade);
+                return true;
+            } else {
+                // we have an active session, should have received a GET logout request
+                facade.getResponse().setStatus(HttpStatus.SC_METHOD_NOT_ALLOWED);
+                facade.authenticationFailed();
+            }
         }
 
         return false;
@@ -89,12 +94,12 @@ final class LogoutHandler {
 
     private boolean isSessionMarkedForInvalidation(OidcHttpFacade facade) {
         RefreshableOidcSecurityContext securityContext = getSecurityContext(facade);
+
         IDToken idToken = securityContext.getIDToken();
 
         if (idToken == null) {
             return false;
         }
-
         return sessionsMarkedForInvalidation.remove(idToken.getSid()) != null;
     }
 
@@ -123,20 +128,17 @@ final class LogoutHandler {
         facade.getResponse().setHeader(HttpConstants.LOCATION, logoutUri);
     }
 
-    private void handleLogoutRequest(OidcHttpFacade facade) {
-        if (isFrontChannel(facade)) {
-            handleFrontChannelLogoutRequest(facade);
-        } else if (isBackChannel(facade)) {
-            handleBackChannelLogoutRequest(facade);
-        } else {
-            // logout requests should arrive either as a HTTP GET or POST
-            facade.getResponse().setStatus(HttpStatus.SC_METHOD_NOT_ALLOWED);
-            facade.authenticationFailed();
+    boolean tryBackChannelLogout(OidcHttpFacade facade) {
+        if (isLogoutCallbackPath(facade)) {
+            if (isBackChannel(facade)) {
+                handleBackChannelLogoutRequest(facade);
+                return true;
+            }
         }
+        return false;
     }
 
     private void handleBackChannelLogoutRequest(OidcHttpFacade facade) {
-        RefreshableOidcSecurityContext securityContext = getSecurityContext(facade);
         String logoutToken = facade.getRequest().getFirstParam(LOGOUT_TOKEN_PARAM);
         TokenValidator tokenValidator = TokenValidator.builder(facade.getOidcClientConfiguration())
                 .setSkipExpirationValidator()
@@ -169,7 +171,7 @@ final class LogoutHandler {
         }
 
         log.debug("Marking session for invalidation during back-channel logout");
-        sessionsMarkedForInvalidation.put(sessionId, securityContext.getOidcClientConfiguration());
+        sessionsMarkedForInvalidation.put(sessionId, facade.getOidcClientConfiguration());
     }
 
     private void handleFrontChannelLogoutRequest(OidcHttpFacade facade) {
@@ -213,9 +215,8 @@ final class LogoutHandler {
         return uri;
     }
 
-    private boolean isLogoutCallbackPath(OidcHttpFacade facade) {
+    boolean isLogoutCallbackPath(OidcHttpFacade facade) {
         String path = facade.getRequest().getRelativePath();
-        String xx = getLogoutCallbackPath(facade); // rls debug only
         return path.endsWith(getLogoutCallbackPath(facade));
     }
 
@@ -225,17 +226,7 @@ final class LogoutHandler {
     }
 
     private boolean isSessionRequiredOnLogout(OidcHttpFacade facade) {
-        return getOidcClientConfiguration(facade).isSessionRequiredOnLogout();
-    }
-
-    private OidcClientConfiguration getOidcClientConfiguration(OidcHttpFacade facade) {
-        RefreshableOidcSecurityContext securityContext = getSecurityContext(facade);
-
-        if (securityContext == null) {
-            return null;
-        }
-
-        return securityContext.getOidcClientConfiguration();
+        return facade.getOidcClientConfiguration().isSessionRequiredOnLogout();
     }
 
     private RefreshableOidcSecurityContext getSecurityContext(OidcHttpFacade facade) {
@@ -251,10 +242,10 @@ final class LogoutHandler {
     }
 
     private String getLogoutPath(OidcHttpFacade facade) {
-        return getOidcClientConfiguration(facade).getLogoutPath();
+        return facade.getOidcClientConfiguration().getLogoutPath();
     }
     private String getLogoutCallbackPath(OidcHttpFacade facade) {
-        return getOidcClientConfiguration(facade).getLogoutCallbackPath();
+        return facade.getOidcClientConfiguration().getLogoutCallbackPath();
     }
 
     private boolean isBackChannel(OidcHttpFacade facade) {

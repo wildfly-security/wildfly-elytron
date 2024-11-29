@@ -37,7 +37,6 @@ import java.util.List;
  */
 public class AuthenticatedActionsHandler {
 
-    private static LogoutHandler logoutHandler = new LogoutHandler();
     private OidcClientConfiguration deployment;
     private OidcHttpFacade facade;
 
@@ -52,10 +51,6 @@ public class AuthenticatedActionsHandler {
         String requestUri = facade.getRequest().getURI();
         if (requestUri.endsWith(KEYCLOAK_QUERY_BEARER_TOKEN)) {
             queryBearerToken();
-            return true;
-        }
-
-        if (logoutHandler.tryLogout(facade)) {
             return true;
         }
 
