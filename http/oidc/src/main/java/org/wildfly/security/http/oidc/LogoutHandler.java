@@ -42,6 +42,7 @@ final class LogoutHandler {
     public static final String ID_TOKEN_HINT_PARAM = "id_token_hint";
     private static final String LOGOUT_TOKEN_PARAM = "logout_token";
     private static final String LOGOUT_TOKEN_TYPE = "Logout";
+    private static final String CLIENT_ID_SID_SEPARATOR = "-";
     public static final String SID = "sid";
     public static final String ISS = "iss";
 
@@ -99,7 +100,7 @@ final class LogoutHandler {
         if (idToken == null) {
             return false;
         }
-        return sessionsMarkedForInvalidation.containsKey(idToken.getSid());
+        return sessionsMarkedForInvalidation.remove(getSessionKey(facade, idToken.getSid())) != null;
     }
 
     private void redirectEndSessionEndpoint(OidcHttpFacade facade) {
@@ -170,7 +171,11 @@ final class LogoutHandler {
         }
 
         log.debug("Marking session for invalidation during back-channel logout");
-        sessionsMarkedForInvalidation.put(sessionId, facade.getOidcClientConfiguration());
+        sessionsMarkedForInvalidation.put(getSessionKey(facade, sessionId), facade.getOidcClientConfiguration());
+    }
+
+    private String getSessionKey(OidcHttpFacade facade, String sessionId) {
+        return facade.getOidcClientConfiguration().getClientId() + CLIENT_ID_SID_SEPARATOR + sessionId;
     }
 
     private void handleFrontChannelLogoutRequest(OidcHttpFacade facade) {
