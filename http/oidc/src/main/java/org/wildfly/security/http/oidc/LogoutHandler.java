@@ -29,6 +29,8 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.utils.URIBuilder;
 import org.jose4j.jwt.JwtClaims;
 import org.wildfly.security.http.HttpConstants;
+import org.wildfly.security.http.HttpScope;
+import org.wildfly.security.http.Scope;
 import org.wildfly.security.http.oidc.OidcHttpFacade.Request;
 
 /**
@@ -66,13 +68,6 @@ final class LogoutHandler {
             return false;
         }
 
-        if (isSessionMarkedForInvalidation(facade)) {
-            // session marked for invalidation, invalidate it
-            log.debug("Invalidating pending logout session");
-            facade.getTokenStore().logout(false);
-            return true;
-        }
-
         if (isRpInitiatedLogoutPath(facade)) {
             redirectEndSessionEndpoint(facade);
             return true;
@@ -92,15 +87,19 @@ final class LogoutHandler {
         return false;
     }
 
-    private boolean isSessionMarkedForInvalidation(OidcHttpFacade facade) {
-        RefreshableOidcSecurityContext securityContext = getSecurityContext(facade);
-
+    boolean isSessionMarkedForInvalidation(OidcHttpFacade facade) {
+        HttpScope session = facade.getScope(Scope.SESSION);
+        if (session == null || ! session.exists()) return false;
+        RefreshableOidcSecurityContext securityContext = (RefreshableOidcSecurityContext) session.getAttachment(OidcSecurityContext.class.getName());
+        if (securityContext == null) {
+            return false;
+        }
         IDToken idToken = securityContext.getIDToken();
 
         if (idToken == null) {
             return false;
         }
-        return sessionsMarkedForInvalidation.remove(idToken.getSid()) != null;
+        return sessionsMarkedForInvalidation.containsKey(idToken.getSid());
     }
 
     private void redirectEndSessionEndpoint(OidcHttpFacade facade) {

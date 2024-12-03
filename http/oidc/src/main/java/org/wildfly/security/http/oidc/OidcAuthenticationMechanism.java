@@ -76,6 +76,11 @@ final class OidcAuthenticationMechanism implements HttpServerAuthenticationMecha
         }
 
         RequestAuthenticator authenticator = createRequestAuthenticator(httpFacade, oidcClientConfiguration);
+        if (logoutHandler.isSessionMarkedForInvalidation(httpFacade)) {
+            // session marked for invalidation, invalidate it
+            log.debug("Invalidating pending logout session");
+            httpFacade.getTokenStore().logout(false);
+        }
         httpFacade.getTokenStore().checkCurrentToken();
         if ((oidcClientConfiguration.getAuthServerBaseUrl() != null && keycloakPreActions(httpFacade, oidcClientConfiguration))
                 || preflightCors(httpFacade, oidcClientConfiguration)) {
