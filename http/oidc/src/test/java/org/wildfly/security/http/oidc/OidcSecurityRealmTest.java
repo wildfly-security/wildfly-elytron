@@ -72,7 +72,7 @@ public class OidcSecurityRealmTest {
     @Test
     public void testGetRealmIdentityNoRoles() throws RealmUnavailableException {
         // setup
-        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(new OidcClientConfiguration(),
+        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(new OidcClientConfiguration(), null,
                 null, null, new AccessToken(new JwtClaims()), null, null, null);
         OidcPrincipal principal = new OidcPrincipal("john", securityContext);
 
@@ -108,7 +108,7 @@ public class OidcSecurityRealmTest {
         jwtClaims.setClaim("resource_access", resourceAccess);
         jwtClaims.setClaim("realm_access", createRoles("roleC", "roleD"));
 
-        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(clientConfiguration,
+        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(clientConfiguration,null,
                 null, null, new AccessToken(jwtClaims), null, null, null);
         OidcPrincipal principal = new OidcPrincipal("john", securityContext);
 
@@ -137,7 +137,7 @@ public class OidcSecurityRealmTest {
         jwtClaims.setClaim("resource_access", resourceAccess);
         jwtClaims.setClaim("realm_access", createRoles("roleC", "roleD"));
 
-        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(clientConfiguration,
+        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(clientConfiguration,null,
                 null, null, new AccessToken(jwtClaims), null, null, null);
         OidcPrincipal principal = new OidcPrincipal("john", securityContext);
 
@@ -165,7 +165,7 @@ public class OidcSecurityRealmTest {
         jwtClaims.setClaim("resource_access", resourceAccess);
         jwtClaims.setClaim("", new RealmAccessClaim(createRoles("roleC", "roleD")));
 
-        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(clientConfiguration,
+        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(clientConfiguration,null,
                 null, null, new AccessToken(jwtClaims), null, null, null);
         OidcPrincipal principal = new OidcPrincipal("john", securityContext);
 
@@ -193,7 +193,7 @@ public class OidcSecurityRealmTest {
         jwtClaims.setClaim("resource_access", resourceAccess);
         jwtClaims.setClaim("", new RealmAccessClaim(createRoles("roleC", "roleD")));
 
-        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(clientConfiguration,
+        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(clientConfiguration,null,
                 null, null, new AccessToken(jwtClaims), null, null, null);
         OidcPrincipal principal = new OidcPrincipal("john", securityContext);
 
@@ -390,7 +390,7 @@ public class OidcSecurityRealmTest {
     }
 
     private Attributes.Entry getRealmIdentityRoles(OidcClientConfiguration clientConfiguration, JwtClaims jwtClaims) throws RealmUnavailableException {
-        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(clientConfiguration,
+        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(clientConfiguration,null,
                 null, null, new AccessToken(jwtClaims), null, null, null);
         OidcPrincipal principal = new OidcPrincipal("john", securityContext);
 

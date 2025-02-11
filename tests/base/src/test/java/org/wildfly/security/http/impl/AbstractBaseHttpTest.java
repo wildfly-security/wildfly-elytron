@@ -213,11 +213,20 @@ public class AbstractBaseHttpTest {
             }
             this.remoteUser = null;
             this.requestURI = requestURI;
+
             this.cookies = new ArrayList<>();
             if (cookie != null) {
-                final String cookieName = cookie.substring(0, cookie.indexOf('='));
-                final String cookieValue = cookie.substring(cookie.indexOf('=') + 1);
-                cookies.add(HttpServerCookie.getInstance(cookieName, cookieValue, null, -1, "/", false, 0, true));
+                String[] cookiesArr = cookie.split(";");
+                if (cookiesArr.length == 0) {
+                    cookiesArr[0] = cookie;
+                }
+                for (int i = 0; i < cookiesArr.length; i++) {
+                    String[] cookiePair = cookiesArr[i].trim().split("=");
+                    if (cookiePair.length == 2) {
+                        this.cookies.add(HttpServerCookie.getInstance(
+                                cookiePair[0], cookiePair[1], null, -1, "/", false, 0, true));
+                    }
+                }
             }
         }
 

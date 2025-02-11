@@ -24,6 +24,7 @@ import static org.wildfly.security.http.oidc.Oidc.AuthOutcome;
 import static org.wildfly.security.http.oidc.Oidc.FACES_REQUEST;
 import static org.wildfly.security.http.oidc.Oidc.HTML_CONTENT_TYPE;
 import static org.wildfly.security.http.oidc.Oidc.PARTIAL;
+import static org.wildfly.security.http.oidc.Oidc.SESSION_RANDOM_VALUE;
 import static org.wildfly.security.http.oidc.Oidc.SOAP_ACTION;
 import static org.wildfly.security.http.oidc.Oidc.TEXT_CONTENT_TYPE;
 import static org.wildfly.security.http.oidc.Oidc.WILDCARD_CONTENT_TYPE;
@@ -200,14 +201,14 @@ public class RequestAuthenticator {
     }
 
     protected void completeAuthentication(OidcRequestAuthenticator oidc) {
-        RefreshableOidcSecurityContext session = new RefreshableOidcSecurityContext(deployment, facade.getTokenStore(), oidc.getTokenString(), oidc.getToken(), oidc.getIDTokenString(), oidc.getIDToken(), oidc.getRefreshToken());
+        RefreshableOidcSecurityContext session = new RefreshableOidcSecurityContext(deployment, facade.getRequest().getCookie(SESSION_RANDOM_VALUE), facade.getTokenStore(), oidc.getTokenString(), oidc.getToken(), oidc.getIDTokenString(), oidc.getIDToken(), oidc.getRefreshToken());
         final OidcPrincipal<RefreshableOidcSecurityContext> principal = new OidcPrincipal<>(oidc.getIDToken().getPrincipalName(deployment), session);
         completeOidcAuthentication(principal);
         log.debugv("User ''{0}'' invoking ''{1}'' on client ''{2}''", principal.getName(), facade.getRequest().getURI(), deployment.getResourceName());
     }
 
     protected void completeAuthentication(BearerTokenRequestAuthenticator bearer) {
-        RefreshableOidcSecurityContext session = new RefreshableOidcSecurityContext(deployment, null, bearer.getTokenString(), bearer.getToken(), null, null, null);
+        RefreshableOidcSecurityContext session = new RefreshableOidcSecurityContext(deployment, facade.getRequest().getCookie(SESSION_RANDOM_VALUE), null, bearer.getTokenString(), bearer.getToken(), null, null, null);
         final OidcPrincipal<RefreshableOidcSecurityContext> principal = new OidcPrincipal<>(bearer.getToken().getPrincipalName(deployment), session);
         completeBearerAuthentication(principal);
         log.debugv("User ''{0}'' invoking ''{1}'' on client ''{2}''", principal.getName(), facade.getRequest().getURI(), deployment.getResourceName());

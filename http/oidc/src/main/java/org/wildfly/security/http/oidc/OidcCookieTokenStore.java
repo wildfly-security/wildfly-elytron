@@ -21,6 +21,7 @@ package org.wildfly.security.http.oidc;
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_STATE_COOKIE;
 import static org.wildfly.security.http.oidc.Oidc.checkCachedAccountMatchesRequest;
+import static org.wildfly.security.http.oidc.Oidc.SESSION_RANDOM_VALUE;
 
 import java.net.URISyntaxException;
 import java.util.List;
@@ -227,7 +228,7 @@ public class OidcCookieTokenStore implements OidcTokenStore {
                 idToken = new IDToken(new JwtConsumerBuilder().setSkipSignatureVerification().setSkipAllValidators().build().processToClaims(idTokenString));
             }
             log.debug("Token obtained from cookie");
-            RefreshableOidcSecurityContext secContext = new RefreshableOidcSecurityContext(deployment, tokenStore, accessTokenString, accessToken, idTokenString, idToken, refreshTokenString);
+            RefreshableOidcSecurityContext secContext = new RefreshableOidcSecurityContext(deployment, facade.getRequest().getCookie(SESSION_RANDOM_VALUE), tokenStore, accessTokenString, accessToken, idTokenString, idToken, refreshTokenString);
             return new OidcPrincipal<>(idToken.getPrincipalName(deployment), secContext);
         } catch (InvalidJwtException e) {
             log.failedToParseTokenFromCookie(e);

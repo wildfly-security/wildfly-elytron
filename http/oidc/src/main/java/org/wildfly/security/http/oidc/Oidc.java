@@ -19,11 +19,15 @@
 package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
+import static org.wildfly.security.jose.jwk.JWKUtil.BASE64_URL;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.UUID;
@@ -34,6 +38,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jose4j.jws.AlgorithmIdentifiers;
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.jose.util.JsonSerialization;
 
 /**
@@ -111,6 +116,7 @@ public class Oidc {
     public static final String REDIRECT_URI = "redirect_uri";
     public static final String REFRESH_TOKEN = "refresh_token";
     public static final String RESPONSE_TYPE = "response_type";
+    public static final String SESSION_RANDOM_VALUE="session_random_value";
     public static final String SESSION_STATE = "session_state";
     public static final String SOAP_ACTION = "SOAPAction";
     public static final String SSL_REQUIRED = "ssl-required";
@@ -119,6 +125,7 @@ public class Oidc {
     public static final int INVALID_ISSUED_FOR_CLAIM = -1;
     public static final int INVALID_AT_HASH_CLAIM = -2;
     public static final int INVALID_TYPE_CLAIM = -3;
+    public static final int INVALID_SESSION_RANDOM_VALUE = -4;
     static final String OIDC_CLIENT_CONFIG_RESOLVER = "oidc.config.resolver";
     static final String OIDC_CONFIG_FILE_LOCATION = "oidc.config.file";
     static final String OIDC_JSON_FILE = "/WEB-INF/oidc.json";
@@ -445,4 +452,14 @@ public class Oidc {
         return true;
     }
 
+    protected static String getCryptographicValue(final String src) {
+        try {
+            MessageDigest md = MessageDigest.getInstance(SHA256);
+            md.update(src.getBytes(StandardCharsets.UTF_8));
+            return ByteIterator.ofBytes(md.digest())
+                    .base64Encode(BASE64_URL, false).drainToString();
+        } catch (NoSuchAlgorithmException e) {
+            throw log.noSuchAlgorithm(e.getMessage());
+        }
+    }
 }

@@ -23,6 +23,7 @@ import static org.wildfly.security.http.oidc.IDToken.AT_HASH;
 import static org.wildfly.security.http.oidc.Oidc.DISABLE_TYP_CLAIM_VALIDATION_PROPERTY_NAME;
 import static org.wildfly.security.http.oidc.Oidc.INVALID_AT_HASH_CLAIM;
 import static org.wildfly.security.http.oidc.Oidc.INVALID_ISSUED_FOR_CLAIM;
+import static org.wildfly.security.http.oidc.Oidc.INVALID_SESSION_RANDOM_VALUE;
 import static org.wildfly.security.http.oidc.Oidc.INVALID_TYPE_CLAIM;
 import static org.wildfly.security.http.oidc.Oidc.getJavaAlgorithmForHash;
 import static org.wildfly.security.jose.jwk.JWKUtil.BASE64_URL;
@@ -82,12 +83,14 @@ public class TokenValidator {
      * @return the {@code VerifiedTokens} if the ID token was valid
      * @throws OidcException if the ID token is invalid
      */
-    public VerifiedTokens parseAndVerifyToken(final String idToken, final String accessToken) throws OidcException {
+    public VerifiedTokens parseAndVerifyToken(final String idToken, final String accessToken, OidcHttpFacade.Cookie cookie) throws OidcException {
         try {
             JwtContext idJwtContext = setVerificationKey(idToken, jwtConsumerBuilder);
             jwtConsumerBuilder.setExpectedAudience(clientConfiguration.getResourceName());
             jwtConsumerBuilder.registerValidator(new AzpValidator(clientConfiguration.getResourceName()));
             jwtConsumerBuilder.registerValidator(new AtHashValidator(accessToken, clientConfiguration.getTokenSignatureAlgorithm()));
+            jwtConsumerBuilder.registerValidator(new NonceValidator(cookie));
+
             // second pass to validate
             jwtConsumerBuilder.build().processContext(idJwtContext);
             JwtClaims idJwtClaims = idJwtContext.getJwtClaims();
@@ -286,6 +289,33 @@ public class TokenValidator {
             return ByteIterator.ofBytes(hashInput).base64Encode(BASE64_URL, false).drainToString();
         }
 
+    }
+
+
+    private static class NonceValidator implements ErrorCodeValidator {
+        private OidcHttpFacade.Cookie cookie;
+
+        public NonceValidator(OidcHttpFacade.Cookie cookie) {
+            this.cookie = cookie;
+        }
+
+        public ErrorCodeValidator.Error validate(JwtContext jwtContext) throws MalformedClaimException {
+            JwtClaims idJwtClaims = jwtContext.getJwtClaims();
+            IDToken idToken = new IDToken(idJwtClaims);
+
+            if (cookie != null) {
+                String sessionRandomValue = Oidc.getCryptographicValue(cookie.getValue());
+                String nonceValue = idToken.getNonce();
+                if (!sessionRandomValue.equals(nonceValue)) {
+                    return new ErrorCodeValidator.Error(INVALID_SESSION_RANDOM_VALUE,
+                            log.invalidNonceValue(nonceValue));
+                }
+            } else {
+                return new ErrorCodeValidator.Error(INVALID_SESSION_RANDOM_VALUE,
+                        log.nonceCookieDoesNotExist());
+            }
+            return null;
+        }
     }
 
     private static class TypeValidator implements ErrorCodeValidator {

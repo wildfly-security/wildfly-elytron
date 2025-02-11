@@ -23,6 +23,7 @@ import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA384;
 import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA512;
 import static org.jose4j.jws.AlgorithmIdentifiers.NONE;
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
+import static org.wildfly.security.http.oidc.IDToken.NONCE;
 import static org.wildfly.security.http.oidc.Oidc.ALLOW_QUERY_PARAMS_PROPERTY_NAME;
 import static org.wildfly.security.http.oidc.Oidc.CLIENT_ID;
 import static org.wildfly.security.http.oidc.Oidc.CODE;
@@ -39,6 +40,7 @@ import static org.wildfly.security.http.oidc.Oidc.RESPONSE_TYPE;
 import static org.wildfly.security.http.oidc.Oidc.REQUEST;
 import static org.wildfly.security.http.oidc.Oidc.REQUEST_URI;
 import static org.wildfly.security.http.oidc.Oidc.SCOPE;
+import static org.wildfly.security.http.oidc.Oidc.SESSION_RANDOM_VALUE;
 import static org.wildfly.security.http.oidc.Oidc.SESSION_STATE;
 import static org.wildfly.security.http.oidc.Oidc.STATE;
 import static org.wildfly.security.http.oidc.Oidc.UI_LOCALES;
@@ -59,6 +61,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -76,6 +79,7 @@ import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.keys.HmacKey;
 import org.jose4j.lang.JoseException;
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.http.HttpConstants;
 
 /**
@@ -95,6 +99,8 @@ public class OidcRequestAuthenticator {
     protected AuthChallenge challenge;
     protected String refreshToken;
     protected String strippedOauthParametersRequestUri;
+
+    private int NONCE_SIZE = 36;
 
     static final boolean ALLOW_QUERY_PARAMS_PROPERTY;
 
@@ -181,7 +187,7 @@ public class OidcRequestAuthenticator {
         return getQueryParamValue(facade, CODE);
     }
 
-    protected String getRedirectUri(String state) {
+    protected String getRedirectUri(String state, String sessionRandomValueHash) {
         String url = getRequestUrl();
         log.debugf("callback uri: %s", url);
 
@@ -229,31 +235,31 @@ public class OidcRequestAuthenticator {
                     if (deployment.getRequestParameterSupported()) {
                         // add request objects into request parameter
                         try {
-                            createRequestWithRequestParameter(REQUEST, redirectUriBuilder, redirectUri, state, forwardedQueryParams);
+                            createRequestWithRequestParameter(REQUEST, redirectUriBuilder, redirectUri, state, forwardedQueryParams, sessionRandomValueHash);
                         } catch (IOException | JoseException e) {
                             throw log.unableToCreateRequestWithRequestParameter(e);
                         }
                     } else {
                         // send request as usual
-                        createOAuthRequest(redirectUriBuilder, redirectUri, state, forwardedQueryParams);
+                        createOAuthRequest(redirectUriBuilder, redirectUri, state, forwardedQueryParams, sessionRandomValueHash);
                         log.requestParameterNotSupported();
                     }
                     break;
                 case REQUEST_URI:
                     if (deployment.getRequestUriParameterSupported()) {
                         try {
-                            createRequestWithRequestParameter(REQUEST_URI, redirectUriBuilder, redirectUri, state, forwardedQueryParams);
+                            createRequestWithRequestParameter(REQUEST_URI, redirectUriBuilder, redirectUri, state, forwardedQueryParams, sessionRandomValueHash);
                         } catch (IOException | JoseException e) {
                             throw log.unableToCreateRequestUriWithRequestParameter(e);
                         }
                     } else {
                         // send request as usual
-                        createOAuthRequest(redirectUriBuilder, redirectUri, state, forwardedQueryParams);
+                        createOAuthRequest(redirectUriBuilder, redirectUri, state, forwardedQueryParams, sessionRandomValueHash);
                         log.requestParameterNotSupported();
                     }
                     break;
                 default:
-                    createOAuthRequest(redirectUriBuilder, redirectUri, state, forwardedQueryParams);
+                    createOAuthRequest(redirectUriBuilder, redirectUri, state, forwardedQueryParams, sessionRandomValueHash);
                     break;
             }
             return redirectUriBuilder.build().toString();
@@ -262,15 +268,16 @@ public class OidcRequestAuthenticator {
         }
     }
 
-    protected URIBuilder createOAuthRequest(URIBuilder redirectUriBuilder, String redirectUri, String state, List<NameValuePair> forwardedQueryParams) {
+    protected URIBuilder createOAuthRequest(URIBuilder redirectUriBuilder, String redirectUri, String state, List<NameValuePair> forwardedQueryParams, String sessionRandomValueHash) {
         redirectUriBuilder.addParameter(REDIRECT_URI, redirectUri)
                 .addParameter(STATE, state)
-                .addParameters(forwardedQueryParams);
+                .addParameters(forwardedQueryParams)
+                .addParameter(NONCE, sessionRandomValueHash);
         return redirectUriBuilder;
     }
 
-    protected URIBuilder createRequestWithRequestParameter(String requestFormat, URIBuilder redirectUriBuilder, String redirectUri, String state, List<NameValuePair> forwardedQueryParams) throws JoseException, IOException {
-        String request = convertToRequestParameter(redirectUriBuilder, redirectUri, state, forwardedQueryParams);
+    protected URIBuilder createRequestWithRequestParameter(String requestFormat, URIBuilder redirectUriBuilder, String redirectUri, String state, List<NameValuePair> forwardedQueryParams, String sessionRandomValueHash) throws JoseException, IOException {
+        String request = convertToRequestParameter(redirectUriBuilder, redirectUri, state, forwardedQueryParams, sessionRandomValueHash);
 
         switch (requestFormat) {
             case REQUEST:
@@ -296,7 +303,8 @@ public class OidcRequestAuthenticator {
 
     protected AuthChallenge loginRedirect() {
         final String state = getStateCode();
-        final String redirect = getRedirectUri(state);
+        final String sessionRandomValue = generateSessionRandomValue();
+        final String redirect = getRedirectUri(state, Oidc.getCryptographicValue(sessionRandomValue));
         if (redirect == null) {
             return challenge(HttpStatus.SC_FORBIDDEN, AuthenticationError.Reason.NO_REDIRECT_URI, null);
         }
@@ -314,6 +322,8 @@ public class OidcRequestAuthenticator {
                 exchange.getResponse().setStatus(HttpStatus.SC_MOVED_TEMPORARILY);
                 exchange.getResponse().setCookie(deployment.getStateCookieName(), state, "/", null, -1, deployment.getSSLRequired().isRequired(facade.getRequest().getRemoteAddr()), true);
                 exchange.getResponse().setHeader(HttpConstants.LOCATION, redirect);
+                exchange.getResponse().setCookie(SESSION_RANDOM_VALUE, sessionRandomValue, "/", null, -1, deployment.getSSLRequired().isRequired(facade.getRequest().getRemoteAddr()), true);
+
                 return true;
             }
         };
@@ -336,6 +346,7 @@ public class OidcRequestAuthenticator {
             log.warn("state parameter was null");
             return challenge(HttpStatus.SC_BAD_REQUEST, AuthenticationError.Reason.INVALID_STATE_COOKIE, null);
         }
+
         if (!state.equals(stateCookieValue)) {
             log.warn("state parameter invalid");
             log.warn("cookie: " + stateCookieValue);
@@ -441,9 +452,12 @@ public class OidcRequestAuthenticator {
 
         try {
             TokenValidator tokenValidator = TokenValidator.builder(deployment).build();
-            TokenValidator.VerifiedTokens verifiedTokens = tokenValidator.parseAndVerifyToken(idTokenString, tokenString);
+
+            TokenValidator.VerifiedTokens verifiedTokens = tokenValidator.parseAndVerifyToken(idTokenString, tokenString,
+                    facade.getRequest().getCookie(SESSION_RANDOM_VALUE));
             idToken = verifiedTokens.getIdToken();
             token = verifiedTokens.getAccessToken();
+
             log.debug("Token Verification succeeded!");
         } catch (OidcException e) {
             log.failedVerificationOfToken(e.getMessage());
@@ -456,6 +470,7 @@ public class OidcRequestAuthenticator {
             log.error("Stale token");
             return challenge(HttpStatus.SC_FORBIDDEN, AuthenticationError.Reason.STALE_TOKEN, null);
         }
+
         log.debug("successfully authenticated");
         return null;
     }
@@ -535,7 +550,7 @@ public class OidcRequestAuthenticator {
         }
     }
 
-    private String convertToRequestParameter(URIBuilder redirectUriBuilder, String redirectUri, String state, List<NameValuePair> forwardedQueryParams) throws JoseException, IOException {
+    private String convertToRequestParameter(URIBuilder redirectUriBuilder, String redirectUri, String state, List<NameValuePair> forwardedQueryParams, String sessionRandomValueHash) throws JoseException, IOException {
         redirectUriBuilder.addParameter(SCOPE, OIDC_SCOPE);
 
         JwtClaims jwtClaims = new JwtClaims();
@@ -545,10 +560,12 @@ public class OidcRequestAuthenticator {
         for ( NameValuePair parameter: forwardedQueryParams) {
             jwtClaims.setClaim(parameter.getName(), parameter.getValue());
         }
+
         jwtClaims.setClaim(STATE, state);
         jwtClaims.setClaim(REDIRECT_URI, redirectUri);
         jwtClaims.setClaim(RESPONSE_TYPE, CODE);
         jwtClaims.setClaim(CLIENT_ID, deployment.getResourceName());
+        jwtClaims.setClaim(NONCE, sessionRandomValueHash);
 
         // sign JWT first before encrypting
         JsonWebSignature signedRequest = signRequest(jwtClaims, deployment);
@@ -621,5 +638,12 @@ public class OidcRequestAuthenticator {
             jsonEncryption.setKey(encPublicKey);
             return jsonEncryption;
         }
+    }
+
+    private String generateSessionRandomValue() {
+        SecureRandom random = new SecureRandom();
+        byte[] nonceData = new byte[NONCE_SIZE];
+        random.nextBytes(nonceData);
+        return ByteIterator.ofBytes(nonceData).base64Encode().drainToString();
     }
 }

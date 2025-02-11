@@ -36,7 +36,8 @@ public class AuthenticationError {
         INVALID_TOKEN,
         STALE_TOKEN,
         NO_AUTHORIZATION_HEADER,
-        NO_QUERY_PARAMETER_ACCESS_TOKEN
+        NO_QUERY_PARAMETER_ACCESS_TOKEN,
+        INVALID_NONCE
     }
 
     private Reason reason;
