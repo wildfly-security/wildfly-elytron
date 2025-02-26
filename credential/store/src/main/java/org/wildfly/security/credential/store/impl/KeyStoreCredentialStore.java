@@ -44,6 +44,9 @@ import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.UnrecoverableEntryException;
+import java.security.KeyStore.Entry;
+import java.security.KeyStore.ProtectionParameter;
+import java.security.KeyStore.SecretKeyEntry;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -171,7 +174,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private final HashMap<String, TopEntry> cache = new HashMap<>();
     private volatile boolean modifiable;
-    private KeyStore keyStore;
+    private InMemoryStore inMemoryStore;
     private Path location;
     private Path externalPath;
     private boolean create;
@@ -388,7 +391,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             // now, store it under a unique alias
             final String ksAlias = calculateNewAlias(credentialAlias, credentialClass, algorithmName, parameterSpec);
             try (Hold hold = lockForWrite()) {
-                keyStore.setEntry(ksAlias, entry, convertParameter(protectionParameter));
+                inMemoryStore.setEntry(ksAlias, entry, convertParameter(protectionParameter));
                 final TopEntry topEntry = cache.computeIfAbsent(toLowercase(credentialAlias), TopEntry::new);
                 final MidEntry midEntry = topEntry.getMap().computeIfAbsent(credentialClass, c -> new MidEntry(topEntry, c));
                 final BottomEntry bottomEntry;
@@ -405,7 +408,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 }
                 if (oldAlias != null && ! oldAlias.equals(ksAlias)) {
                     // unlikely but possible
-                    keyStore.deleteEntry(oldAlias);
+                    inMemoryStore.deleteEntry(oldAlias);
                 }
             }
         } catch (KeyStoreException | NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException | CertificateException e) {
@@ -473,7 +476,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 log.tracef("KeyStoreCredentialStore: no entry for parameterSpec %s", parameterSpec);
                 return null;
             }
-            entry = keyStore.getEntry(ksAlias, convertParameter(protectionParameter));
+            entry = inMemoryStore.getEntry(ksAlias, convertParameter(protectionParameter));
         } catch (NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException e) {
             throw log.cannotAcquireCredentialFromStore(e);
         }
@@ -775,7 +778,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
 
     private void remove(final String ksAlias) throws KeyStoreException {
         if (ksAlias != null) {
-            keyStore.deleteEntry(ksAlias);
+            inMemoryStore.deleteEntry(ksAlias);
         }
     }
 
@@ -790,7 +793,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                         if (useExternalStorage) {
                             externalStorage.store(os);
                         } else {
-                            keyStore.store(os, storePassword);
+                            inMemoryStore.store(os, storePassword);
                         }
                     } catch (Throwable t) {
                         try {
@@ -843,13 +846,14 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             setupExternalStorage(type, location);
         } else {
             dataLocation = location;
-            keyStore = getKeyStoreInstance(type);
+            KeyStore keyStore = getKeyStoreInstance(type);
+            inMemoryStore = new KeyStoreWrapper(keyStore);
         }
         if (create) {
             log.tracef("KeyStoreCredentialStore: creating empty backing KeyStore  dataLocation = %s  external = %b", dataLocation, useExternalStorage);
             if (dataLocation == null) {
                 try {
-                    keyStore.load(null, null);
+                    inMemoryStore.load(null, null);
                 } catch (CertificateException | IOException | NoSuchAlgorithmException e) {
                     throw log.cannotInitializeCredentialStore(e);
                 }
@@ -868,12 +872,12 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                     if (useExternalStorage) {
                         externalStorage.load(fileStream);
                     } else {
-                        keyStore.load(fileStream, password);
+                        inMemoryStore.load(fileStream, password);
                     }
                 }
-                enumeration = keyStore.aliases();
+                enumeration = inMemoryStore.aliases();
             } else {
-                keyStore.load(null, null);
+                inMemoryStore.load(null, null);
                 enumeration = Collections.emptyEnumeration();
             }
         } catch (GeneralSecurityException e) {
@@ -962,7 +966,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
      */
     private void setupExternalStorage(final String keyContainingKeyStoreType, final Path keyContainingKeyStoreLocation) throws CredentialStoreException {
         KeyStore keyContainingKeyStore = getKeyStoreInstance(keyContainingKeyStoreType);
-        keyStore = getKeyStoreInstance("JCEKS");
+        inMemoryStore = new HashMapStore();
         externalStorage = new ExternalStorage();
         try {
             final char[] storePassword = getStorePassword(protectionParameter);
@@ -976,7 +980,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                     keyContainingKeyStore.load(null, storePassword);
                 }
             }
-            externalStorage.init(cryptographicAlgorithm, encryptionKeyAlias, keyContainingKeyStore, storePassword, keyStore);
+            externalStorage.init(cryptographicAlgorithm, encryptionKeyAlias, keyContainingKeyStore, storePassword, inMemoryStore);
         } catch(IOException | GeneralSecurityException e) {
             throw log.cannotInitializeCredentialStore(e);
         }
@@ -1169,10 +1173,112 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
         }
     }
 
+    /**
+     * Interface to represent the in-memory form of either the direct KeyStore
+     * or the store used for external mode.
+     */
+    private interface InMemoryStore {
+
+        public Enumeration<String> aliases() throws KeyStoreException;
+        public Entry getEntry(String alias, ProtectionParameter protParam) throws NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException;
+        public void setEntry(String alias, Entry entry, ProtectionParameter protParam) throws KeyStoreException;
+
+        public void deleteEntry(String alias) throws KeyStoreException;
+
+        public void load(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException;
+        public void store(OutputStream stream, char[] password) throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException;
+    }
+
+    static final class KeyStoreWrapper implements InMemoryStore {
+
+        private final KeyStore wrapped;
+
+        KeyStoreWrapper(final KeyStore toWrap) {
+            this.wrapped = toWrap;
+        }
+
+        @Override
+        public Enumeration<String> aliases() throws KeyStoreException {
+            return wrapped.aliases();
+        }
+
+        @Override
+        public Entry getEntry(String alias, ProtectionParameter protParam)
+                throws NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException {
+            return wrapped.getEntry(alias, protParam);
+        }
+
+        @Override
+        public void setEntry(String alias, Entry entry, ProtectionParameter protParam) throws KeyStoreException {
+            wrapped.setEntry(alias, entry, protParam);
+        }
+
+        @Override
+        public void deleteEntry(String alias) throws KeyStoreException {
+            wrapped.deleteEntry(alias);
+        }
+
+        @Override
+        public void load(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
+            wrapped.load(stream, password);
+        }
+
+        @Override
+        public void store(OutputStream stream, char[] password)
+                throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+            wrapped.store(stream, password);
+        }
+
+    }
+
+    static final class HashMapStore implements InMemoryStore {
+
+        private final Map<String, Entry> map = new HashMap<>();
+
+        @Override
+        public Enumeration<String> aliases() throws KeyStoreException {
+            return  Collections.enumeration(map.keySet());
+        }
+
+        @Override
+        public Entry getEntry(String alias, ProtectionParameter protParam) {
+            return map.get(alias);
+        }
+
+        @Override
+        public void setEntry(String alias, Entry entry, ProtectionParameter protParam) {
+            map.put(alias, entry);
+        }
+
+        @Override
+        public void deleteEntry(String alias) {
+            map.remove(alias);
+        }
+
+        @Override
+        public void load(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
+            map.clear();
+        }
+
+        @Override
+        public void store(OutputStream stream, char[] password) throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+            // This should not be reachable so not converted to an error coded message.
+            throw new UnsupportedOperationException("Cannot store in-memory store");
+        }
+
+    }
+
     private final class ExternalStorage {
 
         // version of external storage file, can be used later to enhance functionality and keep backward compatibility
-        private int VERSION = 1;
+        private int VERSION_ONE = 1;
+        /*
+         * If the file being read is version 2 the algorithm of each SecretKey is written after the encoded form.
+         *
+         * On writing version 2 will only be selected if at lease one SecretKeyEntry has an algorithm other than
+         * the DATA_OID value.
+         */
+        private int VERSION_TWO = 2;
 
         private int SECRET_KEY_ENTRY_TYPE = 100;
 
@@ -1181,19 +1287,19 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
         private Cipher encrypt;
         private Cipher decrypt;
 
-        private KeyStore dataKeyStore;
+        private InMemoryStore inMemoryStore;
         private KeyStore storageSecretKeyStore;
         private SecretKey storageSecretKey;
 
         private ExternalStorage() {}
 
-        void init(String cryptographicAlgorithm, String keyAlias, KeyStore keyStore, char[] keyPassword, KeyStore dataKeyStore) throws CredentialStoreException {
+        void init(String cryptographicAlgorithm, String keyAlias, KeyStore keyStore, char[] keyPassword, InMemoryStore inMemoryStore) throws CredentialStoreException {
 
             if (cryptographicAlgorithm == null)
                 cryptographicAlgorithm = DEFAULT_CRYPTOGRAPHIC_ALGORITHM;
 
             storageSecretKeyStore = keyStore;
-            this.dataKeyStore = dataKeyStore;
+            this.inMemoryStore = inMemoryStore;
 
             try {
                 fetchStorageSecretKey(keyAlias, keyPassword);
@@ -1234,14 +1340,15 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
          * @throws IOException if something goes wrong
          */
         void load(InputStream inputStream) throws IOException, GeneralSecurityException {
-            dataKeyStore.load(null, null);
+            inMemoryStore.load(null, null);
             ObjectInputStream ois = new ObjectInputStream(inputStream);
             int fileVersion = ois.readInt();
-            if (fileVersion == VERSION) {
+            if (fileVersion == VERSION_ONE || fileVersion == VERSION_TWO) {
+                boolean readAlgorithm = fileVersion == VERSION_TWO;
                 while (ois.available() > 0) {
                     int entryType = ois.readInt();
                     if (entryType == SECRET_KEY_ENTRY_TYPE) {
-                        loadSecretKey(ois);
+                        loadSecretKey(ois, readAlgorithm);
                     } else {
                         throw log.unrecognizedEntryType(Integer.toString(entryType));
                     }
@@ -1252,7 +1359,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             ois.close();
         }
 
-        private void loadSecretKey(ObjectInputStream ois) throws IOException, GeneralSecurityException {
+        private void loadSecretKey(ObjectInputStream ois, boolean readAlgorithm) throws IOException, GeneralSecurityException {
             byte[] encryptedData = readBytes(ois);
             byte[] iv = readBytes(ois);
 
@@ -1262,8 +1369,9 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             ObjectInputStream entryOis = new ObjectInputStream(new ByteArrayInputStream(unPadded));
             String ksAlias = entryOis.readUTF();
             byte[] encodedSecretKey = readBytes(entryOis);
-            KeyStore.Entry entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(encodedSecretKey, DATA_OID));
-            dataKeyStore.setEntry(ksAlias, entry, convertParameter(protectionParameter));
+            String algorithm = readAlgorithm ? entryOis.readUTF() : DATA_OID;
+            KeyStore.Entry entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(encodedSecretKey, algorithm));
+            inMemoryStore.setEntry(ksAlias, entry, convertParameter(protectionParameter));
         }
 
         private byte[] readBytes(ObjectInputStream ois) throws IOException {
@@ -1289,13 +1397,15 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
          */
         void store(OutputStream outputStream) throws IOException, GeneralSecurityException {
             ObjectOutputStream oos = new ObjectOutputStream(outputStream);
-            oos.writeInt(VERSION);
-            Enumeration<String> ksAliases = dataKeyStore.aliases();
+            final boolean writeVersionTwo = isWriteUsingVersionTwo();
+
+            oos.writeInt(writeVersionTwo ? VERSION_TWO : VERSION_ONE);
+            Enumeration<String> ksAliases = inMemoryStore.aliases();
             while(ksAliases.hasMoreElements()) {
                 String alias = ksAliases.nextElement();
-                KeyStore.Entry entry = dataKeyStore.getEntry(alias, convertParameter(protectionParameter));
+                KeyStore.Entry entry = inMemoryStore.getEntry(alias, convertParameter(protectionParameter));
                 if (entry instanceof KeyStore.SecretKeyEntry) {
-                    saveSecretKey(alias, oos, (KeyStore.SecretKeyEntry)entry);
+                    saveSecretKey(alias, oos, (KeyStore.SecretKeyEntry)entry, writeVersionTwo);
                 } else {
                     throw log.unrecognizedEntryType(entry != null ? entry.getClass().getCanonicalName() : "null");
                 }
@@ -1304,11 +1414,31 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             oos.close();
         }
 
-        private void saveSecretKey(String ksAlias, ObjectOutputStream oos, KeyStore.SecretKeyEntry entry) throws IOException, GeneralSecurityException {
+        private boolean isWriteUsingVersionTwo() throws GeneralSecurityException {
+            Enumeration<String> aliases = inMemoryStore.aliases();
+            while(aliases.hasMoreElements()) {
+                String alias = aliases.nextElement();
+                KeyStore.Entry entry = inMemoryStore.getEntry(alias, convertParameter(protectionParameter));
+                if (entry instanceof KeyStore.SecretKeyEntry) {
+                    SecretKeyEntry secretKeyEntry = (SecretKeyEntry) entry;
+                    if (!DATA_OID.equals(secretKeyEntry.getSecretKey().getAlgorithm())) {
+                        // It just takes one.
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private void saveSecretKey(String ksAlias, ObjectOutputStream oos, KeyStore.SecretKeyEntry entry, boolean writeAlgorithm) throws IOException, GeneralSecurityException {
             ByteArrayOutputStream entryData = new ByteArrayOutputStream(1024);
             ObjectOutputStream entryOos = new ObjectOutputStream(entryData);
             entryOos.writeUTF(ksAlias);
-            writeBytes(entry.getSecretKey().getEncoded(), entryOos);
+            SecretKey secretKey = entry.getSecretKey();
+            writeBytes(secretKey.getEncoded(), entryOos);
+            if (writeAlgorithm) {
+                entryOos.writeUTF(secretKey.getAlgorithm());
+            }
             entryOos.flush();
 
             encrypt.init(Cipher.ENCRYPT_MODE, storageSecretKey, (AlgorithmParameterSpec) null); // ELY-1308: third param need to workaround BouncyCastle bug
