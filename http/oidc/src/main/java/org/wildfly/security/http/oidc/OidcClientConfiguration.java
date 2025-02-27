@@ -231,7 +231,8 @@ public class OidcClientConfiguration {
             synchronized (this) {
                 String discoveryUrl = getDiscoveryUrl();
                 try {
-                    log.debug("Loading OpenID provider metadata from " + discoveryUrl);
+                    log.info("Loading OpenID provider metadata from " + discoveryUrl);
+                    log.info("IWS patch-level for org.wildfly.security.http.oidc is 2.7.0.Final");
 
                     OidcProviderMetadata config = getOidcProviderMetadata(discoveryUrl);
 
@@ -253,8 +254,10 @@ public class OidcClientConfiguration {
                         registerNodeUrl = getUrl(authServerBaseUrl, KEYCLOAK_REALMS_PATH + getRealm(), CLIENTS_MANAGEMENT_REGISTER_NODE_PATH);
                         unregisterNodeUrl = getUrl(authServerBaseUrl, KEYCLOAK_REALMS_PATH + getRealm(), CLIENTS_MANAGEMENT_UNREGISTER_NODE_PATH);
                     }
+                    log.info("Loaded successfully OpenID provider metadata from " + discoveryUrl);
                     log.loadedOpenIdProviderMetadata(discoveryUrl);
                 } catch (Exception e) {
+                    log.warn("unable to load OpenID provider metadata from " + discoveryUrl + ". Error: " + e);
                     log.unableToLoadOpenIdProviderMetadata(discoveryUrl);
                 }
             }

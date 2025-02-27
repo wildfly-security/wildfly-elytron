@@ -87,26 +87,23 @@ class JWKPublicKeyLocator implements PublicKeyLocator {
 
 
     private void sendRequest(OidcClientConfiguration oidcClientConfiguration) {
-        if (log.isTraceEnabled()) {
-            log.trace("Going to send request to retrieve new set of public keys for client " + oidcClientConfiguration.getResourceName());
-        }
+        String uri = oidcClientConfiguration.getJwksUrl();
+        log.info("Going to send request to retrieve new set of public keys for client " + oidcClientConfiguration.getResourceName() + " from " + uri);
 
-        HttpGet getMethod = new HttpGet(oidcClientConfiguration.getJwksUrl());
+        HttpGet getMethod = new HttpGet(uri);
         try {
             JsonWebKeySet jwks = Oidc.sendJsonHttpRequest(oidcClientConfiguration, getMethod, JsonWebKeySet.class);
 
             Map<String, PublicKey> publicKeys = getKeys(jwks, FOR_SIGNATURE_VALIDATION);
 
-            if (log.isDebugEnabled()) {
-                log.debug("Public keys successfully retrieved for client " +  oidcClientConfiguration.getResourceName() + ". New kids: " + publicKeys.keySet().toString());
-            }
+            log.info("Public keys successfully retrieved for client " +  oidcClientConfiguration.getResourceName() + ". New kids: " + publicKeys.keySet().toString());
 
             // update current keys
             currentKeys.clear();
             currentKeys.putAll(publicKeys);
 
         } catch (OidcException e) {
-            log.error("Error when sending request to retrieve public keys", e);
+            log.error("Error when sending request to retrieve public keys" + e);
         }
     }
 

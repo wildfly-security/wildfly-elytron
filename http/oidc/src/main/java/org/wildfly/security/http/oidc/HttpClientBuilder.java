@@ -90,10 +90,12 @@ public class HttpClientBuilder {
     private SSLContext sslContext;
     private long connectionTimeToLive = -1;
     private TimeUnit connectionTimeToLiveUnit = TimeUnit.MILLISECONDS;
-    private long socketTimeout = -1;
+    private long socketTimeout = 7_500;
     private TimeUnit socketTimeoutUnits = TimeUnit.MILLISECONDS;
-    private long establishConnectionTimeout = -1;
+    private long establishConnectionTimeout = 10_000;
     private TimeUnit establishConnectionTimeoutUnits = TimeUnit.MILLISECONDS;
+    private long connectionRequestTimeout = 20_000;
+    private TimeUnit connectionRequestTimeoutUnits = TimeUnit.MILLISECONDS;
 
     /**
      * This should only be set if you cannot or do not want to verify the identity of the
@@ -197,6 +199,7 @@ public class HttpClientBuilder {
                     .build();
             HttpClientConnectionManager connectionManager;
             if (connectionPoolSize > 0) {
+                log.info("connectionPoolSize is " + connectionPoolSize + " ... enable PoolingHttpClientConnectionManager with connection-ttl "  + connectionTimeToLive + "ms");
                 PoolingHttpClientConnectionManager pcm = new PoolingHttpClientConnectionManager(registry, null, null, null, connectionTimeToLive, connectionTimeToLiveUnit);
                 pcm.setMaxTotal(connectionPoolSize);
                 if (maxPooledPerRoute == 0) maxPooledPerRoute = connectionPoolSize;
@@ -204,6 +207,7 @@ public class HttpClientBuilder {
                 connectionManager = pcm;
 
             } else {
+                log.info("connectionPoolSize is " + connectionPoolSize + " ... enable BasicHttpClientConnectionManager (no pooling)");
                 connectionManager = new BasicHttpClientConnectionManager(registry);
             }
 
@@ -221,11 +225,22 @@ public class HttpClientBuilder {
                 requestConfigBuilder.setProxy(proxyHost);
             }
             if (socketTimeoutMillis > -1) {
+                // **socketTimeout** max time gap between two consecutive data packets while transferring data from server to client.
+                log.info("Setting socketTimeout to " + socketTimeoutMillis + "ms");
                 requestConfigBuilder.setSocketTimeout(socketTimeoutMillis);
             }
             if (establishConnectionTimeout > -1) {
+                // **connectTimeout** max time to establish a connection with remote host/server.
+                log.info("Setting establishConnectionTimeout to " + establishConnectionTimeout + "ms");
                 requestConfigBuilder.setConnectTimeout((int) establishConnectionTimeoutUnits.toMillis(establishConnectionTimeout));
             }
+
+            if (connectionRequestTimeout > -1) {
+                // **connectionRequestTimeout** max time when requesting a connection from the connection manager/pool.
+                log.info("Setting connectionRequestTimeout (used when requesting a connection from manager/pool) to " + connectionRequestTimeout  +"ms");
+                requestConfigBuilder.setConnectionRequestTimeout((int) connectionRequestTimeoutUnits.toMillis(connectionRequestTimeout));
+            }
+
             clientBuilder.setDefaultRequestConfig(requestConfigBuilder.build());
             if (disableCookieCache) {
                 clientBuilder.setDefaultCookieStore(new CookieStore() {
@@ -279,7 +294,7 @@ public class HttpClientBuilder {
             }
         }
         int size = 10;
-        if (oidcClientConfig.getConnectionPoolSize() > 0) {
+        if (oidcClientConfig.getConnectionPoolSize() >= 0) {
             size = oidcClientConfig.getConnectionPoolSize();
         }
         if (oidcClientConfig.getConnectionTimeoutMillis() > 0) {
