@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Tue, 24 Dec 2024 14:33:31 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 17 Apr 2025 19:46:00 +0000</lastBuildDate>
+        
+        <item>
+            <title>Introduction to a GUI wizard to configure TLS in WildFly</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/gui-tls-wizard/
+            </link>
+            <description>
+                This blog post introduces a stand-alone GUI wizard called "TLS wizard". By using the wizard, you can enable one-way TLS for applications deployed to WildFly as well as the WildFly management interfaces. The wizard guides you through creating a self-signed certificate, which the wizard uses to configure one-way TLS. Prerequisites...
+            </description>
+            <pubDate>Thu, 17 Apr 2025 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/gui-tls-wizard/
+            </guid>
+        </item>
         
         <item>
             <title>Securing WildFly Apps with OIDC on Kubernetes</title>
@@ -130,20 +144,6 @@
             <pubDate>Thu, 07 Mar 2024 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/in-progress-wildfly-feature-on-openshift/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Vlog: Securing WildFly Apps with Okta on OpenShift</title>
-            <link>
-                https://www.youtube.com/watch?v=usquALvL2qc
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Tue, 27 Feb 2024 00:00:00 +0000</pubDate>
-            <guid>
-                https://www.youtube.com/watch?v=usquALvL2qc
             </guid>
         </item>
         
