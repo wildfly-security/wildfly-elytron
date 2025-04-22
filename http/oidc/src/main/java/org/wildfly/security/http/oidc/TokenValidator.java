@@ -76,6 +76,10 @@ public class TokenValidator {
         this.clientConfiguration = builder.clientConfiguration;
     }
 
+    public VerifiedTokens parseAndVerifyToken(final String idToken, final String accessToken) throws OidcException {
+        return parseAndVerifyToken(idToken, accessToken, null, false);
+    }
+
     /**
      * Parse and verify the given ID token.
      *
@@ -83,13 +87,16 @@ public class TokenValidator {
      * @return the {@code VerifiedTokens} if the ID token was valid
      * @throws OidcException if the ID token is invalid
      */
-    public VerifiedTokens parseAndVerifyToken(final String idToken, final String accessToken, OidcHttpFacade.Cookie cookie) throws OidcException {
+    public VerifiedTokens parseAndVerifyToken(final String idToken, final String accessToken,
+                                              OidcHttpFacade.Cookie cookie, boolean isValidateNonce) throws OidcException {
         try {
             JwtContext idJwtContext = setVerificationKey(idToken, jwtConsumerBuilder);
             jwtConsumerBuilder.setExpectedAudience(clientConfiguration.getResourceName());
             jwtConsumerBuilder.registerValidator(new AzpValidator(clientConfiguration.getResourceName()));
             jwtConsumerBuilder.registerValidator(new AtHashValidator(accessToken, clientConfiguration.getTokenSignatureAlgorithm()));
-            jwtConsumerBuilder.registerValidator(new NonceValidator(cookie));
+            if (isValidateNonce) {
+                jwtConsumerBuilder.registerValidator(new NonceValidator(cookie));
+            }
 
             // second pass to validate
             jwtConsumerBuilder.build().processContext(idJwtContext);

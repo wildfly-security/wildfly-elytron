@@ -34,18 +34,16 @@ public class RefreshableOidcSecurityContext extends OidcSecurityContext {
     protected transient OidcClientConfiguration clientConfiguration;
     protected transient OidcTokenStore tokenStore;
     protected String refreshToken;
-    protected transient OidcHttpFacade.Cookie cookie;
 
     public RefreshableOidcSecurityContext() {
     }
 
-    public RefreshableOidcSecurityContext(OidcClientConfiguration clientConfiguration, OidcHttpFacade.Cookie cookie, OidcTokenStore tokenStore, String tokenString,
+    public RefreshableOidcSecurityContext(OidcClientConfiguration clientConfiguration, OidcTokenStore tokenStore, String tokenString,
                                           AccessToken token, String idTokenString, IDToken idToken, String refreshToken) {
         super(tokenString, token, idTokenString, idToken);
         this.clientConfiguration = clientConfiguration;
         this.tokenStore = tokenStore;
         this.refreshToken = refreshToken;
-        this.cookie = cookie;
     }
 
     @Override
@@ -151,7 +149,7 @@ public class RefreshableOidcSecurityContext extends OidcSecurityContext {
             IDToken idToken;
             try {
                 TokenValidator tokenValidator = TokenValidator.builder(clientConfiguration).build();
-                TokenValidator.VerifiedTokens verifiedTokens = tokenValidator.parseAndVerifyToken(idTokenString, accessTokenString, cookie);
+                TokenValidator.VerifiedTokens verifiedTokens = tokenValidator.parseAndVerifyToken(idTokenString, accessTokenString);
                 idToken = verifiedTokens.getIdToken();
                 accessToken = verifiedTokens.getAccessToken();
                 log.debug("Token Verification succeeded!");

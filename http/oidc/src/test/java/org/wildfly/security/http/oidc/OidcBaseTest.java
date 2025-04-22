@@ -53,6 +53,7 @@ import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.http.HttpScope;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.http.HttpServerCookie;
@@ -189,6 +190,11 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     }
 
     protected static Dispatcher createAppResponse(HttpServerAuthenticationMechanism mechanism, int expectedStatusCode, String expectedLocation, String clientPageText) {
+        return createAppResponse(mechanism, expectedStatusCode, expectedLocation, clientPageText, false);
+    }
+
+    protected static Dispatcher createAppResponse(HttpServerAuthenticationMechanism mechanism, int expectedStatusCode,
+                                                  String expectedLocation, String clientPageText, boolean isRefreshToken) {
         return new Dispatcher() {
             @Override
             public MockResponse dispatch(RecordedRequest recordedRequest) throws InterruptedException {
@@ -201,6 +207,17 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
                         TestingHttpServerResponse response = request.getResponse();
                         assertEquals(expectedStatusCode, response.getStatusCode());
                         assertEquals(expectedLocation, response.getLocation());
+
+                        if (isRefreshToken) {
+                            HttpScope session = request.getScope(org.wildfly.security.http.Scope.SESSION);
+                            assertNotNull("No session for token refresh", session);
+                            OidcAccount account = (OidcAccount) session.getAttachment(OidcAccount.class.getName());
+                            assertNotNull("No OidcAccount for token refresh", account);
+                            RefreshableOidcSecurityContext refreshableContext = account.getOidcSecurityContext();
+                            assertNotNull("No RefreshableOidcSecurityContext for token refresh", refreshableContext);
+                            assertTrue("Token refresh failed", refreshableContext.refreshToken(false));
+                        }
+
                         return new MockResponse().setBody(clientPageText);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
