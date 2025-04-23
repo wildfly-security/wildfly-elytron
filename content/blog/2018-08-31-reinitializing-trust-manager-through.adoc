@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Reinitializing a Trust Manager through a Two-Way SSL'
+date: 2018-08-31
+tags: ldap,trust-manager,ssl,tls
+synopsis: An overview on how to dynamically reload trust managers using the WildFly CLI.
+author: jucook
+external_link: https://justinwildfly.blogspot.com/2018/08/reinitializing-trust-manager-through.html
+---

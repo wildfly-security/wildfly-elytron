@@ -1,0 +1,77 @@
+---
+layout: post
+title: 'Introduction to a GUI wizard to configure TLS in WildFly'
+aliases: [/blog/gui-tls-wizard]
+date: 2025-04-17
+tags: tls
+synopsis: Learn how to use a GUI wizard to configure one-way TLS in WildFly.
+author: theashiot
+---
+
+:toc: macro
+:toc-title:
+
+This blog post introduces a stand-alone GUI wizard called "TLS wizard". By using the wizard, you can enable one-way TLS for applications deployed to WildFly as well as the WildFly management interfaces. The wizard guides you through creating a self-signed certificate, which the wizard uses to configure one-way TLS.
+
+toc::[]
+
+== Prerequisites
+
+To follow along with this guide, you will need:
+
+* Roughly 5 minutes.
+* JDK 21 installed.
+* WildFly application server installed.
+* Maven installed.
+
+== The TLS wizard
+
+The wizard is available at this link https://github.com/wildfly-security-incubator/tlswizard[tlswizard].
+
+To obtain the wizard, clone the tlswizard repository:
+
+[source]
+----
+$ git clone git@github.com:wildfly-security-incubator/tlswizard.git
+----
+
+Alternatively, you can download the ZIP archive of the application as follows:
+
+. Navigate to https://github.com/wildfly-security-incubator/tlswizard[]
+. Click the *<> Code* button.
+. Click *Download ZIP*.
+. Extract the application from the downloaded archive.
+
+== Using the application
+
+You can enable one-way TLS for applications deployed to WildFly or the WildFly management interface by following these steps:
+
+. Start the WildFly server.
+. Navigate to the application directory `tlswizard`.
+. Launch the application:
++
+[code]
+----
+$ mvn clean javafx:run
+----
+
+. Enter the IP for the server. The default is `127.0.0.1` (localhost). For local WildFly deployments, you don't need to update this.
+
+. Select `applications` or `management interfaces` to secure applications or management interfaces.
+
+. Click *Next*.
+
+. Enter a name for the key store to create with the `.pkcs12` extension.
+
+. Enter details for the certificate to be generated. If you don't, all the values are set to `unknown`.
+
+. Click *Configure TLS*.
+
+. To verify TLS, do this:
+
+** If you secure applications: Navigate to link:https://localhost:8443[]. Inspect the certificate. The `Common Name (CN)` should match the first and last name you entered.
+
+** If you secured the management interface: Navigate to link:http://localhost:9990[]. You will be redirected to `localhost:9993` Inspect the certificate. The `Common Name (CN)` should match the first and last name you entered.
+
+== Resources
+* https://docs.wildfly.org/36/WildFly_Elytron_Security.html#configure-ssltls[WildFly documentation for configuring SSL/TLS]

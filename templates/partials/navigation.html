@@ -1,0 +1,7 @@
+{#for item in cdi:navigationItems.list}
+{#if item.name == 'GitHub'}
+    <a class="{item.getCssClass(page)} {item.name}-menuitem" href="{item.link}">{item.name}</a>
+{#else}
+    <a class="{item.getCssClass(page)} {item.name}-menuitem" href="{site.url(item.link)}">{item.name}</a>
+{/if}
+{/for}

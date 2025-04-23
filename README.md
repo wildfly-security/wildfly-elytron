@@ -5,61 +5,62 @@
 These instructions will allow you to run the Elytron website locally for development and testing purposes.
 
 ### Installation
-The following steps are based on the [Jekyll static site generator docs](https://jekyllrb.com/docs/).
+The following steps are based on the [Roq static site generator docs](https://iamroq.com/docs/getting-started/).
 
-1. Install a full [Ruby development environment](https://jekyllrb.com/docs/installation/)
-2. Install jekyll and [bundler](https://jekyllrb.com/docs/ruby-101/#bundler)  [gems](https://jekyllrb.com/docs/ruby-101/#gems) 
-  
-        gem install jekyll bundler
+1. Install a full Java development environment. For example, using [SDKMAN!](https://sdkman.io/)
 
-3. Fork the [project repository](https://github.com/wildfly-security/wildfly-elytron), then clone your fork.
-  
+       $curl -s "https://get.sdkman.io" | bash
+       ...
+       $ sdk install java 24-tem
+       ...
+       $ sdk install maven 3.9.9
+       ...
+       $ sdk install quarkus # This is optional
+
+2. Fork the [project repository](https://github.com/wildfly-security/wildfly-elytron), then clone your fork.
+
         git clone git@github.com:YOUR_USER_NAME/wildfly-elytron.git
 
-4. Change into the project directory:
-  
+3. Change into the project directory:
+
         cd wildfly-elytron
 
-5. Checkout the [develop](https://github.com/wildfly-security/wildfly-elytron/tree/develop) branch:
-  
+4. Check out the [develop](https://github.com/wildfly-security/wildfly-elytron/tree/develop) branch:
+
         git checkout develop
 
-6. Use bundler to fetch all required gems in their respective versions
+5. Build the site and make it available on a local server
 
-        bundle install
+        mvn quarkus:dev
 
-7. Build the site and make it available on a local server
-  
-        bundle exec jekyll serve
+    or
 
-   If you encounter the following message:
+        quarkus dev
 
-        FATAL: Listen error: unable to monitor directories for changes.  
-        
-   Please refer to these [instructions](https://github.com/guard/listen/wiki/Increasing-the-amount-of-inotify-watchers) to fix this.       
-        
-8. Now browse to http://localhost:4000/wildfly-elytron/
+6. Now browse to http://localhost:8080/wildfly-elytron/
 
-> If you encounter any unexpected errors during the above, please refer to the [troubleshooting](https://jekyllrb.com/docs/troubleshooting/#configuration-problems) page or the [requirements](https://jekyllrb.com/docs/installation/#requirements) page, as you might be missing development headers or other prerequisites.
+7. Optionally, to just build the static files:
 
+        QUARKUS_ROQ_GENERATOR_BATCH=true mvn package quarkus:run
 
-**For more regarding the use of Jekyll, please refer to the [Jekyll Step by Step Tutorial](https://jekyllrb.com/docs/step-by-step/01-setup/).**
+   The files will available under `target/roq`.
+
 
 ## Writing a blog post
 
 To write a blog post:
 
-1. Add an author entry in [_data/authors.yaml](https://github.com/wildfly-security/wildfly-elytron/tree/develop/_data/authors.yaml)
+1. Add an author entry in [data/authors.yaml](https://github.com/wildfly-security/wildfly-elytron/tree/develop/data/authors.yaml)
     - Your profile picture is fetched from [the Gravatar service](https://gravatar.com/). Create an account,
-      and then associate your email with the account. Validate your picture with [the email checker](https://gravatar.com/site/check/). 
+      and then associate your email with the account. Validate your picture with [the email checker](https://gravatar.com/site/check/).
       The field `emailhash` in authors.yaml is set using [these instructions](https://gravatar.com/site/implement/hash/),
       or with the output from the following command:
         ```bash
         echo -n 'email@address.com' | awk '{NF=1;printf "%s", tolower($1);}' | md5sum - | awk 'NF=1'
         ```
-2. Create a blog post entry under [_posts](https://github.com/wildfly-security/wildfly-elytron/tree/develop/_posts)
+2. Create a blog post entry under [content/blog](https://github.com/wildfly-security/wildfly-elytron/tree/develop/content/blog)
     - The file name should be `yyyy-mm-dd-slug.adoc`
-3. Your blog post should be in asciidoc format (take a look at other blogs posts in the _posts directory to see examples)
+3. Your blog post should be in asciidoc format (take a look at other blogs posts in the `content/blog` directory to see examples)
     - To view your blog post without needing to build locally, the following steps can be used:
         - If you haven't done so already, generate a fine-grained GitHub token following the instructions
           [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token). Use this value to add a `PUSH_GITHUB_TOKEN` secret to your
@@ -76,6 +77,6 @@ To write a blog post:
                 git push origin gh-pages
                 ```
     - To view your blog post locally, first follow the instructions [above](https://github.com/wildfly-security/wildfly-elytron/tree/develop#installation) to build the Elytron website
-      locally. Then browse to http://localhost:4000/wildfly-elytron/blog and click on your post.
+      locally. Then browse to http://localhost:8080/wildfly-elytron/blog and click on your post.
 4. Submit a pull request against the `wildfly-elytron` `develop` branch
 

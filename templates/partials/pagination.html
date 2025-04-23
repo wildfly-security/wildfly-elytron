@@ -1,0 +1,12 @@
+{#if page.paginator}
+{!#if page.paginator.total_pages > 1 %!}
+<div class="paginator-btns">
+    {#if page.paginator.prev}
+    <a href="{page.paginator.previous}" class="button-cta secondary">Newer Posts</a>
+    {/if}
+    {#if page.paginator.next }
+    <a href="{page.paginator.next}" class="button-cta secondary">Older Posts</a>
+    {/if}
+</div>
+{!% endif %!}
+{/if}

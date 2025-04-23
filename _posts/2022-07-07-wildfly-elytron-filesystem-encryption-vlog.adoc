@@ -1,9 +1,0 @@
----
-layout: post
-title: 'Vlog: Encrypting a Filesystem Realm'
-date: 2022-07-07
-tags: filesystem-realm encryption
-synopsis: This video demonstrates how to enable encryption for new filesystem realms, and how to encrypt pre-existing filesystem realms.
-author: araskar
-link: https://www.youtube.com/watch?v=1K92tit2uCk
----
