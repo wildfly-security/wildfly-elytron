@@ -19,7 +19,8 @@ toc::[]
 To follow along with this guide, you will need:
 
 * Roughly 5 minutes.
-* WildFly application server installed
+* JDK 21 installed.
+* WildFly application server installed.
 * Maven installed.
 
 == The TLS wizard
