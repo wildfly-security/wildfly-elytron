@@ -8,49 +8,55 @@ layout: default
   <div class="grid__item width-1-12 align-self-center"></div>
 
   <div class="grid__item width-8-12 width-12-12-m">
-    {% for post in paginator.posts %}
-      {% assign author = site.data.authors[post.author] %}
-      <div class="blog-list-item grid-wrapper">
-        <div class="post-title grid__item width-12-12">
-          <a href="{% if post.link %}{{ post.link }}{% else %}{{ post.url | relative_url }}{% endif %}">{{ post.title }}</a>
-        </div>
-        <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
-          {% if author.emailhash %}
-            <img class="headshot" src="https://www.gravatar.com/avatar/{{ author.emailhash }}">
-          {% endif %}
-          <p class="byline">By <a href="{{ author.bio }}">{{ author.name }}</a>
-            <br/>
-            <small>{{ post.date | date: '%B %d, %Y' }} |
-              {% if post.tags %}
-                {% for tag in post.tags %}
-                  <a class="tags" href="{{site.baseurl}}/blog/tag/{{tag | downcase | replace: '.', '-'}}"> #{{ tag | downcase }}</a>
-                {% endfor %}
+
+    {% include search.html %}
+
+    <div id="posts-div" name="posts-div">
+      {% for post in paginator.posts %}
+        {% assign author = site.data.authors[post.author] %}
+        <div class="blog-list-item grid-wrapper">
+          <div class="post-title grid__item width-12-12">
+            <a href="{% if post.link %}{{ post.link }}{% else %}{{ post.url | relative_url }}{% endif %}">{{ post.title }}</a>
+          </div>
+          <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+            {% if author.emailhash %}
+              <img class="headshot" src="https://www.gravatar.com/avatar/{{ author.emailhash }}">
             {% endif %}
-            </small>
-          </p>
+            <p class="byline">By <a href="{{ author.bio }}">{{ author.name }}</a>
+              <br/>
+              <small>{{ post.date | date: '%B %d, %Y' }} |
+                {% if post.tags %}
+                  {% for tag in post.tags %}
+                    <a class="tags" href="{{site.baseurl}}/blog/tag/{{tag | downcase | replace: '.', '-'}}"> #{{ tag | downcase }}</a>
+                  {% endfor %}
+              {% endif %}
+              </small>
+            </p>
+          </div>
+          {% capture post_url %}{% if post.link %}{{ post.link }}{% else %}{{ site.url }}{{ post.url | relative_url }}{% endif %}{% endcapture %}
+          <div class="grid__item width-4-12 width-12-12-m">{% include share-page.html title=post.title url=post_url %}</div>
+          <div class="grid__item width-12-12">
+            {% if post.synopsis %}
+              <p>{{ post.synopsis | strip_html }}</p>
+            {% else %}
+              <p>{{ post.content | strip_html | truncatewords: 75 }}</p>
+            {% endif %}
+          </div>
+          <div class="grid__item width-12-12"><a href="{% if post.link %}{{ post.link }}{% else %}{{ post.url | relative_url }}{% endif %}">{% if post.link contains 'youtube' %}Watch Video &rsaquo;{% else %}Read More &rsaquo;{% endif %}</a></div>
         </div>
-        {% capture post_url %}{% if post.link %}{{ post.link }}{% else %}{{ site.url }}{{ post.url | relative_url }}{% endif %}{% endcapture %}
-        <div class="grid__item width-4-12 width-12-12-m">{% include share-page.html title=post.title url=post_url %}</div>
-        <div class="grid__item width-12-12">
-          {% if post.synopsis %}
-            <p>{{ post.synopsis | strip_html }}</p>
-          {% else %}
-            <p>{{ post.content | strip_html | truncatewords: 75 }}</p>
+      {% endfor %}
+      {% if paginator.total_pages > 1 %}
+        <div class="paginator-btns">
+          {% if paginator.previous_page %}
+            <a href="{{ paginator.previous_page_path | relative_url }}" class="button-cta secondary">Newer Posts</a>
           {% endif %}
+          {% if paginator.next_page %}
+            <a href="{{ paginator.next_page_path | relative_url }}" class="button-cta secondary">Older Posts</a>
+            {% endif %}
         </div>
-        <div class="grid__item width-12-12"><a href="{% if post.link %}{{ post.link }}{% else %}{{ post.url | relative_url }}{% endif %}">{% if post.link contains 'youtube' %}Watch Video &rsaquo;{% else %}Read More &rsaquo;{% endif %}</a></div>
-      </div>
-    {% endfor %}
-    {% if paginator.total_pages > 1 %}
-      <div class="paginator-btns">
-        {% if paginator.previous_page %}
-          <a href="{{ paginator.previous_page_path | relative_url }}" class="button-cta secondary">Newer Posts</a>
-        {% endif %}
-        {% if paginator.next_page %}
-          <a href="{{ paginator.next_page_path | relative_url }}" class="button-cta secondary">Older Posts</a>
-          {% endif %}
-      </div>
       {% endif %}
+    </div>
+
   </div>
 
   <div class="grid__item width-1-12 width-12-12-m"></div>
