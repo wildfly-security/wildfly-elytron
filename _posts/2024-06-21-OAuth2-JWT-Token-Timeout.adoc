@@ -1,0 +1,84 @@
+---
+layout: post
+title: 'OAuth2 and JWT token timeout properties added to WildFly'
+date: 2024-mm-dd
+tags: OAuth2 JWT token timeout connection-timeout read-timeout
+synopsis: Bearer token timeout properties, connection-timeout and read-timeout, have be added to WildFly's Elytron subsystem.
+author: rsearls
+---
+
+:toc: macro
+:toc-title:
+
+toc::[]
+
+Elytron in WildFly 32+ preview version supports two new
+optional attributes, `connection-timeout` and `read-timeout`.
+These attributes allow the user to control the timeout period
+placed on the URL used in obtaining the public key from the OAuth2 or JWT
+provider.  Both are defined on the token-realm element in the Elytron subsystem.
+
+WildFly uses a default value of 2000 milliseconds for both these
+properties.  The user need not set these token-realm attributes if
+that value is sufficient.
+
+Both parameters are datatype int.  The value is in milliseonds.
+Only zero or positive integers are allowed. Zero means infinite time.
+If the connection time or read time expires during
+public key retrieval a warning message is logged and null is returned as
+the public key to Elyton's processing code.
+
+=== Example Server Configuration
+
+==== Prerequisites
+
+To run the example you will need the following.
+
+* JDK-17
+* Wildfly 33 or newer
+* Wildfly quickstart, https://github.com/wildfly/quickstart.git
+
+==== Environment Setup
+
+* cd into `jaxrs-jwt` in the quickstart project.  Follow the directions
+in the README file upto and including executing the CLI script file,
+`configure-elytron.cli`.
+* Create file, `config-bearer-timeout.cli` in the jaxrs-jwt directory.
+Add the following commands to the file and save it.
+
+```
+    # append timeout attributes to the jwt element.
+    /subsystem=elytron/token-realm=jwt-realm:write-attribute(name=jwt.connection-timeout, valu
+   e=2)
+    # /subsystem=elytron/token-realm=jwt-realm:write-attribute(name=jwt.read-timeout, value=1)
+
+```
+
+====  Execute command
+```
+$WILDFLY_HOME/bin/jboss-cli.sh --connect --file=config-bearer-timeout.cli
+```
+
+==== Run the example
+
+* Follow the README directions to provision the Wildfly server
+
+* Follow the directions to run the Integration Tests with a provisioned server.
+The test will fail.
+
+* Check Wildfly's server.log for the message, "Unable to connect to $THE_URL"
+```
+$WILDFLY_HOME/standalone/log/server.log
+```
+
+== Summary
+
+WildFly uses a default value of 2000 milliseconds (i.e. 2 seconds)
+when waiting on a connection to an OAuth2 and JWT provider, and
+2000 milliseconds when reading the public key.  The user can
+fine tune the wait times via the two attributes, `connection-timeout`
+and `read-timeout` on the Elytron's token-realm element.
+
+== Resources
+* https://docs.wildfly.org/32/wildscribe/subsystem/elytron/token-realm/index.html[token realm]
+* https://docs.wildfly.org/32/WildFly_Elytron_Security.html#realms[Elytron security realms]
