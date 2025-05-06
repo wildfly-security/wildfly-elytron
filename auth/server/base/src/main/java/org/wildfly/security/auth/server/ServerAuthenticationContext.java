@@ -61,10 +61,10 @@ import org.wildfly.security.auth.callback.EvidenceDecodePrincipalCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.ExclusiveNameCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
-import org.wildfly.security.auth.callback.PrincipalAuthorizeCallback;
-import org.wildfly.security.auth.callback.MechanismInformationCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
+import org.wildfly.security.auth.callback.MechanismInformationCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
+import org.wildfly.security.auth.callback.PrincipalAuthorizeCallback;
 import org.wildfly.security.auth.callback.RequestInformationCallback;
 import org.wildfly.security.auth.callback.SSLCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
@@ -74,6 +74,7 @@ import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.server._private.ElytronMessages;
 import org.wildfly.security.auth.server.event.RealmFailedAuthenticationEvent;
 import org.wildfly.security.auth.server.event.RealmIdentityFailedAuthorizationEvent;
 import org.wildfly.security.auth.server.event.RealmIdentitySuccessfulAuthorizationEvent;
@@ -98,7 +99,6 @@ import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.ssl.SSLConnection;
 import org.wildfly.security.x500.X500;
-import org.wildfly.security.auth.server._private.ElytronMessages;
 
 /**
  * Server-side authentication context.  Instances of this class are used to perform all authentication and re-authorization
@@ -1132,6 +1132,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
 
                     if (principal != null) {
                         setAuthenticationPrincipal(principal);
+                        authorizeCallback.setSubject(stateRef.get().getRealmIdentity());
                         if (authorize()) {
                             authorizedIdentity = getAuthorizedIdentity();
                         }
