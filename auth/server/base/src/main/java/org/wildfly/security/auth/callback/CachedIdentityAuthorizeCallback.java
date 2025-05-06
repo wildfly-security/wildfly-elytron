@@ -18,17 +18,21 @@
 
 package org.wildfly.security.auth.callback;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
+
+import java.security.Principal;
+import java.util.Set;
+import java.util.function.Function;
+
+import javax.security.auth.Subject;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.cache.CachedIdentity;
 import org.wildfly.security.cache.IdentityCache;
-
-import java.security.Principal;
-import java.util.function.Function;
-
-import static org.wildfly.common.Assert.checkNotNullParam;
 
 /**
  * <p>A callback that is capable of perform authorization based on the identities managed by an {@link IdentityCache}.
@@ -149,6 +153,25 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
     }
 
     /**
+     * Set the Roles present on {@link CachedIdentity} into the {@link RealmIdentity#setSubject(Subject)} in order to get authenticate on all HA nodes;
+     * @param realmIdentity
+     */
+    public void setSubject(RealmIdentity realmIdentity) {
+        checkNotNullParam("realmIdentity", realmIdentity);
+        Subject subject = realmIdentity.getSubject();
+        if (subject == null) {
+            CachedIdentity cachedIdentity = createDomainCache().get();
+            if (cachedIdentity != null) {
+                subject = new Subject();
+                Set<Principal> principals = subject.getPrincipals();
+                principals.add(realmIdentity.getRealmIdentityPrincipal());
+                cachedIdentity.getRoles().forEach(role -> principals.add(new Roles(role)));
+                realmIdentity.setSubject(subject);
+            }
+        }
+    }
+
+    /**
      * Indicates if a cached identity was successfully authorized.
      *
      * @return true if the cached identity was successfully authorized. Otherwise, false
@@ -239,4 +262,19 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
     private IdentityCache createDomainCache() {
         return this.identityCache.apply(securityDomain);
     }
+
+    private static class Roles implements Principal {
+
+        private final String name;
+
+        Roles(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return this.name;
+        }
+    }
+
 }
