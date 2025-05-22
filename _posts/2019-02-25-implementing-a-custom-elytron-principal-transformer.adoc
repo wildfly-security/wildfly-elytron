@@ -1,9 +1,0 @@
----
-layout: post
-title: 'Implementing a custom Elytron principal transformer'
-date: 2019-02-25
-tags: custom-component principal-transformer
-synopsis: How to implement and make use of a custom Elytron principal transformer.
-author: fjuma
-link: https://developer.jboss.org/people/fjuma/blog/2019/02/25/implementing-a-custom-elytron-principal-transformer
----

@@ -1,0 +1,34 @@
+---
+layout: default
+link: /blog/:slug
+---
+
+<div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>{page.title}</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        {#let author = cdi:authors.get(page.data.author)}
+        {#if author.emailhash}
+          <img class="headshot" src="https://www.gravatar.com/avatar/{author.emailhash}">
+        {/if}
+        <p class="byline">
+          By <a href="{author.bio}">{author.name}</a> | {page.date.format('LLLL d, YYY')}
+          <br>
+          {#if page.data.tags}
+            {#for tag in page.data.tags.splitTags}
+              <a style="font-size: 0.9em;" href="{site.url}blog/tag/{tag}"> #{tag}</a>
+            {/for}
+          {/if}
+        </p>
+        {/let}
+      </div>
+      <div class="grid__item width-4-12 width-12-12-m">
+          {#include partials/share-page.html url=page.url title=page.title /}
+      </div>
+      <div class="grid__item width-12-12">
+          {#insert /}
+      </div>
+    </div>
+  </div>
+</div>

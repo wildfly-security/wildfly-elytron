@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Converting Legacy Properties Files into a FileSystemRealm with Elytron Tool'
+date: 2019-02-28
+tags: migration,tool,filesystem-realm,properties
+synopsis: An overview of how to use Elytron Tool to convert legacy properties files into an Elytron FileSystemRealm.
+author: jucook
+external_link: https://justinwildfly.blogspot.com/2019/02/converting-legacy-propeties-files-into.html
+---

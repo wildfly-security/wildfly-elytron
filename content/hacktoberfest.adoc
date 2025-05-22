@@ -1,0 +1,62 @@
+---
+layout: hacktoberfest
+title: Hacktoberfest
+link: /hacktoberfest/
+#image:
+#  path: https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/hacktoberfest2024.png
+---
+:page-liquid:
+
+
+Welcome, Hacktoberfest participants! We're glad to have you join us.
+
+== What is Hacktoberfest?
+
+https://hacktoberfest.com/[Hacktoberfest] takes place annually during the month of October. This event encourages open source contributions from the community. To participate in Hacktoberfest, you simply need to:
+
+1. Register on the https://hacktoberfest.com/[Hacktoberfest] site
+
+2. Submit 4 approved PRs against participating project repositories during the month of October
+
+3. You’ll unlock a digital badge when you register for Hacktoberfest, and level it up with each of your four pull/merge requests accepted during Hacktoberfest. Visit the https://hacktoberfest.com/particfdipation/[Hacktoberfest site] for more information.
+
+== Getting Started
+
+To get started, follow the steps below:
+
+. *Create a Jira Account.* Visit https://issues.redhat.com/[] and click on *Log In* in the top right corner of the page.
+* At the bottom of the *Log in to your Red Hat account* section, click on *Register for a Red Hat account*, which will lead you to a page to create an account.
+* Fill in all the fields accordingly and click on *Create my account*.
+* You will be asked to verify your email using a link sent to the email you used to register.
+* Once you have successfully created and verified your account, you can go back to https://issues.redhat.com/ to log into your Jira account. You will log into this account to assign yourself issues to work on in step 4.
+
+. *Set up your development environment.* We use Java 11, Maven, and Git. Follow our setup guide for your operating system:
++
+++++
+{#include partials/OSD-2022-logo-bullets.html}
+++++
+
+. *Pick your https://en.wikipedia.org/wiki/Comparison_of_integrated_development_environments#Java[IDE].* We recommend https://www.jetbrains.com/idea/[IDEA] or https://www.eclipse.org/ide/[Eclipse], but feel free to use whatever you'd like.
+. *Start contributing!* Whether you're new to security, new to Java, or new to tools like Git or Maven, we have a bunch of issues that are perfect for getting started on our project, no prior experience is needed. Check out our list of https://issues.redhat.com/issues/?filter=12364234[good first issues]. Once you have selected an issue you'd like to work on, make sure it's not already assigned to someone else. To assign an issue to yourself, simply click on "Start Progress". This will automatically assign the issue to you. +
+Our https://github.com/wildfly-security/wildfly-elytron/blob/1.x/CONTRIBUTING.md#contributing-guidelines[contribution guide] has all the information you need on how to format your PRs.
+
+If you have any questions, we'll be happy to help on https://wildfly.zulipchat.com/#narrow/stream/173102-wildfly-elytron[Zulip chat].
+
+== FAQ for New Contributors
+
+Check out these https://fjuma.github.io/wildfly-elytron/blog/frequently-asked-questions-new-contributors/[frequently asked questions] from new contributors.
+
+== Future Opportunities to Contribute
+
+Want to find out about future events we'll be participating in like Hacktoberfest, Google Summer of Code, or other Open Source Days? Subscribe to this https://listman.redhat.com/mailman/listinfo/wildfly-elytron-dev[mailing list].
+
+If you're interested, check out our https://wildfly-security.github.io/wildfly-elytron/community/[Community] page for all the information you need on how to stay involved
+in the WildFly Elytron project.
+
+== Where to Learn More
+
+To get more familiar with WildFly, our link:../getting-started-for-developers/[Getting Started] page has some resources to help you learn more about the project. Want to get started quickly? Check out these sections:
+
+* link:../getting-started-for-developers/#a-quick-introduction-to-the-project[WildFly Project Introductions]
+* link:../getting-started-for-developers/#getting-familiar-with-elytron[Getting familiar with Elytron]
+* link:../getting-started-for-developers/#getting-your-developer-environment-set-up[Building and testsuite commands]

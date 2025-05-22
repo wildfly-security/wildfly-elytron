@@ -1,0 +1,10 @@
+---
+layout: post
+title: 'Using Elytron certificate-based authentication with authorization'
+date: 2019-06-14
+tags: ssl,authorization,certificate,tls,authentication
+synopsis: This blog post describes how to secure a web application deployed to WildFly using the CLIENT_CERT HTTP authentication mechanism with two-way SSL and authorization.
+author: fjuma
+external_link: https://developer.jboss.org/people/fjuma/blog/2019/06/14/using-elytron-certificate-based-authentication-with-authorization
+---
+

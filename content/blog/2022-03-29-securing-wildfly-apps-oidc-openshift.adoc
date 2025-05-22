@@ -1,0 +1,10 @@
+---
+layout: post
+title: 'Vlog: Securing a WildFly Application with OpenID Connect on OpenShift'
+date: 2022-03-29
+tags: oidc,openshift,vlog
+synopsis: This video demonstrates how to secure an application deployed to WildFly on OpenShift with OpenID Connect.
+author: fjuma
+external_link: https://www.youtube.com/watch?v=2gQO4_7Z5CI
+---
+

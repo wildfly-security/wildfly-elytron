@@ -1,9 +1,0 @@
----
-layout: post
-title: 'Vlog: Filesystem Realm Integrity'
-date: 2022-12-07
-tags: filesystem-realm integrity vlog
-synopsis: This video provides an introduction to using integrity verification in filesystem realms, a new feature added in WildFly 27.
-author: araskar
-link: https://www.youtube.com/watch?v=Tzd9GTr8kwE
----

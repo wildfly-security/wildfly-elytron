@@ -1,9 +1,0 @@
----
-layout: post
-title: 'Enhanced Audit Logging in WildFly Elytron - RFC Support and Reliabiliity/Speed Customization'
-date: 2019-06-11
-tags: audit-logging rfc
-synopsis: An update on the audit logging enhancements of additional RFC support and reliability vs speed customization that is being added to WildFly Elytron.
-author: jucook
-link: https://justinwildfly.blogspot.com/2019/06/enhanced-audit-logging-in-wildfly.html
----
