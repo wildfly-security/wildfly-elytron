@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.auth.realm.token;
+package org.wildfly.security.realm.token.test.util;
 
 public class RsaJwk {
     private String kty;
