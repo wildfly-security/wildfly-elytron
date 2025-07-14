@@ -23,6 +23,7 @@ import java.net.URI;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.cache.CachedIdentity;
@@ -68,6 +69,11 @@ public class DefaultSingleSignOn implements SingleSignOn {
     @Override
     public SecurityIdentity getIdentity() {
         return this.entry.getCachedIdentity().getSecurityIdentity();
+    }
+
+    @Override
+    public Set<String> getRoles() {
+        return this.entry.getCachedIdentity().getRoles();
     }
 
     @Override
