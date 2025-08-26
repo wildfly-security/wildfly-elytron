@@ -7,6 +7,7 @@ on:
       - 1.x
       - 2.x
       - 2.2.x
+      - 2.6.x
       - master
 
 jobs:
@@ -32,7 +33,7 @@ jobs:
       #    docker-machine create --driver virtualbox default
       #    docker --version
       - name: Cache Maven packages
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}

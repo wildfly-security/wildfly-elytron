@@ -141,7 +141,10 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
                  * If we are associating an identity with the session for the first time we need to
                  * change the ID of the session, in other cases we can continue with the same ID.
                  */
-                if (!disableSessionIdChange && session.supportsChangeID() && session.getAttachment(CACHED_IDENTITY_KEY) == null) {
+                if (!disableSessionIdChange && session.supportsChangeID() &&
+                        (session.getAttachment(CACHED_IDENTITY_KEY) == null ||
+                          !((CachedIdentity)session.getAttachment(CACHED_IDENTITY_KEY)).getName()
+                                  .equals(identity.getPrincipal().getName()))) {
                     String originalSessionID = session.getID();
                     session.changeID();
                     String newSessionID = session.getID();
@@ -337,7 +340,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
             if (appendPort(scheme, port)) {
                 sb.append(':').append(port);
             }
-            sb.append(requestURI.getPath());
+            sb.append(requestURI.getRawPath());
             if(requestURI.getRawQuery() != null) {
                 sb.append("?");
                 sb.append(requestURI.getRawQuery());

@@ -46,6 +46,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
@@ -207,14 +208,20 @@ public class HttpClientBuilder {
             }
 
             org.apache.http.impl.client.HttpClientBuilder clientBuilder = org.apache.http.impl.client.HttpClientBuilder.create();
+            int socketTimeoutMillis = (int) socketTimeoutUnits.toMillis(socketTimeout);
+            if (socketTimeoutMillis > 0) {
+                clientBuilder.setDefaultSocketConfig(SocketConfig.custom()
+                        .setSoTimeout(socketTimeoutMillis)
+                        .build());
+            }
             clientBuilder.setConnectionManager(connectionManager);
 
             RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();
             if (proxyHost != null) {
                 requestConfigBuilder.setProxy(proxyHost);
             }
-            if (socketTimeout > -1) {
-                requestConfigBuilder.setSocketTimeout((int) socketTimeoutUnits.toMillis(socketTimeout));
+            if (socketTimeoutMillis > -1) {
+                requestConfigBuilder.setSocketTimeout(socketTimeoutMillis);
             }
             if (establishConnectionTimeout > -1) {
                 requestConfigBuilder.setConnectTimeout((int) establishConnectionTimeoutUnits.toMillis(establishConnectionTimeout));
@@ -274,6 +281,15 @@ public class HttpClientBuilder {
         int size = 10;
         if (oidcClientConfig.getConnectionPoolSize() > 0) {
             size = oidcClientConfig.getConnectionPoolSize();
+        }
+        if (oidcClientConfig.getConnectionTimeoutMillis() > 0) {
+            setEstablishConnectionTimeout(oidcClientConfig.getConnectionTimeoutMillis(), establishConnectionTimeoutUnits);
+        }
+        if (oidcClientConfig.getConnectionTtlMillis() > 0) {
+            setConnectionTimeToLive(oidcClientConfig.getConnectionTtlMillis(), connectionTimeToLiveUnit);
+        }
+        if (oidcClientConfig.getSocketTimeoutMillis() > 0) {
+            setSocketTimeout(oidcClientConfig.getSocketTimeoutMillis(), socketTimeoutUnits);
         }
         HttpClientBuilder.HostnameVerificationPolicy policy = HttpClientBuilder.HostnameVerificationPolicy.WILDCARD;
         if (oidcClientConfig.isAllowAnyHostname()) {

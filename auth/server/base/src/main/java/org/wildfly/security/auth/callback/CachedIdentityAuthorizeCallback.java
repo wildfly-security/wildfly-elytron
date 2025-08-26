@@ -46,7 +46,7 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
 
     private final Function<SecurityDomain, IdentityCache> identityCache;
     private final boolean localCache;
-    private Principal principal;
+    private final Principal principal;
     private boolean authorized;
     private SecurityDomain securityDomain;
 
@@ -85,10 +85,13 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
         checkNotNullParam("identityCache", identityCache);
         this.identityCache = identityCache;
         this.localCache = localCache;
+        this.principal = null;
     }
 
     /**
      * Creates a new instance to authenticate, authorize and cache the identity associated with the given <code>name</code>.
+     *
+     * <p>By supplying a name authorizing the supplied name will be prioritised over restoring an identify from the cache</p>
      *
      * @param name the name associated with the identity
      * @param identityCache the identity cache
@@ -99,6 +102,8 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
 
     /**
      * Creates a new instance to authenticate, authorize and cache the identity associated with the given <code>principal</code>.
+     *
+     * <p>By supplying a {@code Principal} authorizing the supplied {@code Principal} will be prioritised over restoring an identify from the cache</p>
      *
      * @param principal the principal associated with the identity
      * @param identityCache the identity cache
@@ -113,6 +118,8 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
     /**
      * Creates a new instance to authenticate, authorize and cache the identity associated with the given <code>principal</code>.
      *
+     * <p>By supplying a {@code Principal} authorizing the supplied {@code Principal} will be prioritised over restoring an identify from the cache</p>
+     *
      * @param principal the principal associated with the identity
      * @param identityCache the identity cache
      */
@@ -124,6 +131,8 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
      * <p>Creates a new instance to authenticate, authorize and cache the identity associated with the given <code>principal</code>.
      *
      * <p>This constructor can be used to perform caching operations (e.g.: put, get and remove) in the context of a {@link SecurityDomain}.
+     *
+     * <p>By supplying a {@code Principal} authorizing the supplied {@code Principal} will be prioritised over restoring an identify from the cache</p>
      *
      * @param principal the principal associated with the identity
      * @param identityCache a function that creates an {@link IdentityCache} given a {@link SecurityDomain}
@@ -155,10 +164,11 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
      */
     public void setAuthorized(SecurityIdentity securityIdentity) {
         authorized = securityIdentity != null;
+        IdentityCache cache = createDomainCache();
         if (authorized) {
-            createDomainCache().put(securityIdentity);
+            cache.put(securityIdentity);
         } else {
-            createDomainCache().remove();
+            cache.remove();
         }
     }
 
@@ -178,7 +188,7 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
     /**
      * Returns the authorization {@link Principal}.
      *
-     * @return the principal (not {@code null})
+     * @return the principal
      */
     public Principal getAuthorizationPrincipal() {
         return this.principal;

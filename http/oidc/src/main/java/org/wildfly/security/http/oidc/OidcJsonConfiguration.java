@@ -18,6 +18,8 @@
 
 package org.wildfly.security.http.oidc;
 
+import static org.wildfly.security.http.oidc.Oidc.CONNECTION_TIMEOUT_MILLIS;
+import static org.wildfly.security.http.oidc.Oidc.CONNECTION_TTL_MILLIS;
 import static org.wildfly.security.http.oidc.Oidc.DEFAULT_TOKEN_SIGNATURE_ALGORITHM;
 import static org.wildfly.security.http.oidc.Oidc.ADAPTER_STATE_COOKIE_PATH;
 import static org.wildfly.security.http.oidc.Oidc.ALLOW_ANY_HOSTNAME;
@@ -64,6 +66,7 @@ import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_KEYSTOR
 import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_KEYSTORE_PASSWORD;
 import static org.wildfly.security.http.oidc.Oidc.REQUEST_OBJECT_SIGNING_KEYSTORE_TYPE;
 import static org.wildfly.security.http.oidc.Oidc.SCOPE;
+import static org.wildfly.security.http.oidc.Oidc.SOCKET_TIMEOUT_MILLIS;
 import static org.wildfly.security.http.oidc.Oidc.SSL_REQUIRED;
 import static org.wildfly.security.http.oidc.Oidc.TOKEN_MINIMUM_TIME_TO_LIVE;
 import static org.wildfly.security.http.oidc.Oidc.TOKEN_SIGNATURE_ALGORITHM;
@@ -94,6 +97,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         USE_RESOURCE_ROLE_MAPPINGS, USE_REALM_ROLE_MAPPINGS,
         ENABLE_CORS, CORS_MAX_AGE, CORS_ALLOWED_METHODS, CORS_EXPOSED_HEADERS,
         EXPOSE_TOKEN, BEARER_ONLY, AUTODETECT_BEARER_ONLY, CONNECTION_POOL_SIZE,
+        CONNECTION_TIMEOUT_MILLIS, CONNECTION_TTL_MILLIS, SOCKET_TIMEOUT_MILLIS,
         ALLOW_ANY_HOSTNAME, DISABLE_TRUST_MANAGER, TRUSTSTORE, TRUSTSTORE_PASSWORD,
         CLIENT_KEYSTORE, CLIENT_KEYSTORE_PASSWORD, CLIENT_KEY_PASSWORD,
         ALWAYS_REFRESH_TOKEN,
@@ -134,6 +138,12 @@ public class OidcJsonConfiguration {
     protected String requestObjectSigningKeyStoreType;
     @JsonProperty(CONNECTION_POOL_SIZE)
     protected int connectionPoolSize = 20;
+    @JsonProperty(CONNECTION_TIMEOUT_MILLIS)
+    protected int connectionTimeoutMillis = -1;
+    @JsonProperty(CONNECTION_TTL_MILLIS)
+    protected int connectionTtlMillis = -1;
+    @JsonProperty(SOCKET_TIMEOUT_MILLIS)
+    protected int socketTimeoutMillis = -1;
     @JsonProperty(ALWAYS_REFRESH_TOKEN)
     protected boolean alwaysRefreshToken = false;
     @JsonProperty(REGISTER_NODE_AT_STARTUP)
@@ -329,6 +339,30 @@ public class OidcJsonConfiguration {
 
     public void setConnectionPoolSize(int connectionPoolSize) {
         this.connectionPoolSize = connectionPoolSize;
+    }
+
+    public int getConnectionTimeoutMillis() {
+        return connectionTimeoutMillis;
+    }
+
+    public void setConnectionTimeoutMillis(int connectionTimeoutMillis) {
+        this.connectionTimeoutMillis = connectionTimeoutMillis;
+    }
+
+    public int getConnectionTtlMillis() {
+        return connectionTtlMillis;
+    }
+
+    public void setConnectionTtlMillis(int connectionTtlMillis) {
+        this.connectionTtlMillis = connectionTtlMillis;
+    }
+
+    public int getSocketTimeoutMillis() {
+        return socketTimeoutMillis;
+    }
+
+    public void setSocketTimeoutMillis(int socketTimeoutMillis) {
+        this.socketTimeoutMillis = socketTimeoutMillis;
     }
 
     public boolean isAlwaysRefreshToken() {

@@ -193,6 +193,11 @@ public class OidcTest extends OidcBaseTest {
     }
 
     @Test
+    public void testTimeoutConfigurationOptions() throws Exception {
+        OidcClientConfigurationBuilder.build(getOidcConfigurationInputStreamWithTimeoutOptions(5000, 5000, 5000));
+    }
+
+    @Test
     public void testSucessfulAuthenticationWithAuthServerUrl() throws Exception {
         performAuthentication(getOidcConfigurationInputStream(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
                 true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
@@ -367,6 +372,28 @@ public class OidcTest extends OidcBaseTest {
         testRequestObjectInvalidConfiguration(getOidcConfigurationInputStreamWithoutEncValue(REQUEST.getValue(), RSA_OAEP), RequestObjectErrorType.MISSING_ENC_VALUE);
     }
 
+    @Test
+    // Generate an invalid sessionRandomValue so that the nonce check fails
+    public void testRequestParameterNonceMismatch() throws Exception {
+        performAuthentication(
+                getOidcConfigurationInputStreamWithRequestParameter(REQUEST.getValue(), NONE, "", ""),
+                KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,true,
+                HttpStatus.SC_FORBIDDEN,null, CLIENT_PAGE_TEXT, true);
+    }
+
+    @Test
+    public void testRequestUriParameterNonceMismatch() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_URI.getValue(), NONE, "", ""),
+                KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD, true,
+                HttpStatus.SC_FORBIDDEN, null, CLIENT_PAGE_TEXT, true);
+    }
+
+    @Test
+    public void testStandardConfigWithNonceMismatch() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithProviderUrl(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_FORBIDDEN, null, CLIENT_PAGE_TEXT, true);
+    }
+
     /*****************************************************************************************************************************************
      * Tests for multi-tenancy.
      *
@@ -514,6 +541,34 @@ public class OidcTest extends OidcBaseTest {
     public void testUnauthorizedAccessWithProviderUrlValidUser() throws Exception {
         performTenantRequestWithProviderUrl(CHARLIE, CHARLIE_PASSWORD, TENANT1_ENDPOINT, TENANT2_ENDPOINT);
         performTenantRequestWithProviderUrl(DAN, DAN_PASSWORD, TENANT2_ENDPOINT, TENANT1_ENDPOINT);
+    }
+
+    /**
+     *  Check that a RefreshableOidcSecurityContext.tokenRefresh works now that
+     *  a request nonce has been added to elytron.
+     */
+    @Test
+    public void testRefreshToken() throws Exception {
+        Map<String, Object> props = new HashMap<>();
+        OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(getOidcRefreshConfigurationInputStream());
+        OidcClientContext oidcClientContext = new OidcClientContext(oidcClientConfiguration);
+        oidcFactory = new OidcMechanismFactory(oidcClientContext);
+        HttpServerAuthenticationMechanism mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, getCallbackHandler());
+
+        URI requestUri = new URI(getClientUrl());
+        TestingHttpServerRequest request = new TestingHttpServerRequest(null, requestUri);
+        mechanism.evaluateRequest(request);
+        TestingHttpServerResponse response = request.getResponse();
+        assertEquals(HttpStatus.SC_MOVED_TEMPORARILY, response.getStatusCode());
+        assertEquals(Status.NO_AUTH, request.getResult());
+
+        client.setDispatcher(createAppResponse(mechanism, HttpStatus.SC_MOVED_TEMPORARILY,
+                getClientUrl(), CLIENT_PAGE_TEXT, true));
+
+        TextPage page = loginToKeycloak(KeycloakConfiguration.ALICE,
+                KeycloakConfiguration.ALICE_PASSWORD, requestUri, response.getLocation(),
+                response.getCookies()).click();
+        assertTrue(page.getContent().contains(CLIENT_PAGE_TEXT));
     }
 
     private void testNonExistingUserWithAuthServerUrl(String username, String password, String tenant) throws Exception {
@@ -691,6 +746,23 @@ public class OidcTest extends OidcBaseTest {
                 "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
                 "    \"" + CREDENTIALS + "\" : {\n" +
                 "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + clientSecret + "\"\n" +
+                "    }\n" +
+                "}";
+        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private InputStream getOidcConfigurationInputStreamWithTimeoutOptions(int connectionTimeoutMillis, int connectionTtlMillis, int socketTimeoutMillis) {
+        String oidcConfig = "{\n" +
+                "    \"realm\" : \"" + TEST_REALM + "\",\n" +
+                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"public-client\" : \"false\",\n" +
+                "    \"connection-timeout-millis\" : \"" + connectionTimeoutMillis + "\",\n" +
+                "    \"connection-ttl-millis\" : \"" + connectionTtlMillis + "\",\n" +
+                "    \"socket-timeout-millis\" : \"" + socketTimeoutMillis + "\",\n" +
+                "    \"auth-server-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "\",\n" +
+                "    \"ssl-required\" : \"EXTERNAL\",\n" +
+                "    \"credentials\" : {\n" +
+                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
@@ -886,6 +958,22 @@ public class OidcTest extends OidcBaseTest {
 
     private static final String getClientPageTestForTenant(String tenant) {
         return tenant.equals(TENANT1_ENDPOINT) ? TENANT1_ENDPOINT : TENANT2_ENDPOINT + ":" + CLIENT_PAGE_TEXT;
+    }
+
+    private InputStream getOidcRefreshConfigurationInputStream() {
+        return getOidcRefreshConfigurationInputStream(CLIENT_SECRET, KEYCLOAK_CONTAINER.getAuthServerUrl());
+    }
+    private InputStream getOidcRefreshConfigurationInputStream(String clientSecret, String authServerUrl) {
+        String oidcConfig = "{\n" +
+                "    \"" + Oidc.CLIENT_ID_JSON_VALUE + "\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
+                "    \"" + PROVIDER_URL + "\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + CREDENTIALS + "\" : {\n" +
+                "        \"" + ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + clientSecret + "\"\n" +
+                "    }\n" +
+                "}";
+        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
     }
 }
 

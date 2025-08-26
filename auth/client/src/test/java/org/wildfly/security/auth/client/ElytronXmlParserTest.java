@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -113,16 +114,12 @@ public class ElytronXmlParserTest {
 
     @Test
     public void testKeyStoreClearPassword() throws ConfigXMLParseException, URISyntaxException {
-        URL config = getClass().getResource("test-wildfly-config-v1_4.xml");
-        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
-        Assert.assertNotNull(authContext);
+        assertAuthContext("test-wildfly-config-v1_4.xml");
     }
 
     @Test
     public void testKeyStoreMaskedPassword() throws Exception {
-        URL config = getClass().getResource("test-wildfly-config-v1_4.xml");
-        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
-        Assert.assertNotNull(authContext);
+        SecurityFactory<AuthenticationContext> authContext = assertAuthContext("test-wildfly-config-v1_4.xml");
         RuleNode<SecurityFactory<SSLContext>> node = authContext.create().sslRuleMatching(new URI("http://masked/"), null, null);
         Assert.assertNotNull(node);
         Assert.assertNotNull(node.getConfiguration().create());
@@ -130,18 +127,13 @@ public class ElytronXmlParserTest {
 
     @Test
     public void testKeyStoreEmptyType() throws ConfigXMLParseException, URISyntaxException {
-        URL config = getClass().getResource("test-wildfly-config-v1_4.xml");
-        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
-        Assert.assertNotNull(authContext);
+        assertAuthContext("test-wildfly-config-v1_4.xml");
     }
 
     @Test
     public void testClearCredential() throws Exception {
-        URL config = getClass().getResource("test-wildfly-config-v1_4.xml");
-        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
-        Assert.assertNotNull(authContext);
-        RuleNode<AuthenticationConfiguration> node = authContext.create().authRuleMatching(new URI("http://clear/"), null, null);
-        Assert.assertNotNull(node);
+        SecurityFactory<AuthenticationContext> authContext = assertAuthContext("test-wildfly-config-v1_4.xml");
+        RuleNode<AuthenticationConfiguration> node = getNode(authContext, "http://clear/");
         Password password = node.getConfiguration().getCredentialSource().getCredential(PasswordCredential.class).getPassword();
         Assert.assertTrue(password instanceof ClearPassword);
         Assert.assertEquals(new String(PASSWORD), new String(((ClearPassword)password).getPassword()));
@@ -149,22 +141,17 @@ public class ElytronXmlParserTest {
 
     @Test
     public void testMaskedCredential() throws Exception {
-        URL config = getClass().getResource("test-wildfly-config-v1_4.xml");
-        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
-        Assert.assertNotNull(authContext);
-        RuleNode<AuthenticationConfiguration> node = authContext.create().authRuleMatching(new URI("http://masked/"), null, null);
-        Assert.assertNotNull(node);
+        SecurityFactory<AuthenticationContext> authContext = assertAuthContext("test-wildfly-config-v1_4.xml");
+        RuleNode<AuthenticationConfiguration> node = getNode(authContext, "http://masked/");
         Password password = node.getConfiguration().getCredentialSource().getCredential(PasswordCredential.class).getPassword();
         Assert.assertEquals(new String(PASSWORD), new String(((ClearPassword)password).getPassword()));
     }
 
+
     @Test
     public void testWebservices() throws Exception {
-        URL config = getClass().getResource("test-wildfly-config-v1_5.xml");
-        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
-        Assert.assertNotNull(authContext);
-        RuleNode<AuthenticationConfiguration> node = authContext.create().authRuleMatching(new URI("http://webservices/"), null, null);
-        Assert.assertNotNull(node);
+        SecurityFactory<AuthenticationContext> authContext = assertAuthContext("test-wildfly-config-v1_5.xml");
+        RuleNode<AuthenticationConfiguration> node = getNode(authContext, "http://webservices/");
         String wsHttpMechanism  = node.getConfiguration().getWsHttpMechanism();
         String wsSecurityType = node.getConfiguration().getWsSecurityType();
         Assert.assertEquals("BASIC", wsHttpMechanism);
@@ -173,11 +160,8 @@ public class ElytronXmlParserTest {
 
     @Test
     public void testEmptyWebServices() throws Exception {
-        URL config = getClass().getResource("test-wildfly-config-v1_5.xml");
-        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
-        Assert.assertNotNull(authContext);
-        RuleNode<AuthenticationConfiguration> node = authContext.create().authRuleMatching(new URI("http://webservices-empty/"), null, null);
-        Assert.assertNotNull(node);
+        SecurityFactory<AuthenticationContext> authContext = assertAuthContext("test-wildfly-config-v1_5.xml");
+        RuleNode<AuthenticationConfiguration> node = getNode(authContext, "http://webservices-empty/");
         String wsSecurityType = node.getConfiguration().getWsSecurityType();
         String wsHttpMechanism  = node.getConfiguration().getWsHttpMechanism();
         Assert.assertNull(wsHttpMechanism);
@@ -186,9 +170,7 @@ public class ElytronXmlParserTest {
 
     @Test
     public void testCipherSuites() throws Exception {
-        URL config = getClass().getResource("test-wildfly-config-v1_5.xml");
-        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
-        Assert.assertNotNull(authContext);
+        SecurityFactory<AuthenticationContext> authContext = assertAuthContext("test-wildfly-config-v1_5.xml");
         checkSSLContext(authContext, "http://both.org");
         checkSSLContext(authContext, "http://selector-only.org");
         checkSSLContext(authContext, "http://names-only.org");
@@ -198,6 +180,20 @@ public class ElytronXmlParserTest {
         RuleNode<SecurityFactory<SSLContext>> node = authContext.create().sslRuleMatching(new URI(uri), null, null);
         Assert.assertNotNull(node);
         Assert.assertNotNull(node.getConfiguration().create());
+    }
+
+    private SecurityFactory<AuthenticationContext> assertAuthContext(final String resource) throws ConfigXMLParseException, URISyntaxException {
+        URL config = getClass().getResource(resource);
+        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
+        Assert.assertNotNull(authContext);
+        return authContext;
+    }
+
+    private RuleNode<AuthenticationConfiguration> getNode(SecurityFactory<AuthenticationContext> authContext, String uri)
+            throws GeneralSecurityException, URISyntaxException {
+        RuleNode<AuthenticationConfiguration> node = authContext.create().authRuleMatching(new URI(uri), null, null);
+        Assert.assertNotNull(node);
+        return node;
     }
 
     @BeforeClass

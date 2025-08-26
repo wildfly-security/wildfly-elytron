@@ -31,7 +31,6 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
-// has dependency on wildfly-credential-source-deprecated
 public class CommandCredentialSourceTest {
     @Test
     public void testCommand() throws GeneralSecurityException, IOException {
@@ -64,21 +63,6 @@ public class CommandCredentialSourceTest {
 
     private static void addCommand(final CommandCredentialSource.Builder builder) {
         builder.addCommand("-cp").addCommand(System.getProperty("java.class.path")).addCommand(CredentialCommand.class.getName());
-    }
-
-    private static String buildExternalCommand(final String extOption, final String delimiter, final String argument) {
-        // First check for java.exe or java as the binary
-        File java = new File(System.getProperty("java.home"), "/bin/java");
-        File javaExe = new File(System.getProperty("java.home"), "/bin/java.exe");
-        String jre;
-        if (java.exists())
-            jre = java.getAbsolutePath();
-        else
-            jre = javaExe.getAbsolutePath();
-        // Build the command to run this jre
-        String cmd = jre + delimiter + "-cp" + delimiter + System.getProperty("java.class.path") + delimiter
-                + CredentialCommand.class.getName() + (argument != null ? delimiter + argument : "");
-        return extOption + cmd;
     }
 
 }

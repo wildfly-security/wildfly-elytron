@@ -31,7 +31,7 @@
 
     <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-elytron-parent</artifactId>
-    <version>2.6.1.CR1-SNAPSHOT</version>
+    <version>2.7.0.CR1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>WildFly Elytron Parent</name>
@@ -61,21 +61,21 @@
         <version.com.fasterxml.jackson.databind>${version.com.fasterxml.jackson}</version.com.fasterxml.jackson.databind>
         <version.commons-cli>1.6.0</version.commons-cli>
         <version.jakarta.enterprise>4.0.1</version.jakarta.enterprise>
-        <version.org.apache.commons>3.15.0</version.org.apache.commons>
+        <version.org.apache.commons>3.18.0</version.org.apache.commons>
         <version.org.apache.directory.server>2.0.0.AM27</version.org.apache.directory.server>
-        <version.org.apache.directory.api>2.1.6</version.org.apache.directory.api>
+        <version.org.apache.directory.api>2.1.7</version.org.apache.directory.api>
         <version.org.apache.kerby>2.0.3</version.org.apache.kerby>
         <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
         <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
         <version.org.bouncycastle>1.67</version.org.bouncycastle>
-        <version.org.apache.sshd.common>2.12.0</version.org.apache.sshd.common>
+        <version.org.apache.sshd.common>2.13.2</version.org.apache.sshd.common>
         <version.org.apache.httpcomponents.httpclient>4.5.14</version.org.apache.httpcomponents.httpclient>
         <version.org.apache.httpcomponents.httpcore>4.4.16</version.org.apache.httpcomponents.httpcore>
         <version.org.eclipse.parsson.jakarta.json>1.1.5</version.org.eclipse.parsson.jakarta.json>
-        <version.org.jboss.logging>3.5.3.Final</version.org.jboss.logging>
+        <version.org.jboss.logging>3.6.1.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.1.19.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.6.Final</version.org.jboss.logmanager.log4j-jboss>
-        <version.org.jboss.logging.tools>2.2.1.Final</version.org.jboss.logging.tools>
+        <version.org.jboss.logging.tools>3.0.1.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.12.2.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.2.0.Final</version.org.jboss.slf4j>
         <version.jakarta.json.jakarta-json-api>2.1.2</version.jakarta.json.jakarta-json-api>
@@ -132,7 +132,7 @@
             </resource>
         </resources>
 
-        <plugins>        
+        <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -155,8 +155,8 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>        
-        
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -211,13 +211,13 @@
                     </execution>
                 </executions>
             </plugin>
-            
+
             <plugin>
                 <groupId>com.github.ferstl</groupId>
                 <artifactId>depgraph-maven-plugin</artifactId>
                 <version>3.2.2</version>
             </plugin>
-            
+
         </plugins>
 
         <pluginManagement>
@@ -455,7 +455,7 @@
                                 <goal>aggregate</goal>
                             </goals>
                             <configuration>
-                                <destDir>api-javadoc</destDir>                                
+                                <destDir>api-javadoc</destDir>
                                 <sourceFileIncludes>
                                     <include>org/wildfly/security/*.java</include>
                                     <include>org/wildfly/security/asn1/*.java</include>
@@ -616,6 +616,12 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-credential-store</artifactId>
+                <type>test-jar</type>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -727,7 +733,7 @@
                 <artifactId>wildfly-elytron-jose-util</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-keystore</artifactId>

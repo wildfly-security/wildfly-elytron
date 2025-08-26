@@ -72,7 +72,7 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
         this.map.put(SINGLE_SIGN_ON_KEY, sso);
         this.request = checkNotNullParam("request", request);
         checkNotNullParam("sso", sso);
-        this.ssoFactory = identity -> sso;
+        this.ssoFactory = identity -> context.getSingleSignOnManager().create(sso.getMechanism(), sso.isProgrammatic(), identity);
     }
 
     @Override
@@ -89,6 +89,15 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
 
     @Override
     public void put(SecurityIdentity identity) {
+        // If the new identity is a different name invalidate the current cached identity.
+        CachedIdentity cached = get();
+        if (cached != null && !cached.getName().equals(identity.getPrincipal().getName())) {
+            SingleSignOn sso = this.map.remove(SINGLE_SIGN_ON_KEY);
+            if (sso != null) {
+                sso.invalidate();
+            }
+        }
+
         SingleSignOn sso = this.map.computeIfAbsent(SINGLE_SIGN_ON_KEY, key -> this.ssoFactory.apply(identity));
         sso.setIdentity(identity);
 
@@ -181,7 +190,7 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
 
     @Override
     public CachedIdentity remove() {
-        SingleSignOn sso = this.map.get(SINGLE_SIGN_ON_KEY);
+        SingleSignOn sso = this.map.remove(SINGLE_SIGN_ON_KEY);
 
         if (sso == null) return null;
 

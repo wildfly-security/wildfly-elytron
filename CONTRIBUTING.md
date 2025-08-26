@@ -116,7 +116,7 @@ Contributors are encouraged to keep documentation up-to-date along with code cha
 Community documentation can be found in the [wildfly repository](https://github.com/wildfly/wildfly/tree/main/docs)
 
 ## FAQ for New Contributors
-Check out our [Frequently Asked Questions](https://fjuma.github.io/wildfly-elytron/blog/frequently-asked-questions-new-contributors/) for New Contributors.
+Check out our [Frequently Asked Questions](https://wildfly-security.github.io/wildfly-elytron/blog/frequently-asked-questions-new-contributors/) for New Contributors.
 
 ## Code Reviews
 

@@ -112,15 +112,4 @@ public class BasicAuthenticationMechanismTest extends AbstractBaseHttpTest {
         testStatefulBasic("Aladdin", "WallyWorld", "open sesame", "basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==");
         testStatefulBasic("test", "foo", "123\u00A3", "BASIC dGVzdDoxMjPCow==");
     }
-
-    @Test
-    public void testBasicUnauthorizedUser() throws Exception {
-       HttpServerAuthenticationMechanism mechanism = basicFactory.createAuthenticationMechanism(HttpConstants.BASIC_NAME,
-                Collections.singletonMap(HttpConstants.CONFIG_REALM, "test-realm"), getCallbackHandler("unauthorizedUser", "test-realm", "password"));
-        TestingHttpServerRequest request = new TestingHttpServerRequest(new String[] {"Basic dW5hdXRob3JpemVkVXNlcjpwYXNzd29yZA=="});
-        mechanism.evaluateRequest(request);
-        Assert.assertEquals(Status.FAILED, request.getResult());
-        TestingHttpServerResponse response = request.getResponse();
-        Assert.assertEquals(HttpConstants.FORBIDDEN, response.getStatusCode());
-    }
 }

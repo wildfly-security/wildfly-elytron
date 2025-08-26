@@ -278,5 +278,14 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 23070, value = "Authentication request format must be one of the following: oauth2, request, request_uri.")
     RuntimeException invalidAuthenticationRequestFormat();
+
+    @Message(id = 23071, value = "Invalid ID token nonce: %s")
+    String invalidNonceValue(String name);
+
+    @Message(id = 23072, value = "No such algorithm: '%s'")
+    IllegalArgumentException noSuchAlgorithm(String algorithm);
+
+    @Message(id = 23073, value = "Nonce cookie does not exist")
+    String nonceCookieDoesNotExist();
 }
 

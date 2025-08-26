@@ -42,7 +42,6 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.http.HttpAuthenticationException;
-import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.mechanism.http.UsernamePasswordAuthenticationMechanism;
@@ -171,7 +170,7 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
                                 httpBasic.debugf("User %s authorization failed.", username);
                                 fail();
 
-                                request.authenticationFailed(httpBasic.authorizationFailed(username), response -> response.setStatusCode(HttpConstants.FORBIDDEN));
+                                request.authenticationFailed(httpBasic.authorizationFailed(username), response -> prepareResponse(request, displayRealmName, response));
                                 return;
                             }
 

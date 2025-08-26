@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.wildfly.security</groupId>
         <artifactId>wildfly-elytron-parent</artifactId>
-        <version>2.6.1.CR1-SNAPSHOT</version>
+        <version>2.7.0.CR1-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -557,7 +557,7 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron</artifactId>
-                                    <version>2.6.0.Final</version> <!-- When updating to next release, clear all exclusions. -->
+                                    <version>2.6.4.Final</version> <!-- When updating to next release, clear all exclusions. -->
                                     <type>jar</type>
                                 </dependency>
                             </oldVersion>
@@ -953,9 +953,6 @@
                                     <include>org.wildfly.security.x500.cert</include>
                                 </includes>
                                 <excludes>
-                                    <exclude>org.wildfly.security.auth.client.ElytronMessages_$logger</exclude>
-                                    <exclude>org.wildfly.security.auth.util.ElytronMessages_$logger</exclude>
-                                    <exclude>org.wildfly.security.auth.util.GSSCredentialSecurityFactory</exclude>
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>

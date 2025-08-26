@@ -1122,20 +1122,18 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     CachedIdentityAuthorizeCallback authorizeCallback = (CachedIdentityAuthorizeCallback) callback;
                     authorizeCallback.setSecurityDomain(stateRef.get().getSecurityDomain());
                     SecurityIdentity authorizedIdentity = null;
-                    Principal principal = null;
-                    SecurityIdentity identity = authorizeCallback.getIdentity();
-                    if (identity != null && importIdentity(identity)) {
+                    Principal principal = authorizeCallback.getAuthorizationPrincipal();
+                    SecurityIdentity identity;
+                    if (principal == null && (identity = authorizeCallback.getIdentity()) != null && importIdentity(identity)) {
                         authorizedIdentity = getAuthorizedIdentity();
-                    } else {
+                    } else if (principal == null) {
                         principal = authorizeCallback.getPrincipal();
-                        if (principal == null) {
-                            principal = authorizeCallback.getAuthorizationPrincipal();
-                        }
-                        if (principal != null) {
-                            setAuthenticationPrincipal(principal);
-                            if (authorize()) {
-                                authorizedIdentity = getAuthorizedIdentity();
-                            }
+                    }
+
+                    if (principal != null) {
+                        setAuthenticationPrincipal(principal);
+                        if (authorize()) {
+                            authorizedIdentity = getAuthorizedIdentity();
                         }
                     }
                     log.tracef("Handling CachedIdentityAuthorizeCallback: principal = %s  authorizedIdentity = %s", principal, authorizedIdentity);

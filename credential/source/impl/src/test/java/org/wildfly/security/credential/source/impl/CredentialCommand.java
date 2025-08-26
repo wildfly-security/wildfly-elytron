@@ -21,9 +21,9 @@ package org.wildfly.security.credential.source.impl;
  * Class that simulates credential command for tests.
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
-public class CredentialCommand {
+class CredentialCommand {
 
-    private CredentialCommand() {
+    CredentialCommand() {
 
     }
 

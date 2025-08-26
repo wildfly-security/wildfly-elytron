@@ -323,30 +323,6 @@ public class CAGenerationTool implements Closeable {
         }
     }
 
-    private X509Certificate createSelfSignedIdentity(final String alias, final X500Principal principal,
-            final String keyStoreName) {
-        SelfSignedX509CertificateAndSigningKey selfSignedIdentity = SelfSignedX509CertificateAndSigningKey.builder()
-                .setDn(principal)
-                .setKeyAlgorithmName(KEY_ALGORITHM)
-                .setSignatureAlgorithmName(SIGNATURE_ALGORTHM)
-                .build();
-
-        X509Certificate selfSignedCertificate = selfSignedIdentity.getSelfSignedCertificate();
-        File keyStoreFile = new File(workingDir, keyStoreName);
-        KeyStore keyStore = createEmptyKeyStore();
-        try {
-            keyStore.setKeyEntry(alias, selfSignedIdentity.getSigningKey(), PASSWORD,
-                    new X509Certificate[] { selfSignedIdentity.getSelfSignedCertificate() });
-            try (OutputStream out = new FileOutputStream(keyStoreFile)) {
-                keyStore.store(out, PASSWORD);
-            }
-        } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-
-        return selfSignedCertificate;
-    }
-
     private X509Certificate createIdentity(final Identity identity) {
         Identity caIdentity = identity.getSignedBy();
         if (caIdentity == null) {
