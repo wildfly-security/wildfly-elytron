@@ -17,49 +17,45 @@
  */
 package org.wildfly.security.tool;
 
+
 import static org.wildfly.security.tool.Params.BULK_CONVERT_PARAM;
-import static org.wildfly.security.tool.Params.CREATE_CREDENTIAL_STORE_PARAM;
-import static org.wildfly.security.tool.Params.CREDENTIAL_STORE_LOCATION_PARAM;
-import static org.wildfly.security.tool.Params.DEBUG_PARAM;
 import static org.wildfly.security.tool.Params.DEFAULT_KEY_PAIR_ALIAS;
 import static org.wildfly.security.tool.Params.DEFAULT_LEVELS;
 import static org.wildfly.security.tool.Params.DEFAULT_SECRET_KEY_ALIAS;
 import static org.wildfly.security.tool.Params.DIRECTORY_PARAM;
-import static org.wildfly.security.tool.Params.ENCODED_PARAM;
 import static org.wildfly.security.tool.Params.FILE_PARAM;
 import static org.wildfly.security.tool.Params.HASH_CHARSET_PARAM;
-import static org.wildfly.security.tool.Params.HASH_ENCODING_PARAM;
-import static org.wildfly.security.tool.Params.HELP_PARAM;
 import static org.wildfly.security.tool.Params.INPUT_LOCATION_PARAM;
 import static org.wildfly.security.tool.Params.KEYSTORE_PARAM;
 import static org.wildfly.security.tool.Params.KEYSTORE_TYPE_PARAM;
 import static org.wildfly.security.tool.Params.KEY_PAIR_ALIAS_PARAM;
-import static org.wildfly.security.tool.Params.LEVELS_PARAM;
 import static org.wildfly.security.tool.Params.LINE_SEPARATOR;
 import static org.wildfly.security.tool.Params.NAME_PARAM;
 import static org.wildfly.security.tool.Params.OUTPUT_LOCATION_PARAM;
 import static org.wildfly.security.tool.Params.PASSWORD_ENV_PARAM;
 import static org.wildfly.security.tool.Params.PASSWORD_PARAM;
-import static org.wildfly.security.tool.Params.REALM_NAME_PARAM;
-import static org.wildfly.security.tool.Params.SECRET_KEY_ALIAS_PARAM;
-import static org.wildfly.security.tool.Params.SILENT_PARAM;
 import static org.wildfly.security.tool.Params.SUMMARY_DIVIDER;
-import static org.wildfly.security.tool.Params.SUMMARY_PARAM;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+
+import java.awt.Desktop;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.KeyPair;
+import java.security.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.crypto.SecretKey;
 import org.apache.commons.cli.CommandLine;
@@ -72,6 +68,7 @@ import org.wildfly.security.auth.realm.FileSystemRealmUtil;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealmBuilder;
 import org.wildfly.security.password.spec.Encoding;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.tool.help.DescriptionSection;
 import org.wildfly.security.tool.help.HelpCommand;
 import org.wildfly.security.tool.help.OptionsSection;
@@ -89,8 +86,29 @@ import org.wildfly.security.tool.help.UsageSection;
 class FileSystemEncryptRealmCommand extends Command {
     static final String FILE_SYSTEM_ENCRYPT_COMMAND = "filesystem-realm-encrypt";
 
+    private static final String DOCS_VERSION = "27";
+    private static final String DOCS_URI = "https://docs.wildfly.org/" + DOCS_VERSION + "/WildFly_Elytron_Security.html";
+
+    private static final String HELP_PARAM = "help";
+    private static final String DEBUG_PARAM = "debug";
+    private static final String SILENT_PARAM = "silent";
+    private static final String SUMMARY_PARAM = "summary";
+    private static final String INPUT_REALM_LOCATION_PARAM = "input-location";
+    private static final String REALM_NAME_PARAM = "realm-name";
+    private static final String OUTPUT_REALM_LOCATION_PARAM = "output-location";
+    private static final String CREDENTIAL_STORE_LOCATION_PARAM = "credential-store";
+    private static final String CREATE_CREDENTIAL_STORE_PARAM = "create";
+    private static final String SECRET_KEY_ALIAS_PARAM = "secret-key";
+    private static final String HASH_ENCODING_PARAM = "hash-encoding";
+    private static final String ENCODED_PARAM = "encoded";
+    private static final String LEVELS_PARAM = "levels";
     private static final String POPULATE_SECRET_KEY_PARAM = "populate";
     private static final String DEFAULT_FILESYSTEM_REALM_NAME = "encrypted-filesystem-realm";
+
+    private static final String WEB_PARAM = "web";
+    public static Supplier<Provider[]> ELYTRON_PASSWORD_PROVIDERS = () -> new Provider[]{
+            WildFlyElytronPasswordProvider.getInstance()
+    };
 
     private final List<Descriptor> descriptors = new ArrayList<>();
     private final List<String> PARAMS_LIST = new ArrayList<>(Arrays.asList(INPUT_LOCATION_PARAM, OUTPUT_LOCATION_PARAM));
@@ -174,6 +192,9 @@ class FileSystemEncryptRealmCommand extends Command {
 
         option = new Option("b", BULK_CONVERT_PARAM, true, ElytronToolMessages.msg.cmdFileSystemRealmEncryptBulkConvertDesc());
         option.setArgName(FILE_PARAM);
+        options.addOption(option);
+
+        option = Option.builder().longOpt(WEB_PARAM).desc(ElytronToolMessages.msg.cmdWebDesc()).build();
         options.addOption(option);
 
         option = Option.builder().longOpt(HELP_PARAM).desc(ElytronToolMessages.msg.cmdLineHelp()).build();
@@ -391,6 +412,24 @@ class FileSystemEncryptRealmCommand extends Command {
             help();
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
             return;
+        }
+        if (cmdLine.hasOption(WEB_PARAM)) {
+            if (Desktop.isDesktopSupported()){
+                Desktop desktop = Desktop.getDesktop();
+                if (desktop.isSupported(Desktop.Action.BROWSE)){
+                    try {
+                        desktop.browse(new URI(DOCS_URI +
+                                "#converting-an-unencrypted-filesystem-realm-into-an-encrypted-filesystem-realm"));
+                        setStatus(ElytronTool.ElytronToolExitStatus_OK);
+                        return;
+                    } catch (IOException | URISyntaxException e) {
+                        setStatus(GENERAL_CONFIGURATION_ERROR);
+                        throw ElytronToolMessages.msg.unableToOpenBrowser();
+                    }
+                }
+            }
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.unableToOpenBrowser();
         }
         if (cmdLine.hasOption(SILENT_PARAM)) {
             silentMode = true;
