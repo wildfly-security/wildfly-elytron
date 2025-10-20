@@ -188,6 +188,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.testcontainers/nginx -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>nginx</artifactId>
+            <version>${version.org.testcontainers.nginx}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

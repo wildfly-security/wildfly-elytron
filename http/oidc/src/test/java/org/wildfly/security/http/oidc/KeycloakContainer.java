@@ -33,11 +33,18 @@ public class KeycloakContainer extends GenericContainer<KeycloakContainer> {
     private static final String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:24.0.1";
     private static final int KEYCLOAK_PORT_HTTP = 8080;
     private static final int KEYCLOAK_PORT_HTTPS = 8443;
+    private String relativeUrl;
 
     private boolean useHttps;
 
     public KeycloakContainer() {
         this(false);
+    }
+
+    public KeycloakContainer(String relativeUrl) {
+        super(KEYCLOAK_IMAGE);
+        this.useHttps = false;
+        this.relativeUrl = relativeUrl;
     }
 
     public KeycloakContainer(final boolean useHttps) {
@@ -48,14 +55,25 @@ public class KeycloakContainer extends GenericContainer<KeycloakContainer> {
 
     @Override
     protected void configure() {
+        if (relativeUrl != null) {
+            withEnv("KC_HTTP_RELATIVE_PATH", relativeUrl);
+        }
+        waitingFor(Wait.forLogMessage(".*Running the server in development mode. DO NOT use this configuration in production.*", 1));
         withExposedPorts(KEYCLOAK_PORT_HTTP, KEYCLOAK_PORT_HTTPS);
-        waitingFor(Wait.forHttp("/").forPort(8080));
         withEnv("KEYCLOAK_ADMIN", KEYCLOAK_ADMIN_USER);
         withEnv("KEYCLOAK_ADMIN_PASSWORD", KEYCLOAK_ADMIN_PASSWORD);
         withCommand("start-dev");
     }
 
     public String getAuthServerUrl() {
-        return String.format("http://%s:%s", getContainerIpAddress(), useHttps ? getMappedPort(KEYCLOAK_PORT_HTTPS) : getMappedPort(KEYCLOAK_PORT_HTTP));
+        String host = getHost();
+        int port = getMappedPort(useHttps ? KEYCLOAK_PORT_HTTPS : KEYCLOAK_PORT_HTTP);
+        String url;
+        if (relativeUrl != null) {
+            url = String.format("http://%s:%s/%s", host, port, relativeUrl);
+        } else {
+            url = String.format("http://%s:%s", host, port);
+        }
+        return url;
     }
 }

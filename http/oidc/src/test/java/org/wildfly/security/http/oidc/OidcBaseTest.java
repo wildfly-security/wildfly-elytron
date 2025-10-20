@@ -20,6 +20,7 @@ package org.wildfly.security.http.oidc;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_NAME;
 import static org.wildfly.security.http.oidc.Oidc.SESSION_RANDOM_VALUE;
@@ -31,7 +32,10 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -238,9 +242,21 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
                 String path = recordedRequest.getPath();
                 if (path.contains("/" + CLIENT_APP) && path.contains("&code=")) {
                     try {
+                        String proxyHeader = Stream.of("X-Forwarded-Host", "Forwarded")
+                                .map(recordedRequest::getHeader)
+                                .filter(Objects::nonNull)
+                                .findFirst()
+                                .orElse(null);
 
-                        TestingHttpServerRequest request = new TestingHttpServerRequest(new String[0],
-                                new URI(recordedRequest.getRequestUrl().toString()), cookies);
+                        URI uri;
+                        if (proxyHeader != null) {
+                            uri = new URI(recordedRequest.getRequestUrl().url().toString());
+                            uri = new URI(uri.getScheme().toLowerCase(Locale.US), proxyHeader, uri.getPath(), uri.getQuery(), uri.getFragment());
+                        } else {
+                            uri = new URI(recordedRequest.getRequestUrl().toString());
+                        }
+
+                        TestingHttpServerRequest request = new TestingHttpServerRequest(new String[0], uri, cookies);
                         mechanism.evaluateRequest(request);
                         TestingHttpServerResponse response = request.getResponse();
                         assertEquals(expectedStatusCode, response.getStatusCode());
@@ -336,24 +352,34 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     }
 
     protected HtmlInput loginToKeycloak(String username, String password, URI requestUri, String location, List<HttpServerCookie> cookies) throws IOException {
+        return loginToKeycloak(username, password, requestUri, location, cookies, true);
+    }
+
+    protected HtmlInput loginToKeycloak(String username, String password, URI requestUri, String location, List<HttpServerCookie> cookies, boolean keycloakClientExists) throws IOException {
         WebClient webClient = getWebClient();
         if (cookies != null) {
             for (HttpServerCookie cookie : cookies) {
                 webClient.addCookie(getCookieString(cookie), requestUri.toURL(), null);
             }
         }
-
-        HtmlPage keycloakLoginPage = webClient.getPage(location);
-        HtmlForm loginForm = keycloakLoginPage.getForms().get(0);
-        loginForm.getInputByName(KEYCLOAK_USERNAME).setValueAttribute(username);
-        loginForm.getInputByName(KEYCLOAK_PASSWORD).setValueAttribute(password);
-        return loginForm.getInputByName(KEYCLOAK_LOGIN);
+        HtmlPage keycloakLoginPage;
+        if (keycloakClientExists) {
+            keycloakLoginPage = webClient.getPage(location);
+            HtmlForm loginForm = keycloakLoginPage.getForms().get(0);
+            loginForm.getInputByName(KEYCLOAK_USERNAME).setValueAttribute(username);
+            loginForm.getInputByName(KEYCLOAK_PASSWORD).setValueAttribute(password);
+            return loginForm.getInputByName(KEYCLOAK_LOGIN);
+        } else {
+            webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
+            assertEquals(HttpStatus.SC_NOT_FOUND, webClient.getPage(location).getWebResponse().getStatusCode());
+            return null;
+        }
     }
 
     protected String getCookieString(HttpServerCookie cookie) {
         final StringBuilder header = new StringBuilder(cookie.getName());
         header.append("=");
-        if(cookie.getValue() != null) {
+        if (cookie.getValue() != null) {
             header.append(cookie.getValue());
         }
         if (cookie.getPath() != null) {
@@ -396,41 +422,51 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
                                        int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
         performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, getClientUrl(), expectedLocation,
-                clientPageText, null, false, false );
+                clientPageText, null, false, false, false, true);
     }
 
     protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
                                          int expectedDispatcherStatusCode, String expectedLocation, String clientPageText,
                                          boolean changeSessionId) throws Exception {
         performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, getClientUrl(), expectedLocation,
-                clientPageText, null, false, changeSessionId);
+                clientPageText, null, false, changeSessionId, false, true);
     }
 
     protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
                                          int expectedDispatcherStatusCode, String clientUrl, String expectedLocation, String clientPageText) throws Exception {
         performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, clientUrl, expectedLocation,
-                clientPageText, null, false, false);
+                clientPageText, null, false, false, false, true);
     }
 
     protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak, int expectedDispatcherStatusCode,
                                          String expectedLocation, String clientPageText, String expectedScope, boolean checkInvalidScopeError,
                                          boolean changeSessionId) throws Exception {
         performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, getClientUrl(), expectedLocation, clientPageText,
-                expectedScope, checkInvalidScopeError, changeSessionId);
+                expectedScope, checkInvalidScopeError, changeSessionId, false, true);
     }
     protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak, int expectedDispatcherStatusCode,
                                          String expectedLocation, String clientPageText, String expectedScope, boolean checkInvalidScopeError) throws Exception {
         performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, getClientUrl(), expectedLocation, clientPageText,
-                expectedScope, checkInvalidScopeError, false);
+                expectedScope, checkInvalidScopeError, false, false, true);
     }
 
-    private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+    protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+                                         int expectedDispatcherStatusCode, boolean relativeUrl, String clientUrl, String expectedLocation, String clientPageText) throws Exception {
+        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, clientUrl, expectedLocation,
+                clientPageText, null, false, false, relativeUrl, true);
+    }
+
+    protected void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
                                        int expectedDispatcherStatusCode, String clientUrl, String expectedLocation, String clientPageText,
-                                       String expectedScope, boolean checkInvalidScopeError, boolean changeSessionId) throws Exception {
+                                       String expectedScope, boolean checkInvalidScopeError, boolean changeSessionId, boolean relativeUrl, boolean clientExists) throws Exception {
         try {
             Map<String, Object> props = new HashMap<>();
             OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(oidcConfig);
-            assertEquals(OidcClientConfiguration.RelativeUrlsUsed.NEVER, oidcClientConfiguration.getRelativeUrls());
+            if (relativeUrl) {
+                assertEquals(OidcClientConfiguration.RelativeUrlsUsed.ALWAYS, oidcClientConfiguration.getRelativeUrls());
+            } else {
+                assertEquals(OidcClientConfiguration.RelativeUrlsUsed.NEVER, oidcClientConfiguration.getRelativeUrls());
+            }
 
             OidcClientContext oidcClientContext = new OidcClientContext(oidcClientConfiguration);
             oidcFactory = new OidcMechanismFactory(oidcClientContext);
@@ -473,9 +509,14 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
                     TextPage keycloakLoginPage = webClient.getPage(response.getLocation());
                     assertTrue(keycloakLoginPage.getWebResponse().getWebRequest().toString().contains("error_description=Invalid+scopes"));
                 } else {
-                    TextPage page = loginToKeycloak(username, password, requestUri, response.getLocation(),
-                            response.getCookies()).click();
-                    assertTrue(page.getContent().contains(clientPageText));
+                    if (clientExists) {
+                        TextPage page = loginToKeycloak(username, password, requestUri, response.getLocation(),
+                                response.getCookies(), clientExists).click();
+                        assertTrue(page.getContent().contains(clientPageText));
+                    } else {
+                        assertNull(loginToKeycloak(username, password, requestUri, response.getLocation(),
+                                response.getCookies(), clientExists));
+                    }
                 }
             }
         } finally {

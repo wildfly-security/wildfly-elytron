@@ -109,6 +109,11 @@ public class KeycloakConfiguration {
     }
 
     public static RealmRepresentation getRealmRepresentation(final String realmName, String clientId, String clientSecret,
+                                                             String clientHostName, int clientPort, String clientApp, boolean configureClientScopes, boolean relativeUrl) throws Exception {
+        return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp, false, null, null, 3, 3, configureClientScopes, false, relativeUrl);
+    }
+
+    public static RealmRepresentation getRealmRepresentation(final String realmName, String clientId, String clientSecret,
                                                              String clientHostName, int clientPort, String clientApp, int accessTokenLifespan,
                                                              int ssoSessionMaxLifespan, boolean configureClientScopes, boolean multiTenancyApp) throws Exception {
         return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp, accessTokenLifespan, ssoSessionMaxLifespan, configureClientScopes, multiTenancyApp);
@@ -181,6 +186,14 @@ public class KeycloakConfiguration {
                                                    boolean directAccessGrantEnabled, String bearerOnlyClientId,
                                                    String corsClientId, int accessTokenLifespan, int ssoSessionMaxLifespan,
                                                    boolean configureClientScopes, boolean multiTenancyApp) throws Exception {
+        return createRealm(name, clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, bearerOnlyClientId, corsClientId, accessTokenLifespan, ssoSessionMaxLifespan, configureClientScopes, multiTenancyApp, false);
+    }
+
+    private static RealmRepresentation createRealm(String name, String clientId, String clientSecret,
+                                                   String clientHostName, int clientPort, String clientApp,
+                                                   boolean directAccessGrantEnabled, String bearerOnlyClientId,
+                                                   String corsClientId, int accessTokenLifespan, int ssoSessionMaxLifespan,
+                                                   boolean configureClientScopes, boolean multiTenancyApp, boolean relativeUrl) throws Exception {
         RealmRepresentation realm = new RealmRepresentation();
         realm.setRealm(name);
         realm.setEnabled(true);
@@ -198,7 +211,7 @@ public class KeycloakConfiguration {
         realm.getRoles().getRealm().add(new RoleRepresentation("user", null, false));
         realm.getRoles().getRealm().add(new RoleRepresentation("admin", null, false));
 
-        ClientRepresentation webAppClient = createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, multiTenancyApp);
+        ClientRepresentation webAppClient = createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, null, multiTenancyApp, relativeUrl);
         if (configureClientScopes) {
             webAppClient.setDefaultClientScopes(Collections.singletonList(OIDC_SCOPE));
             webAppClient.setOptionalClientScopes(Arrays.asList("phone", "email", "profile"));
@@ -210,7 +223,7 @@ public class KeycloakConfiguration {
         }
 
         if (corsClientId != null) {
-            realm.getClients().add(createWebAppClient(corsClientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, ALLOWED_ORIGIN, multiTenancyApp));
+            realm.getClients().add(createWebAppClient(corsClientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, ALLOWED_ORIGIN, multiTenancyApp, relativeUrl));
         }
 
         if (name.equals(TENANT1_REALM)) {
@@ -230,18 +243,26 @@ public class KeycloakConfiguration {
 
     private static ClientRepresentation createWebAppClient(String clientId, String clientSecret, String clientHostName, int clientPort, String clientApp,
                                                            boolean directAccessGrantEnabled, boolean multiTenancyApp) throws Exception {
-        return createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, null, multiTenancyApp);
+        return createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, null, multiTenancyApp, false);
     }
 
     private static ClientRepresentation createWebAppClient(String clientId, String clientSecret, String clientHostName, int clientPort,
                                                            String clientApp, boolean directAccessGrantEnabled, String allowedOrigin, boolean multiTenancyApp) throws Exception {
+        return createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, allowedOrigin, multiTenancyApp, false);
+    }
+
+    private static ClientRepresentation createWebAppClient(String clientId, String clientSecret, String clientHostName, int clientPort,
+                                                           String clientApp, boolean directAccessGrantEnabled, String allowedOrigin, boolean multiTenancyApp, boolean relativeUrl) throws Exception {
         ClientRepresentation client = new ClientRepresentation();
         client.setClientId(clientId);
         client.setPublicClient(false);
         client.setSecret(clientSecret);
         //client.setRedirectUris(Arrays.asList("*"));
-        if (multiTenancyApp) {
-            client.setRedirectUris(Arrays.asList("http://" + clientHostName + ":" + clientPort + "/" + clientApp + "/*"));
+        if (relativeUrl) {
+            client.setRedirectUris(Arrays.asList("/" + clientApp + "/*"));
+        } else if (multiTenancyApp) {
+            client.setRedirectUris(Arrays.asList("http://" + clientHostName + ":" + clientPort + "/" + clientApp,
+                    "http://" + clientHostName + ":" + clientPort + "/" + clientApp + "/*"));
         } else {
             client.setRedirectUris(Arrays.asList("http://" + clientHostName + ":" + clientPort + "/" + clientApp));
         }

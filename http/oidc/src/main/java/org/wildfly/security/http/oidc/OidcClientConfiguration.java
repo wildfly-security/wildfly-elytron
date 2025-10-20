@@ -261,6 +261,21 @@ public class OidcClientConfiguration {
         }
     }
 
+    protected void resolveUrls(OidcClientUriBuilder authUrlBuilder) {
+        log.debug("resolveUrls");
+
+        String login = authUrlBuilder.clone().path(ServiceUrlConstants.AUTH_PATH).build(getRealm()).toString();
+        authUrl = OidcClientUriBuilder.fromUri(login).buildAsString();
+        issuerUrl = authUrlBuilder.clone().path(ServiceUrlConstants.REALM_INFO_PATH).build(getRealm()).toString();
+
+        tokenUrl = authUrlBuilder.clone().path(ServiceUrlConstants.TOKEN_PATH).build(getRealm()).toString();
+        logoutUrl = OidcClientUriBuilder.fromUri(authUrlBuilder.clone().path(ServiceUrlConstants.TOKEN_SERVICE_LOGOUT_PATH).build(getRealm()).toString()).buildAsString();
+        accountUrl = authUrlBuilder.clone().path(ServiceUrlConstants.ACCOUNT_SERVICE_PATH).build(getRealm()).toString();
+        registerNodeUrl = authUrlBuilder.clone().path(ServiceUrlConstants.CLIENTS_MANAGEMENT_REGISTER_NODE_PATH).build(getRealm()).toString();
+        unregisterNodeUrl = authUrlBuilder.clone().path(ServiceUrlConstants.CLIENTS_MANAGEMENT_UNREGISTER_NODE_PATH).build(getRealm()).toString();
+        jwksUrl = authUrlBuilder.clone().path(ServiceUrlConstants.JWKS_URL).build(getRealm()).toString();
+    }
+
     protected OidcProviderMetadata getOidcProviderMetadata(String discoveryUrl) throws Exception {
         HttpGet request = new HttpGet(discoveryUrl);
         request.addHeader(ACCEPT, JSON_CONTENT_TYPE);
