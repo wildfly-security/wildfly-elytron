@@ -5,7 +5,7 @@ WildFly Elytron
  
 An "elytron" (ĕl´·ĭ·trŏn, plural "elytra") is the hard, protective casing over a wing of certain flying insects (e.g. beetles).
 
-Building From Source
+Clone the repo
 --------------------
 
 ```console
