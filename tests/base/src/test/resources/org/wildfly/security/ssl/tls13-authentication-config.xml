@@ -44,14 +44,14 @@
                     <key-store-clear-password password="Elytron"/>
                 </key-store-ssl-certificate>
                 <trust-store key-store-name="scarab"/>
-                <cipher-suite selector="TLS_RSA_WITH_AES_128_CBC_SHA256"/>
+                <cipher-suite selector="TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"/>
             </ssl-context>
             <ssl-context name="server-tls12-only">
                 <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">
                     <key-store-clear-password password="Elytron"/>
                 </key-store-ssl-certificate>
                 <trust-store key-store-name="scarab"/>
-                <cipher-suite selector="TLS_RSA_WITH_AES_128_CBC_SHA256" names="TLS_AES_128_GCM_SHA256"/>
+                <cipher-suite selector="TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384" names="TLS_AES_128_GCM_SHA256"/>
             </ssl-context>
             <ssl-context name="different-preferred-tls13-suites">
                 <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">

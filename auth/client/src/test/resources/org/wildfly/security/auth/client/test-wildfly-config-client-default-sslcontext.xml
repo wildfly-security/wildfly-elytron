@@ -18,7 +18,7 @@
                     <key-store-clear-password password="password"/>
                 </key-store-ssl-certificate>
                 <protocol names="TLSv1.2" />
-                <cipher-suite selector="TLS_RSA_WITH_AES_128_CBC_SHA256" />
+                <cipher-suite selector="TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384" />
             </ssl-context>
         </ssl-contexts>
         <ssl-context-rules>

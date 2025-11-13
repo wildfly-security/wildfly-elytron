@@ -34,6 +34,7 @@ import java.util.Stack;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.wildfly.security.ParametricPrivilegedAction;
 
@@ -45,6 +46,7 @@ import sun.misc.Unsafe;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+@Ignore("In JDK-24+ Unsafe and securityManager in general will not be support")
 public class AlternateSecurityManagerTest {
 
     private static final String KEY = "test-key";
