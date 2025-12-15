@@ -133,7 +133,7 @@ public class TokenValidator {
             jwtConsumerBuilder.setRequireSubject();
 
             if (! DISABLE_TYP_CLAIM_VALIDATION_PROPERTY) {
-                jwtConsumerBuilder.registerValidator(new TypeValidator("Bearer"));
+                jwtConsumerBuilder.registerValidator(new TypeValidator(tokenType));
             }
 
             if (clientConfiguration.isVerifyTokenAudience()) {
