@@ -190,4 +190,6 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 13018, value = "Wrapped SecurityRealm '%s' does not implement interface '%s'")
     IllegalStateException doesNotImplementRequiredInterface(String className, String interfaceName);
 
+    @Message(id = 13019, value = "Interrupted while waiting for identity lock")
+    RealmUnavailableException interruptedWaitingForIdentityLock(@Cause InterruptedException cause);
 }
