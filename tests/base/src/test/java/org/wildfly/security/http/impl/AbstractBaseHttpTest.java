@@ -19,6 +19,7 @@
 package org.wildfly.security.http.impl;
 
 import static org.wildfly.security.auth.server.ServerUtils.ELYTRON_PASSWORD_PROVIDERS;
+import static org.wildfly.security.http.HttpConstants.ALGORITHM;
 import static org.wildfly.security.http.HttpConstants.AUTHENTICATION_INFO;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.LOCATION;
@@ -67,6 +68,7 @@ import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.BearerTokenEvidence;
+import org.wildfly.security.evidence.EllipticCurveTokenEvidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
@@ -159,6 +161,17 @@ public class AbstractBaseHttpTest {
         public TestingHttpServerRequest(String[] authorization) {
             if (authorization != null) {
                 requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
+            }
+            this.remoteUser = null;
+            this.cookies = new ArrayList<>();
+        }
+
+        public TestingHttpServerRequest(String[] authorization, String algorithm) {
+            if (authorization != null) {
+                requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
+            }
+            if (algorithm != null) {
+                requestHeaders.put(ALGORITHM, Arrays.asList(algorithm));
             }
             this.remoteUser = null;
             this.cookies = new ArrayList<>();
@@ -544,14 +557,20 @@ public class AbstractBaseHttpTest {
                         X509PeerCertificateChainEvidence evidence = (X509PeerCertificateChainEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
                         evidence.setDecodedPrincipal(evidence.getFirstCertificate().getIssuerX500Principal());
                         ((EvidenceVerifyCallback) callback).setVerified("CN=Duk3,OU=T3st,O=W0nd3rl4nd,C=US".equals(evidence.getFirstCertificate().getIssuerX500Principal().getName()));
+                    } else if (((EvidenceVerifyCallback) callback).getEvidence() instanceof EllipticCurveTokenEvidence) {
+                        EllipticCurveTokenEvidence evidence = (EllipticCurveTokenEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
+                        ((EvidenceVerifyCallback) callback).setVerified(Objects.equals(token, evidence.getToken()));
                     }
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     // NO-OP
                 } else if (callback instanceof IdentityCredentialCallback) {
                     Credential credential = ((IdentityCredentialCallback) callback).getCredential();
                     if (token != null) {
-                        MatcherAssert.assertThat(credential, CoreMatchers.instanceOf(BearerTokenCredential.class));
-                        String obtainedToken = ((BearerTokenCredential) credential).getToken();
+                        String obtainedToken = null;
+                        if (credential instanceof BearerTokenCredential) {
+                            MatcherAssert.assertThat(credential, CoreMatchers.instanceOf(BearerTokenCredential.class));
+                            obtainedToken = ((BearerTokenCredential) credential).getToken();
+                        }
                         Assert.assertNotNull(obtainedToken);
                         Assert.assertEquals(obtainedToken, token);
                     } else {
