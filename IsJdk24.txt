@@ -1,0 +1,2 @@
+Tmp file for github CI to trigger build with jdk-24+.
+File to be removed in future.

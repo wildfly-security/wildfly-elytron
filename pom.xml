@@ -90,6 +90,7 @@
         <version.org.jboss.logging>3.6.1.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.1.19.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.6.Final</version.org.jboss.logmanager.log4j-jboss>
+        <version.org.jboss.logging.jboss-logging-processor>3.0.4.Final</version.org.jboss.logging.jboss-logging-processor>
         <version.org.jboss.logging.tools>3.0.1.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.12.2.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.2.0.Final</version.org.jboss.slf4j>
@@ -1204,6 +1205,81 @@
     </dependencyManagement>
 
     <profiles>
+        <profile>
+            <id>jdk-23-plus-processors</id>
+            <activation>
+                <!-- Activates for JDK versions 23 and higher -->
+                <jdk>[23,)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${version.compiler.plugin}</version>
+                        <executions>
+                            <execution>
+                                <id>default-compile</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <configuration>
+                                    <release>11</release>
+                                    <buildDirectory>${project.build.directory}</buildDirectory>
+                                    <compileSourceRoots>${project.compileSourceRoots}</compileSourceRoots>
+                                    <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                                    <annotationProcessorPaths>
+                                        <path>
+                                            <groupId>org.jboss.logging</groupId>
+                                            <artifactId>jboss-logging-processor</artifactId>
+                                            <version>${version.org.jboss.logging.jboss-logging-processor}</version>
+                                        </path>
+                                        <!-- have org.kohsuke.MetaInfServices annotations processed -->
+                                        <path>
+                                            <groupId>org.kohsuke.metainf-services</groupId>
+                                            <artifactId>metainf-services</artifactId>
+                                            <version>${version.org.kohsuke.metainf-services.metainf-services}</version>
+                                        </path>
+                                    </annotationProcessorPaths>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>jdk-pre-23</id>
+            <activation>
+                <!-- Activates for JDK versions up to 22 -->
+                <jdk>[11,23)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${version.compiler.plugin}</version>
+                        <executions>
+                            <execution>
+                                <id>default-compile</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <configuration>
+                                    <release>11</release>
+                                    <buildDirectory>${project.build.directory}</buildDirectory>
+                                    <compileSourceRoots>${project.compileSourceRoots}</compileSourceRoots>
+                                    <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>modularizedJdk</id>
             <activation>
