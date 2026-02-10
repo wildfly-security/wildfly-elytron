@@ -1,0 +1,115 @@
+---
+layout: post
+title: 'WildFly HashiCorp Vault Integration – Upcoming Expression Resolver'
+aliases: [/blog/hashicorp-vault-releases-and-expression-resolver]
+date: 2026-02-13
+tags: hashicorp,vault,credential-store,expression,resolver,subsystem,feature-pack,maven-central
+synopsis: HashiCorp Vault feature pack and upcoming expression resolver.
+author: dvilkola
+---
+
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Introduction
+
+The HashiCorp Vault feature pack Alpha releases are now available in Maven Central, and we are working on an expression resolver that will allow using secrets from Vault with WildFly expressions.
+
+=== Provision WildFly with the HashiCorp Vault feature pack
+
+Use the Galleon provisioning tools with the latest release version of the feature pack. For example:
+
+[source,bash]
+----
+galleon.sh install org.wildfly.security.hashicorp.vault:hashicorp-vault-feature-pack:${version} \
+  --layers=hashicorp-vault \
+  --dir=wildfly
+----
+
+Substitute the version with the latest release available on Maven Central (e.g. `1.0.0.Alpha3` or newer). This command creates a WildFly server that includes the HashiCorp Vault subsystem in the wildfly directory.
+
+Remember to start WildFly with experimental stability when using the HashiCorp Vault subsystem:
+
+[source,bash]
+----
+./wildfly/bin/standalone.sh --stability=experimental
+----
+
+== Credential store operations
+
+Once you have added a credential store to the `hashicorp-vault` subsystem, you can add a credential store and use the usual WildFly credential store operations. For example:
+
+[source,bash]
+----
+$WILDFLY_HOME/bin/jboss-cli.sh --connect
+
+# Add a minimal credential store
+/subsystem=hashicorp-vault/credential-store=my-vault:add(
+    host-address="http://localhost:8200",
+    credential-reference=\{clear-text="myroot"\}
+)
+----
+
+NOTE: In the command above, you can also configure certificates to authenticate to the Vault by using the respective attributes.
+
+[source,bash]
+----
+/subsystem=hashicorp-vault/credential-store=my-vault:add-alias(
+    alias="secret/myapp.database_password",
+    secret-value="supersecret"
+)
+
+/subsystem=hashicorp-vault/credential-store=my-vault:remove-alias(
+    alias="secret/myapp.database_password"
+)
+
+/subsystem=hashicorp-vault/credential-store=my-vault:read-aliases()
+
+----
+
+=== Read aliases operation
+
+Without parameters, the operation `read-aliases` returns all aliases, but you can optionally specify a Vault path and recursive options to limit the result. To list aliases under a specific path (e.g. `secret/myapp`) with optional recursive traversal, use the `path`, `recursive`, `recursive-depth`, and `max-number-of-aliases` parameters as needed.
+
+=== Alias format
+
+The credential store maps WildFly aliases to Vault secrets using the format `<vault-path>.<key>`:
+
+* **Example**: The alias `secret/myapp.database_password` maps to the `database_password` key in the `secret/myapp` path in Vault.
+
+The same alias format is used when adding or removing credentials and when referencing the store from other subsystems (e.g. `credential-reference`) or from the upcoming expression resolver.
+
+=== Using the credential store from other subsystems
+
+Once credentials are stored, you can reference them from other WildFly subsystems using the standard `credential-reference` mechanism (e.g. `store="my-vault"` and `alias="secret/myapp.database_password"`).
+
+== Upcoming HashiCorp Vault Expression resolver
+
+We are working on adding an expression resolver that connects to HashiCorp Vault when resolving expressions. This will allow you to use a Vault-backed secret in any management attribute that supports expressions.
+
+=== Planned expression format
+
+The expression format we are working on is +$\{HC_VAULT::storeName:alias\}+
+
+Where:
+
+* `storeName` is the name of a `credential-store` you have configured in the `hashicorp-vault` subsystem.
+* `alias` is the alias (key) of the secret in that credential store.
+
+=== Example usage
+
+[source,bash]
+----
+/system-property=my.app.password:add(value="$\{HC_VAULT::my-vault:secret/myapp.database_password\}")
+----
+
+== Getting involved
+
+The HashiCorp Vault feature pack and subsystem continue to be developed. You can try the Alpha releases from Maven Central and provide feedback. Feature requests and issues are welcome: https://github.com/wildfly-security-incubator/wildfly-hashicorp-vault-feature-pack/issues. You can also reach us on Zulip: https://wildfly.zulipchat.com/#narrow/stream/173102-wildfly-elytron
+
+== Resources
+
+* link:https://www.vaultproject.io/[HashiCorp Vault Documentation]
+* link:https://github.com/wildfly-security-incubator/wildfly-hashicorp-vault-feature-pack[WildFly HashiCorp Vault Feature Pack]
