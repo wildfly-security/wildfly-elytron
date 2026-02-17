@@ -462,7 +462,7 @@ public class OAuth2SaslClientTest extends BaseTestCase {
                         && body.contains("password=dont_tell_me")) {
                     JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
 
-                    tokenBuilder.add("access_token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoiYXV0aC5zZXJ2ZXIiLCJhdWQiOiJmb3JfbWUiLCJleHAiOjE3NjA5OTE2MzUsInByZWZlcnJlZF91c2VybmFtZSI6Impkb2UifQ.SoPW41_mOFnKXdkwVG63agWQ2k09dEnEtTBztnxHN64");
+                    tokenBuilder.add("access_token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoiYXV0aC5zZXJ2ZXIiLCJhdWQiOiJmb3JfbWUiLCJleHAiOjIxNDU5MTMxOTksInByZWZlcnJlZF91c2VybmFtZSI6Impkb2UifQ.T9pSmskrcLqIXp2orJADQq-f0p0KNz8Hq6HALFIRDiY");
 
                     return new MockResponse().setBody(tokenBuilder.build().toString());
                 } else if (clientCredentials
@@ -470,7 +470,7 @@ public class OAuth2SaslClientTest extends BaseTestCase {
                         && !body.contains("username=")) {
                     JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
 
-                    tokenBuilder.add("access_token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoiYXV0aC5zZXJ2ZXIiLCJhdWQiOiJmb3JfbWUiLCJleHAiOjE3NjA5OTE2MzUsInByZWZlcnJlZF91c2VybmFtZSI6Impkb2UifQ.SoPW41_mOFnKXdkwVG63agWQ2k09dEnEtTBztnxHN64");
+                    tokenBuilder.add("access_token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoiYXV0aC5zZXJ2ZXIiLCJhdWQiOiJmb3JfbWUiLCJleHAiOjIxNDU5MTMxOTksInByZWZlcnJlZF91c2VybmFtZSI6Impkb2UifQ.T9pSmskrcLqIXp2orJADQq-f0p0KNz8Hq6HALFIRDiY");
 
                     return new MockResponse().setBody(tokenBuilder.build().toString());
                 }
