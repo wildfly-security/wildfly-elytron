@@ -1365,6 +1365,15 @@
             </build>
         </profile>
         <profile>
+            <id>jdk21-test-profile</id>
+            <activation>
+                <jdk>[21,)</jdk>
+            </activation>
+            <modules>
+                <module>tests/jdk21</module>
+            </modules>
+        </profile>
+        <profile>
             <id>aggregate-javadoc</id>
             <activation>
                 <property>

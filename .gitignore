@@ -44,3 +44,7 @@ hs_err_pid*.log
 /.m2
 settings.xml
 .codenvy
+# Ignore copilot files
+.copilot
+*instructions.md
+
