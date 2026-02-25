@@ -6,7 +6,7 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
@@ -15,8 +15,8 @@
         <skipITs>true</skipITs>
 
         <version.compiler-plugin>3.14.0</version.compiler-plugin>
-        <version.quarkus-roq>1.5.1</version.quarkus-roq>
-        <version.quarkus.platform>3.22.1</version.quarkus.platform>
+        <version.quarkus-roq>2.0.4</version.quarkus-roq>
+        <version.quarkus.platform>3.31.4</version.quarkus.platform>
         <version.surefire-plugin>3.5.2</version.surefire-plugin>
     </properties>
 
@@ -59,16 +59,9 @@
             <version>${version.quarkus-roq}</version>
         </dependency>
         <dependency>
-            <groupId>io.quarkiverse.roq</groupId>
-            <artifactId>quarkus-roq-plugin-tagging</artifactId>
-            <version>${version.quarkus-roq}</version>
-        </dependency>
-
-        <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
         </dependency>
-
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5</artifactId>
@@ -83,7 +76,28 @@
     </dependencies>
 
     <build>
+        <defaultGoal>test</defaultGoal>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>enforce-java</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[${maven.compiler.release},)</version>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>quarkus-maven-plugin</artifactId>

@@ -338,6 +338,14 @@ pre, pre span {
   color: #be9100;
 }
 
+pre:has(code) {
+  margin: 0px;
+  max-height: max-content;
+  width: auto;
+  padding: 0px;
+  border: none;
+}
+
 code, pre, pre span {
   background-color: inherit;
   padding: 0;

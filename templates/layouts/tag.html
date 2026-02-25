@@ -1,7 +1,10 @@
 ---
 layout: default
 tagging: blog
-paginate: true
+#paginate:
+#    collection: blog
+#    size: 10
+#    link: blog/tag/:page
 ---
 {@io.quarkiverse.roq.frontmatter.runtime.model.NormalPage page}
 <div class="blog-page grid-wrapper">
@@ -18,7 +21,9 @@ paginate: true
                 <a href="{post.data.external_link ?: post.url}">{post.title}</a>
             </div>
             <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+                {#if author.containsKey('emailhash')}
                 <img class="headshot" src="https://www.gravatar.com/avatar/{author.emailhash}">
+                {/if}
                 <p class="byline">By <a href="{author.bio}">{author.name}</a>
                     <br/>
                     <small>{post.date.format('LLLL dd, YYYY')} |
@@ -31,7 +36,7 @@ paginate: true
                 </p>
             </div>
             <div class="grid__item width-4-12 width-12-12-m">
-                {#include partials/share-page.html title=post.title url=post.data.link or post.url /}
+                {#include partials/share-page.html title=post.title url=post.data.link.or(post.url) /}
             </div>
             <div class="grid__item width-12-12">
                 {#if post.data.synopsis}
@@ -39,9 +44,11 @@ paginate: true
                 {/if}
             </div>
             <div class="grid__item width-12-12">
-                <a href="{post.data.external_link ?: post.url}">
-                    {#if post.data.external_link contains 'youtube' %}Watch Video &rsaquo;{#else}Read More &rsaquo;{/if}
+                {#let url=post.data.external_link.or(post.url.path)}
+                <a href="{url}">
+                    {#if url.contains('youtube')}Watch Video &rsaquo;{#else}Read More &rsaquo;{/if}
                 </a>
+                {/let}
             </div>
         </div>
         {/let}

@@ -9,7 +9,7 @@ link: /blog/:slug
     <div class="grid-wrapper">
       <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
         {#let author = cdi:authors.get(page.data.author)}
-        {#if author.emailhash}
+        {#if author.containsKey('emailhash')}
           <img class="headshot" src="https://www.gravatar.com/avatar/{author.emailhash}">
         {/if}
         <p class="byline">

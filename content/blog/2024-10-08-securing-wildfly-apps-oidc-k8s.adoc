@@ -327,6 +327,7 @@ Set up access to your application by configuring port-forward in kubernetes.
 
 . Get the name of pod for your application:
 +
+[source]
 ----
 kubectl get pod
 
@@ -374,6 +375,7 @@ The example application simply outputs the name of the logged in user.
 
 You should see the following output:
 
+[source]
 ----
 Secured Servlet
 

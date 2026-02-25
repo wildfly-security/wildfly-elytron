@@ -1,0 +1,23 @@
+name: Test site build
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven
+        run: mvn --batch-mode test
+      - name: Archive generated site
+        uses: actions/upload-artifact@v4
+        with:
+            name: generated-site
+            path: ./target/roq/
