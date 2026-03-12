@@ -129,7 +129,7 @@ public class JwtValidator implements TokenValidator {
     /**
      * Process an RSA or EC (Ellipitic Curve) based JWT token.
      * @param evidence
-     * @return
+     * @return claims as Attributes
      * @throws RealmUnavailableException
      */
     public Attributes validate(Evidence evidence) throws RealmUnavailableException {
@@ -274,7 +274,7 @@ public class JwtValidator implements TokenValidator {
 
             // Perform the verification
             boolean verfiedSig = verifier.verify(derSignature);
-            System.out.println("Signature verifcation is: " + verfiedSig);
+            log.debug("Signature verifcation is: " + verfiedSig);
             return verfiedSig;
 
         } catch (IOException e) {
@@ -403,7 +403,7 @@ public class JwtValidator implements TokenValidator {
             }
             signature.initVerify(publicKey);
         } catch (InvalidKeyException e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
             return null;
         }
 
