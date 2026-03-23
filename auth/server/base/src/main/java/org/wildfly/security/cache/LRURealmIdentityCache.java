@@ -23,12 +23,12 @@ import static org.wildfly.common.Assert.checkMinimumParameter;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.wildfly.security.auth.server.RealmIdentity;
 
@@ -47,15 +47,16 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
     /**
      * Holds the cached identitys where the key is the domain principal, the one used to lookup the identity
      */
-    private final Map<Principal, CacheEntry> identityCache;
+    private final LinkedHashMap<Principal, CacheEntry> identityCache;
 
     /**
      * Holds a mapping between a realm principal and domain principals
      */
     private final Map<Principal, Set<Principal>> domainPrincipalMap;
 
-    private final AtomicBoolean writing = new AtomicBoolean(false);
+    private final ReentrantLock lock = new ReentrantLock();
 
+    private final int maxEntries;
     private final long maxAge;
 
     /**
@@ -76,88 +77,87 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
     public LRURealmIdentityCache(int maxEntries, long maxAge) {
         checkMinimumParameter("maxEntries", 1, maxEntries);
         checkMinimumParameter("maxAge", -1, maxAge);
-        identityCache = new LinkedHashMap<Principal, CacheEntry>(16, DEFAULT_LOAD_FACTOR, true) {
-            @Override
-            protected boolean removeEldestEntry(Entry<Principal, CacheEntry> eldest) {
-                return identityCache.size()  > maxEntries;
-            }
-        };
+        identityCache = new LinkedHashMap<>(16, DEFAULT_LOAD_FACTOR, true);
         domainPrincipalMap = new HashMap<>(16);
+        this.maxEntries = maxEntries;
         this.maxAge = maxAge;
     }
 
     @Override
     public void put(Principal key, RealmIdentity newValue) {
+        lock.lock();
         try {
-            if (parkForWriteAndCheckInterrupt()) {
-                return;
+            CacheEntry entry = identityCache.get(key);
+
+            if (entry == null) {
+                entry = new CacheEntry(newValue, maxAge);
+                identityCache.put(key, entry);
             }
 
-            CacheEntry entry = identityCache.computeIfAbsent(key, principal -> {
-                domainPrincipalMap.computeIfAbsent(newValue.getRealmIdentityPrincipal(), principal1 -> {
-                    Set<Principal> principals = new HashSet<>();
-
-                    principals.add(key);
-
-                    return principals;
-                });
-                return new CacheEntry(key, newValue, maxAge);
-            });
-
-            if (entry != null) {
-                domainPrincipalMap.get(entry.value().getRealmIdentityPrincipal()).add(key);
-            }
+            domainPrincipalMap.computeIfAbsent(entry.value().getRealmIdentityPrincipal(), ignored -> new HashSet<>()).add(key);
+            evictIfNecessary();
         } finally {
-            writing.lazySet(false);
+            lock.unlock();
         }
     }
 
     @Override
     public RealmIdentity get(Principal key) {
-        if (parkForReadAndCheckInterrupt()) {
+        lock.lock();
+        try {
+            CacheEntry cached = identityCache.get(key);
+
+            if (cached != null) {
+                return removeIfExpired(cached);
+            }
+
+            Set<Principal> domainPrincipals = domainPrincipalMap.get(key);
+
+            if (domainPrincipals != null) {
+                for (Principal domainPrincipal : new HashSet<>(domainPrincipals)) {
+                    CacheEntry associated = identityCache.get(domainPrincipal);
+
+                    if (associated == null) {
+                        removeDomainPrincipal(domainPrincipal, key);
+                        continue;
+                    }
+
+                    return removeIfExpired(associated);
+                }
+            }
+
             return null;
+        } finally {
+            lock.unlock();
         }
-
-        CacheEntry cached = identityCache.get(key);
-
-        if (cached != null) {
-            return removeIfExpired(cached);
-        }
-
-        Set<Principal> domainPrincipal = domainPrincipalMap.get(key);
-
-        if (domainPrincipal != null) {
-            return removeIfExpired(identityCache.get(domainPrincipal.iterator().next()));
-        }
-
-        return null;
     }
 
     @Override
     public void remove(Principal key) {
+        lock.lock();
         try {
-            if (parkForWriteAndCheckInterrupt()) {
-                return;
-            }
+            CacheEntry cached = identityCache.get(key);
 
-            if (identityCache.containsKey(key)) {
-                domainPrincipalMap.remove(identityCache.remove(key).value().getRealmIdentityPrincipal()).forEach(identityCache::remove);
-            } else if (domainPrincipalMap.containsKey(key)) {
-                domainPrincipalMap.remove(key).forEach(identityCache::remove);
+            if (cached != null) {
+                if (! removeAllDomainPrincipals(cached.value().getRealmIdentityPrincipal())) {
+                    identityCache.remove(key);
+                }
+            } else {
+                removeAllDomainPrincipals(key);
             }
         } finally {
-            writing.lazySet(false);
+            lock.unlock();
         }
     }
 
     @Override
     public void clear() {
+        lock.lock();
         try {
-            parkForWriteAndCheckInterrupt();
             identityCache.clear();
             domainPrincipalMap.clear();
         } finally {
-            writing.lazySet(false);
+            lock.unlock();
         }
     }
 
@@ -167,51 +167,67 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
         }
 
         if (cached.isExpired()) {
-            remove(cached.key());
+            removeAllDomainPrincipals(cached.value().getRealmIdentityPrincipal());
             return null;
         }
 
         return cached.value();
     }
 
-    private boolean parkForWriteAndCheckInterrupt() {
-        while (!writing.compareAndSet(false, true)) {
-            LockSupport.parkNanos(1L);
-            if (Thread.interrupted()) {
-                return true;
+    private void evictIfNecessary() {
+        while (identityCache.size() > maxEntries) {
+            Iterator<Entry<Principal, CacheEntry>> iterator = identityCache.entrySet().iterator();
+
+            if (! iterator.hasNext()) {
+                return;
             }
+
+            Entry<Principal, CacheEntry> eldest = iterator.next();
+            iterator.remove();
+            removeDomainPrincipal(eldest.getKey(), eldest.getValue().value().getRealmIdentityPrincipal());
         }
-        return false;
     }
 
-    private boolean parkForReadAndCheckInterrupt() {
-        while (writing.get()) {
-            LockSupport.parkNanos(1L);
-            if (Thread.interrupted()) {
-                return true;
-            }
+    private boolean removeAllDomainPrincipals(Principal realmPrincipal) {
+        Set<Principal> domainPrincipals = domainPrincipalMap.remove(realmPrincipal);
+
+        if (domainPrincipals == null) {
+            return false;
         }
-        return false;
+
+        for (Principal domainPrincipal : domainPrincipals) {
+            identityCache.remove(domainPrincipal);
+        }
+
+        return true;
+    }
+
+    private void removeDomainPrincipal(Principal domainPrincipal, Principal realmPrincipal) {
+        Set<Principal> domainPrincipals = domainPrincipalMap.get(realmPrincipal);
+
+        if (domainPrincipals == null) {
+            return;
+        }
+
+        domainPrincipals.remove(domainPrincipal);
+
+        if (domainPrincipals.isEmpty()) {
+            domainPrincipalMap.remove(realmPrincipal);
+        }
     }
 
     private static final class CacheEntry {
 
-        final Principal key;
         final RealmIdentity value;
         final long expiration;
 
-        CacheEntry(Principal key, RealmIdentity value, long maxAge) {
-            this.key = key;
+        CacheEntry(RealmIdentity value, long maxAge) {
             this.value = value;
             if(maxAge == -1) {
                 expiration = -1;
             } else {
                 expiration = System.currentTimeMillis() + maxAge;
             }
-        }
-
-        Principal key() {
-            return key;
         }
 
         RealmIdentity value() {

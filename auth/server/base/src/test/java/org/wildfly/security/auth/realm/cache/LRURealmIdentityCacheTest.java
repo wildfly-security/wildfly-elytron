@@ -18,13 +18,26 @@
 
 package org.wildfly.security.auth.realm.cache;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.Field;
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -157,11 +170,123 @@ public class LRURealmIdentityCacheTest {
         }
     }
 
+    @Test
+    public void testRemoveInvalidatesAllDomainPrincipalsForRealmIdentity() {
+        LRURealmIdentityCache cache = new LRURealmIdentityCache(5);
+        Principal realmPrincipal = createPrincipal(new LinkedList<>());
+        Principal firstDomainPrincipal = createPrincipal(new LinkedList<>());
+        Principal secondDomainPrincipal = createPrincipal(new LinkedList<>());
+
+        cache.put(firstDomainPrincipal, createRealmIdentity(realmPrincipal));
+        cache.put(secondDomainPrincipal, createRealmIdentity(realmPrincipal));
+
+        assertNotNull(cache.get(realmPrincipal));
+
+        cache.remove(firstDomainPrincipal);
+
+        assertNull(cache.get(firstDomainPrincipal));
+        assertNull(cache.get(secondDomainPrincipal));
+        assertNull(cache.get(realmPrincipal));
+    }
+
+    @Test
+    public void testMaxEntriesCleanupRealmPrincipalMapping() throws Exception {
+        LRURealmIdentityCache cache = new LRURealmIdentityCache(1);
+        Principal evictedRealmPrincipal = createPrincipal(new LinkedList<>());
+        Principal survivingRealmPrincipal = createPrincipal(new LinkedList<>());
+        Principal evictedDomainPrincipal = createPrincipal(new LinkedList<>());
+        Principal survivingDomainPrincipal = createPrincipal(new LinkedList<>());
+
+        cache.put(evictedDomainPrincipal, createRealmIdentity(evictedRealmPrincipal));
+        cache.put(survivingDomainPrincipal, createRealmIdentity(survivingRealmPrincipal));
+
+        assertFalse(getDomainPrincipalMap(cache).containsKey(evictedRealmPrincipal));
+        assertNull(cache.get(evictedDomainPrincipal));
+        assertNotNull(cache.get(survivingDomainPrincipal));
+        assertNotNull(cache.get(survivingRealmPrincipal));
+    }
+
+    @Test
+    public void testExpirationCleanupRealmPrincipalMapping() throws Exception {
+        LRURealmIdentityCache cache = new LRURealmIdentityCache(1, 1);
+        Principal realmPrincipal = createPrincipal(new LinkedList<>());
+        Principal domainPrincipal = createPrincipal(new LinkedList<>());
+
+        cache.put(domainPrincipal, createRealmIdentity(realmPrincipal));
+
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+
+        while (cache.get(domainPrincipal) != null && System.nanoTime() < deadline) {
+            TimeUnit.MILLISECONDS.sleep(10);
+        }
+
+        assertNull(cache.get(domainPrincipal));
+        assertNull(cache.get(realmPrincipal));
+        assertFalse(getDomainPrincipalMap(cache).containsKey(realmPrincipal));
+    }
+
+    @Test
+    public void testConcurrentAccessMaintainsConsistentMappings() throws Exception {
+        LRURealmIdentityCache cache = new LRURealmIdentityCache(16);
+        List<Principal> domainPrincipals = new ArrayList<>();
+        List<Principal> realmPrincipals = new ArrayList<>();
+
+        for (int i = 0; i < 16; i++) {
+            domainPrincipals.add(createPrincipal(new LinkedList<>()));
+        }
+        for (int i = 0; i < 4; i++) {
+            realmPrincipals.add(createPrincipal(new LinkedList<>()));
+        }
+
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<?>> futures = new ArrayList<>();
+
+        try {
+            for (int thread = 0; thread < 4; thread++) {
+                final int offset = thread;
+                futures.add(executor.submit(() -> {
+                    start.await();
+
+                    for (int i = 0; i < 250; i++) {
+                        int index = offset + ((i % 4) * 4);
+                        Principal domainPrincipal = domainPrincipals.get(index);
+                        Principal realmPrincipal = realmPrincipals.get(index % realmPrincipals.size());
+
+                        cache.put(domainPrincipal, createRealmIdentity(realmPrincipal));
+                        cache.get(domainPrincipal);
+                        cache.get(realmPrincipal);
+
+                        if ((i % 5) == 0) {
+                            cache.remove(domainPrincipal);
+                        }
+                    }
+
+                    return null;
+                }));
+            }
+
+            start.countDown();
+
+            for (Future<?> future : futures) {
+                future.get(10, TimeUnit.SECONDS);
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+
+        assertMappingConsistency(cache);
+    }
+
     private RealmIdentity createRealmIdentity() {
+        return createRealmIdentity(null);
+    }
+
+    private RealmIdentity createRealmIdentity(Principal realmPrincipal) {
         return new RealmIdentity() {
             @Override
             public Principal getRealmIdentityPrincipal() {
-                return null;
+                return realmPrincipal;
             }
 
             @Override
@@ -189,5 +314,47 @@ public class LRURealmIdentityCacheTest {
                 return false;
             }
         };
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Principal, Set<Principal>> getDomainPrincipalMap(LRURealmIdentityCache cache) throws Exception {
+        Field field = LRURealmIdentityCache.class.getDeclaredField("domainPrincipalMap");
+        field.setAccessible(true);
+        return (Map<Principal, Set<Principal>>) field.get(cache);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Principal, Object> getIdentityCache(LRURealmIdentityCache cache) throws Exception {
+        Field field = LRURealmIdentityCache.class.getDeclaredField("identityCache");
+        field.setAccessible(true);
+        return new HashMap<>((Map<Principal, Object>) field.get(cache));
+    }
+
+    private RealmIdentity getRealmIdentity(Object cacheEntry) throws Exception {
+        Field valueField = cacheEntry.getClass().getDeclaredField("value");
+        valueField.setAccessible(true);
+        return (RealmIdentity) valueField.get(cacheEntry);
+    }
+
+    private void assertMappingConsistency(LRURealmIdentityCache cache) throws Exception {
+        Map<Principal, Object> identityCache = getIdentityCache(cache);
+        Map<Principal, Set<Principal>> domainPrincipalMap = getDomainPrincipalMap(cache);
+
+        for (Map.Entry<Principal, Set<Principal>> mapping : domainPrincipalMap.entrySet()) {
+            for (Principal domainPrincipal : mapping.getValue()) {
+                Object cacheEntry = identityCache.get(domainPrincipal);
+
+                assertNotNull(cacheEntry);
+                assertSame(mapping.getKey(), getRealmIdentity(cacheEntry).getRealmIdentityPrincipal());
+            }
+        }
+
+        for (Map.Entry<Principal, Object> entry : identityCache.entrySet()) {
+            Principal realmPrincipal = getRealmIdentity(entry.getValue()).getRealmIdentityPrincipal();
+            Set<Principal> domainPrincipals = domainPrincipalMap.get(realmPrincipal);
+
+            assertNotNull(domainPrincipals);
+            assertTrue(domainPrincipals.contains(entry.getKey()));
+        }
     }
 }
