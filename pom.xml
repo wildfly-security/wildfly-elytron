@@ -304,7 +304,7 @@
                         <failsOnError>true</failsOnError>
                         <includeTestSourceDirectory>true</includeTestSourceDirectory>
                         <useFile />
-                        <excludes>**/*$logger.java,**/*$bundle.java</excludes>
+                        <excludes>**/*$logger.java,**/*$bundle.java,**/module-info.java</excludes>
                     </configuration>
                     <dependencies>
                         <dependency>

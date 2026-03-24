@@ -37,7 +37,7 @@ import org.wildfly.security.credential.PublicKeyCredential;
 import org.wildfly.security.credential.SecretKeyCredential;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.credential.X509CertificateChainPublicCredential;
-import org.wildfly.security.keystore.PasswordEntry;
+import org.wildfly.security.credential.keystore.PasswordEntry;
 import org.wildfly.security.x500.X500;
 
 /**

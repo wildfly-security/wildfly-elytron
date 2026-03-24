@@ -31,7 +31,7 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.ssl.SSLConnection;
+import org.wildfly.security.auth.ssl.SSLConnection;
 
 /**
  * A SASL client factory which provides information about the security layer of the connection to the callback handler.

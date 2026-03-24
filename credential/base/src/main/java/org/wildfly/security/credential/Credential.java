@@ -30,7 +30,7 @@ import java.util.function.Supplier;
 import org.wildfly.common.Assert;
 import org.wildfly.security.evidence.AlgorithmEvidence;
 import org.wildfly.security.evidence.Evidence;
-import org.wildfly.security.keystore.PasswordEntry;
+import org.wildfly.security.credential.keystore.PasswordEntry;
 import org.wildfly.security.x500.X500;
 
 /**

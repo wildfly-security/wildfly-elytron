@@ -44,7 +44,7 @@ import org.junit.Test;
 import org.wildfly.security.auth.realm.token.TokenSecurityRealm;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
 import org.wildfly.security.auth.server.SecurityRealm;
-import org.wildfly.security.credential.source.OAuth2CredentialSource;
+import org.wildfly.security.auth.client.credential.OAuth2CredentialSource;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.realm.token.test.util.JwtTestUtil;
 import org.wildfly.security.sasl.SaslMechanismSelector;

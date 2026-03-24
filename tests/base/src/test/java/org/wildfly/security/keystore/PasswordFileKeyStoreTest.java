@@ -28,6 +28,8 @@ import java.io.InputStream;
 import java.security.KeyStore;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.wildfly.security.credential.keystore.PasswordEntry;
+
 import org.junit.Test;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;

@@ -117,7 +117,7 @@ public class WildFlyElytronProvider extends VersionedProvider {
         final List<String> emptyList = Collections.emptyList();
         final Map<String, String> emptyMap = Collections.emptyMap();
 
-        putService(new Service(this, "KeyStore", "PasswordFile", "org.wildfly.security.keystore.PasswordKeyStoreSpi", emptyList, emptyMap));
+        putService(new Service(this, "KeyStore", "PasswordFile", "org.wildfly.security.credential.keystore.PasswordKeyStoreSpi", emptyList, emptyMap));
     }
 
     private void putHttpAuthenticationMechanismImplementations() {
