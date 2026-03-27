@@ -16,17 +16,21 @@
 
 package org.wildfly.security.manager;
 
-import static java.security.AccessController.doPrivileged;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.lang.reflect.Field;
 import java.net.URL;
+import java.security.AccessControlException;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.Permission;
+import java.security.Permissions;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.PropertyPermission;
 import java.util.Stack;
@@ -36,8 +40,7 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.wildfly.security.ParametricPrivilegedAction;
-
-import sun.misc.Unsafe;
+import org.wildfly.security.manager.action.ReadPropertyAction;
 
 /**
  * Test case to verify calls via the {@link WildFlySecurityManager} are not incorrectly intercepted when an alternative
@@ -52,28 +55,6 @@ public class AlternateSecurityManagerTest {
 
     private static final Permission INTERESTING_PERMISSION = new PropertyPermission(KEY, "read");
 
-    private static final Unsafe unsafe;
-    private static final long pdStackOffset;
-
-    static {
-        final Field pdField;
-        try {
-            // does not need to be accessible
-            pdField = AccessControlContext.class.getDeclaredField("context");
-        } catch (NoSuchFieldException e) {
-            throw new NoSuchFieldError(e.getMessage());
-        }
-        if (pdField.getType() != ProtectionDomain[].class) {
-            throw new Error();
-        }
-        try {
-            unsafe = (Unsafe) doPrivileged(new GetAccessibleDeclaredFieldAction(Unsafe.class, "theUnsafe")).get(null);
-        } catch (IllegalAccessException e) {
-            throw new IllegalAccessError(e.getMessage());
-        }
-        pdStackOffset = unsafe.objectFieldOffset(pdField);
-    }
-
     private final CustomSecurityManager securityManager = new CustomSecurityManager();
 
     private volatile AccessControlContext context;
@@ -82,16 +63,17 @@ public class AlternateSecurityManagerTest {
      * Used to verify we are the final CodeSource in calls and the WildFlySecurityManager is not added.
      */
     private volatile URL ourCodeSource;
+    private volatile URL actionCodeSource;
+    private volatile URL managerCodeSource;
 
     @Before
     public void before() {
         Assume.assumeTrue("Skipping AlternateSecurityManagerTest suite, tests are not being run on JDK 17 or lower.",
                 Integer.parseInt(System.getProperty("java.specification.version")) <= 17);
-        AccessControlContext current = AccessController.getContext();
-        ProtectionDomain[] domains = getProtectionDomainStack(current);
-
-        context = new AccessControlContext(new ProtectionDomain[] { domains[1] });
-        ourCodeSource = domains[0].getCodeSource().getLocation();
+        context = new AccessControlContext(new ProtectionDomain[] { new ProtectionDomain(null, new Permissions()) });
+        ourCodeSource = AlternateSecurityManagerTest.class.getProtectionDomain().getCodeSource().getLocation();
+        actionCodeSource = ReadPropertyAction.class.getProtectionDomain().getCodeSource().getLocation();
+        managerCodeSource = WildFlySecurityManager.class.getProtectionDomain().getCodeSource().getLocation();
 
         System.setProperty(KEY, VALUE);
         System.setSecurityManager(securityManager);
@@ -105,6 +87,8 @@ public class AlternateSecurityManagerTest {
         securityManager.reset();
 
         context = null;
+        actionCodeSource = null;
+        managerCodeSource = null;
     }
 
     @Test
@@ -112,15 +96,10 @@ public class AlternateSecurityManagerTest {
         String value = System.getProperty(KEY);
         assertEquals("Retrieved property", VALUE,  value);
 
-        List<ProtectionDomain[]> baseDomains = securityManager.reset();
+        List<Class<?>[]> baseDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, baseDomains.size());
-
-        /*
-         * We can not check the number of ProtectionDomains here as the method of calling the test
-         * could influence the stack.
-         */
-
-        assertEquals("Our CodeSource", ourCodeSource, baseDomains.get(0)[0].getCodeSource().getLocation());
+        assertRelevantCodeSources(baseDomains.get(0), ourCodeSource);
+        assertFalse("WildFlySecurityManager should not be on the direct stack", containsClass(baseDomains.get(0), WildFlySecurityManager.class));
     }
 
     @Test
@@ -128,40 +107,20 @@ public class AlternateSecurityManagerTest {
         String value = AccessController.doPrivileged(new CustomAction());
         assertEquals("Retrieved property", VALUE,  value);
 
-        List<ProtectionDomain[]> baseDomains = securityManager.reset();
+        List<Class<?>[]> baseDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, baseDomains.size());
-
-        ProtectionDomain[] base = baseDomains.get(0);
-        assertEquals("ProtectionDomain Count", 1, base.length);
-
-        assertEquals("Our CodeSource", ourCodeSource, base[0].getCodeSource().getLocation());
+        assertRelevantCodeSources(baseDomains.get(0), ourCodeSource);
+        assertFalse("WildFlySecurityManager should not be on the direct stack", containsClass(baseDomains.get(0), WildFlySecurityManager.class));
     }
 
     @Test
     public void testGetPropertyPrivileged() {
         assertEquals("Retrieved property", VALUE,  WildFlySecurityManager.getPropertyPrivileged(KEY, null));
 
-        List<ProtectionDomain[]> baseDomains = securityManager.reset();
+        List<Class<?>[]> baseDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, baseDomains.size());
-
-        /*
-         * There should be 3 protection domains on the call stack at the time the SecurityManager
-         * Permission check is performed:
-         *
-         * 1. The protection domain of the test classes i.e. this test case.
-         * 2. The protection domain for the ReadPropertyAction.
-         * 3. The protection domain for the WildFlySecurityManager.
-         *
-         * Internally the WildFlySecurityManager created an AccessControlContext for this class only to
-         * execute the ReadPropertyAction, the ReadPropertyAction has it's own code source / protection domain.
-         * Finally as the caller to doPrivileged the ProtectionDomain of WildFlySecurityManager is added.
-         *
-         * Importantly the test framework executing the test has been eliminated from the stack.
-         */
-
-        ProtectionDomain[] base = baseDomains.get(0);
-        assertEquals("ProtectionDomain Count", 3, base.length);
-        assertEquals("Our CodeSource", ourCodeSource, base[0].getCodeSource().getLocation());
+        assertRelevantCodeSources(baseDomains.get(0), ourCodeSource, actionCodeSource, managerCodeSource);
+        assertTrue("WildFlySecurityManager should be on the privileged stack", containsClass(baseDomains.get(0), WildFlySecurityManager.class));
     }
 
     @Test
@@ -173,57 +132,54 @@ public class AlternateSecurityManagerTest {
         String value = AccessController.doPrivileged(new CustomAction());
         assertEquals("Retrieved property", VALUE,  value);
 
-        List<ProtectionDomain[]> baseDomains = securityManager.reset();
+        List<Class<?>[]> baseDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, baseDomains.size());
+        assertRelevantCodeSources(baseDomains.get(0), ourCodeSource);
 
         value = WildFlySecurityManager.doUnchecked(new CustomAction());
         assertEquals("Retrieved property", VALUE,  value);
 
-        List<ProtectionDomain[]> actualDomains = securityManager.reset();
+        List<Class<?>[]> actualDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, actualDomains.size());
-
-        ProtectionDomain[] base = addSecurityManagerProtectionDomain(baseDomains.get(0));
-        ProtectionDomain[] actual = actualDomains.get(0);
-
-        assertEquals("Matching ProtectionDomain[] size.", base.length, actual.length);
-        for (int i = 0; i < base.length; i++) {
-            assertEquals("Matching CodeSource Location", base[i].getCodeSource().getLocation(), actual[i].getCodeSource().getLocation());
-        }
+        assertRelevantCodeSources(actualDomains.get(0), ourCodeSource, managerCodeSource);
+        assertTrue("WildFlySecurityManager should be on the privileged stack", containsClass(actualDomains.get(0), WildFlySecurityManager.class));
     }
 
     @Test
     public void testDoUnchecked_WithContext() {
-        String value = AccessController.doPrivileged(new CustomAction(), context);
-        assertEquals("Retrieved property", VALUE,  value);
+        assertPropertyReadDenied(new PrivilegedAction<String>() {
+            @Override
+            public String run() {
+                return AccessController.doPrivileged(new CustomAction(), context);
+            }
+        });
 
-        List<ProtectionDomain[]> baseDomains = securityManager.reset();
+        List<Class<?>[]> baseDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, baseDomains.size());
+        assertRelevantCodeSources(baseDomains.get(0), ourCodeSource);
 
-        value = WildFlySecurityManager.doUnchecked(new CustomAction(), context);
-        assertEquals("Retrieved property", VALUE,  value);
+        assertPropertyReadDenied(new PrivilegedAction<String>() {
+            @Override
+            public String run() {
+                return WildFlySecurityManager.doUnchecked(new CustomAction(), context);
+            }
+        });
 
-        List<ProtectionDomain[]> actualDomains = securityManager.reset();
+        List<Class<?>[]> actualDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, actualDomains.size());
+        assertRelevantCodeSources(actualDomains.get(0), ourCodeSource, managerCodeSource);
+        assertTrue("WildFlySecurityManager should be on the privileged stack", containsClass(actualDomains.get(0), WildFlySecurityManager.class));
 
-        ProtectionDomain[] base = addSecurityManagerProtectionDomain(baseDomains.get(0));
-        ProtectionDomain[] actual = actualDomains.get(0);
+        assertPropertyReadDenied(new PrivilegedAction<String>() {
+            @Override
+            public String run() {
+                return WildFlySecurityManager.doUnchecked(KEY, new CustomAction(), context);
+            }
+        });
 
-        assertEquals("Matching ProtectionDomain[] size.", base.length, actual.length);
-        for (int i = 0; i < base.length; i++) {
-            assertEquals("Matching CodeSource Location", base[i].getCodeSource().getLocation(), actual[i].getCodeSource().getLocation());
-        }
-
-        value = WildFlySecurityManager.doUnchecked(KEY, new CustomAction(), context);
-        assertEquals("Retrieved property", VALUE,  value);
-
-        List<ProtectionDomain[]> parameterDomains = securityManager.reset();
+        List<Class<?>[]> parameterDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, parameterDomains.size());
-
-        ProtectionDomain[] parameter = parameterDomains.get(0);
-        assertEquals("Matching ProtectionDomain[] size.", base.length, parameter.length);
-        for (int i = 0; i < base.length; i++) {
-            assertEquals("Matching CodeSource Location", base[i].getCodeSource().getLocation(), parameter[i].getCodeSource().getLocation());
-        }
+        assertRelevantCodeSources(parameterDomains.get(0), ourCodeSource, managerCodeSource);
     }
 
     @Test
@@ -231,45 +187,41 @@ public class AlternateSecurityManagerTest {
         String value = WildFlySecurityManager.doChecked(new CustomAction());
         assertEquals("Retrieved property", VALUE,  value);
 
-        List<ProtectionDomain[]> baseDomains = securityManager.reset();
+        List<Class<?>[]> baseDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, baseDomains.size());
+        assertTrue("WildFlySecurityManager should be on the checked stack", containsClass(baseDomains.get(0), WildFlySecurityManager.class));
 
         value = WildFlySecurityManager.doChecked(KEY, new CustomAction());
         assertEquals("Retrieved property", VALUE,  value);
 
-        List<ProtectionDomain[]> actualDomains = securityManager.reset();
+        List<Class<?>[]> actualDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, actualDomains.size());
-
-        ProtectionDomain[] base = baseDomains.get(0);
-        ProtectionDomain[] actual = actualDomains.get(0);
-
-        assertEquals("Matching ProtectionDomain[] size.", base.length, actual.length);
-        for (int i = 0; i < base.length; i++) {
-            assertEquals("Matching CodeSource Location", base[i].getCodeSource().getLocation(), actual[i].getCodeSource().getLocation());
-        }
+        assertEquals("Matching relevant code sources", getRelevantCodeSources(baseDomains.get(0)), getRelevantCodeSources(actualDomains.get(0)));
     }
 
     @Test
     public void testDoChecked_WithContext() {
-        String value = WildFlySecurityManager.doChecked(new CustomAction(), context);
-        assertEquals("Retrieved property", VALUE,  value);
+        assertPropertyReadDenied(new PrivilegedAction<String>() {
+            @Override
+            public String run() {
+                return WildFlySecurityManager.doChecked(new CustomAction(), context);
+            }
+        });
 
-        List<ProtectionDomain[]> baseDomains = securityManager.reset();
+        List<Class<?>[]> baseDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, baseDomains.size());
+        assertRelevantCodeSources(baseDomains.get(0), ourCodeSource, managerCodeSource);
 
-        value = WildFlySecurityManager.doChecked(KEY, new CustomAction(), context);
-        assertEquals("Retrieved property", VALUE,  value);
+        assertPropertyReadDenied(new PrivilegedAction<String>() {
+            @Override
+            public String run() {
+                return WildFlySecurityManager.doChecked(KEY, new CustomAction(), context);
+            }
+        });
 
-        List<ProtectionDomain[]> actualDomains = securityManager.reset();
+        List<Class<?>[]> actualDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, actualDomains.size());
-
-        ProtectionDomain[] base = baseDomains.get(0);
-        ProtectionDomain[] actual = actualDomains.get(0);
-
-        assertEquals("Matching ProtectionDomain[] size.", base.length, actual.length);
-        for (int i = 0; i < base.length; i++) {
-            assertEquals("Matching CodeSource Location", base[i].getCodeSource().getLocation(), actual[i].getCodeSource().getLocation());
-        }
+        assertEquals("Matching relevant code sources", getRelevantCodeSources(baseDomains.get(0)), getRelevantCodeSources(actualDomains.get(0)));
     }
 
     @Test
@@ -277,94 +229,125 @@ public class AlternateSecurityManagerTest {
         String value = AccessController.doPrivileged(new CustomAction());
         assertEquals("Retrieved property", VALUE,  value);
 
-        List<ProtectionDomain[]> baseDomains = securityManager.reset();
+        List<Class<?>[]> baseDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, baseDomains.size());
+        assertRelevantCodeSources(baseDomains.get(0), ourCodeSource);
 
         value = WildFlySecurityManager.doPrivilegedWithParameter(KEY, new CustomAction());
         assertEquals("Retrieved property", VALUE,  value);
 
-        List<ProtectionDomain[]> actualDomains = securityManager.reset();
+        List<Class<?>[]> actualDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, actualDomains.size());
-
-        ProtectionDomain[] base = addSecurityManagerProtectionDomain(baseDomains.get(0));
-        ProtectionDomain[] actual = actualDomains.get(0);
-
-        assertEquals("Matching ProtectionDomain[] size.", base.length, actual.length);
-        for (int i = 0; i < base.length; i++) {
-            assertEquals("Matching CodeSource Location", base[i].getCodeSource().getLocation(), actual[i].getCodeSource().getLocation());
-        }
+        assertRelevantCodeSources(actualDomains.get(0), ourCodeSource, managerCodeSource);
+        assertTrue("WildFlySecurityManager should be on the privileged stack", containsClass(actualDomains.get(0), WildFlySecurityManager.class));
     }
 
     @Test
     public void testDoPrivilegedWithParameter_WithContext() {
-        String value = AccessController.doPrivileged(new CustomAction(), context);
-        assertEquals("Retrieved property", VALUE,  value);
+        assertPropertyReadDenied(new PrivilegedAction<String>() {
+            @Override
+            public String run() {
+                return AccessController.doPrivileged(new CustomAction(), context);
+            }
+        });
 
-        List<ProtectionDomain[]> baseDomains = securityManager.reset();
+        List<Class<?>[]> baseDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, baseDomains.size());
+        assertRelevantCodeSources(baseDomains.get(0), ourCodeSource);
 
-        value = WildFlySecurityManager.doPrivilegedWithParameter(KEY, new CustomAction(), context);
-        assertEquals("Retrieved property", VALUE,  value);
+        assertPropertyReadDenied(new PrivilegedAction<String>() {
+            @Override
+            public String run() {
+                return WildFlySecurityManager.doPrivilegedWithParameter(KEY, new CustomAction(), context);
+            }
+        });
 
-        List<ProtectionDomain[]> actualDomains = securityManager.reset();
+        List<Class<?>[]> actualDomains = securityManager.reset();
         assertEquals("Expected checkPermission Calls", 1, actualDomains.size());
+        assertRelevantCodeSources(actualDomains.get(0), ourCodeSource, managerCodeSource);
+    }
 
-        ProtectionDomain[] base = addSecurityManagerProtectionDomain(baseDomains.get(0));
-        ProtectionDomain[] actual = actualDomains.get(0);
-
-        assertEquals("Matching ProtectionDomain[] size.", base.length, actual.length);
-        for (int i = 0; i < base.length; i++) {
-            assertEquals("Matching CodeSource Location", base[i].getCodeSource().getLocation(), actual[i].getCodeSource().getLocation());
+    private void assertPropertyReadDenied(final PrivilegedAction<String> action) {
+        securityManager.setEnforceSecurityContext(true);
+        try {
+            action.run();
+            fail("Expected property read to be denied");
+        } catch (AccessControlException expected) {
+            // expected
+        } finally {
+            securityManager.setEnforceSecurityContext(false);
         }
     }
 
-    private static ProtectionDomain[] getProtectionDomainStack(final AccessControlContext context) {
-        ProtectionDomain[] domains = (ProtectionDomain[]) unsafe.getObject(context, pdStackOffset);
-        /*
-         * The call to doPrivileged adds an empty ProtectionDomain so filter it from the list.
-         */
-        ArrayList<ProtectionDomain> filteredDomains = new ArrayList<>();
-        for (ProtectionDomain current : domains) {
-            if (current.getClassLoader() != null || current.getCodeSource() != null || current.getPermissions() != null
-                    || (current.getPrincipals() != null && current.getPrincipals().length > 0)) {
-                filteredDomains.add(current);
+    private void assertRelevantCodeSources(final Class<?>[] context, final URL... expected) {
+        final List<URL> actual = getRelevantCodeSources(context);
+        int matchIndex = 0;
+        for (URL current : actual) {
+            if (current.equals(expected[matchIndex])) {
+                matchIndex++;
+                if (matchIndex == expected.length) {
+                    return;
+                }
             }
         }
-
-        return filteredDomains.toArray(new ProtectionDomain[filteredDomains.size()]);
+        assertEquals("Expected relevant code sources in order " + Arrays.asList(expected) + " but was " + actual, expected.length, matchIndex);
     }
 
-    private static ProtectionDomain[] addSecurityManagerProtectionDomain(ProtectionDomain[] original) {
-        ProtectionDomain managerDomain = WildFlySecurityManager.class.getProtectionDomain();
-        for (ProtectionDomain current : original) {
-            if (current.equals(managerDomain)) {
-                return original;
+    private List<URL> getRelevantCodeSources(final Class<?>[] context) {
+        ArrayList<URL> urls = new ArrayList<>();
+        URL previous = null;
+        for (Class<?> currentClass : context) {
+            URL current = getCodeSource(currentClass);
+            if (current != null && isRelevantCodeSource(current) && ! current.equals(previous)) {
+                urls.add(current);
+                previous = current;
             }
         }
+        return urls;
+    }
 
-        ProtectionDomain[] response = new ProtectionDomain[original.length + 1];
-        System.arraycopy(original, 0, response, 0, original.length);
-        response[response.length - 1] = managerDomain;
+    private boolean isRelevantCodeSource(final URL url) {
+        return url.equals(ourCodeSource) || url.equals(actionCodeSource) || url.equals(managerCodeSource);
+    }
 
-        return response;
+    private static URL getCodeSource(final Class<?> clazz) {
+        final ProtectionDomain protectionDomain = clazz.getProtectionDomain();
+        return protectionDomain != null && protectionDomain.getCodeSource() != null ? protectionDomain.getCodeSource().getLocation() : null;
+    }
+
+    private static boolean containsClass(final Class<?>[] context, final Class<?> expectedClass) {
+        for (Class<?> current : context) {
+            if (current == expectedClass) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static class CustomSecurityManager extends SecurityManager {
 
-        private final Stack<ProtectionDomain[]> calls = new Stack<>();
+        private final Stack<Class<?>[]> calls = new Stack<>();
+        private volatile boolean enforceSecurityContext;
 
-        List<ProtectionDomain[]> reset() {
-            List<ProtectionDomain[]> response = new ArrayList<>(calls);
+        List<Class<?>[]> reset() {
+            List<Class<?>[]> response = new ArrayList<>(calls);
             calls.clear();
 
             return response;
+        }
+
+        void setEnforceSecurityContext(final boolean enforceSecurityContext) {
+            this.enforceSecurityContext = enforceSecurityContext;
         }
 
         @Override
         public void checkPermission(Permission permission) {
             if (INTERESTING_PERMISSION.equals(permission)) {
                 System.out.println("Permission Check " + permission.toString());
-                calls.push(getProtectionDomainStack(((AccessControlContext)getSecurityContext())));
+                calls.push(getClassContext());
+                if (enforceSecurityContext) {
+                    ((AccessControlContext) getSecurityContext()).checkPermission(permission);
+                }
             }
         }
     }

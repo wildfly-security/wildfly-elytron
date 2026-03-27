@@ -19,9 +19,9 @@
 package org.wildfly.security.manager;
 
 import java.io.FileDescriptor;
-import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.net.InetAddress;
+import java.security.AccessControlException;
 import java.security.AccessControlContext;
 import java.security.CodeSource;
 import java.security.Permission;
@@ -53,7 +53,6 @@ import org.wildfly.security.manager.action.ReadPropertyAction;
 import org.wildfly.security.manager.action.SetContextClassLoaderAction;
 import org.wildfly.security.manager.action.WritePropertyAction;
 import org.wildfly.security.permission.PermissionVerifier;
-import sun.misc.Unsafe;
 
 import static java.lang.System.clearProperty;
 import static java.lang.System.getProperties;
@@ -91,6 +90,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         ParametricPrivilegedAction<Object, Object> action1;
         ParametricPrivilegedExceptionAction<Object, Object> action2;
         Object parameter;
+        AccessControlContext accessControlContext;
     }
 
     private static final ThreadLocal<Context> CTX = new ThreadLocal<Context>() {
@@ -99,29 +99,11 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         }
     };
 
-    private static final Unsafe unsafe;
-    private static final long pdStackOffset;
     private static final WildFlySecurityManager INSTANCE;
     private static final boolean hasGetCallerClass;
     private static final boolean usingStackWalker;
 
     static {
-        final Field pdField;
-        try {
-            // does not need to be accessible
-            pdField = AccessControlContext.class.getDeclaredField("context");
-        } catch (NoSuchFieldException e) {
-            throw new NoSuchFieldError(e.getMessage());
-        }
-        if (pdField.getType() != ProtectionDomain[].class) {
-            throw new Error();
-        }
-        try {
-            unsafe = (Unsafe) doPrivileged(new GetAccessibleDeclaredFieldAction(Unsafe.class, "theUnsafe")).get(null);
-        } catch (IllegalAccessException e) {
-            throw new IllegalAccessError(e.getMessage());
-        }
-        pdStackOffset = unsafe.objectFieldOffset(pdField);
         // Cannot be lambda due to JDK race conditions
         //noinspection Convert2Lambda,Anonymous2MethodRef
         INSTANCE = doPrivileged(new PrivilegedAction<WildFlySecurityManager>() {
@@ -280,7 +262,10 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
     }
 
     public boolean implies(final Permission permission) {
-        return tryCheckPermission(permission, getProtectionDomainStack(getContext()));
+        if (permission.implies(SECURITY_MANAGER_PERMISSION)) {
+            return false;
+        }
+        return tryCheckPermission(permission, getContext());
     }
 
     /**
@@ -294,29 +279,33 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         if (perm.implies(SECURITY_MANAGER_PERMISSION)) {
             throw access.secMgrChange();
         }
+        if (! tryCheckPermission(perm, context)) {
+            throw access.accessControlException(perm, perm);
+        }
+    }
+
+    private static boolean tryCheckPermission(final Permission permission, final AccessControlContext context) {
         final Context ctx = CTX.get();
         if (ctx.checking) {
             if (ctx.entered) {
-                return;
+                return true;
             }
-            final ProtectionDomain[] stack;
             ctx.entered = true;
             try {
-                stack = getProtectionDomainStack(context);
-                if (stack != null) {
-                    final ProtectionDomain deniedDomain = findAccessDenial(perm, stack);
-                    if (deniedDomain != null) {
-                        throw access.accessControlException(perm, perm, deniedDomain.getCodeSource(), deniedDomain.getClassLoader());
+                try {
+                    context.checkPermission(permission);
+                } catch (AccessControlException e) {
+                    access.accessCheckFailed(permission);
+                    if (access.isTraceEnabled()) {
+                        access.trace("Permission check failed (permission \"" + permission + "\")", e);
                     }
+                    return LOG_ONLY;
                 }
             } finally {
                 ctx.entered = false;
             }
         }
-    }
-
-    private static ProtectionDomain[] getProtectionDomainStack(final AccessControlContext context) {
-        return (ProtectionDomain[]) unsafe.getObject(context, pdStackOffset);
+        return true;
     }
 
     private static boolean doCheck() {
@@ -1526,6 +1515,32 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         }
     };
 
+    // Cannot be lambda due to JDK race conditions
+    @SuppressWarnings("Convert2Lambda")
+    private static final PrivilegedAction<Object> PA_TRAMPOLINE1_WITH_CONTEXT = new PrivilegedAction<Object>() {
+        public Object run() {
+            final Context ctx = CTX.get();
+            final AccessControlContext accessControlContext = ctx.accessControlContext;
+            ctx.accessControlContext = null;
+            return doPrivileged(PA_TRAMPOLINE1, accessControlContext);
+        }
+    };
+
+    // Cannot be lambda due to JDK race conditions
+    @SuppressWarnings("Convert2Lambda")
+    private static final PrivilegedExceptionAction<Object> PA_TRAMPOLINE2_WITH_CONTEXT = new PrivilegedExceptionAction<Object>() {
+        public Object run() throws Exception {
+            final Context ctx = CTX.get();
+            final AccessControlContext accessControlContext = ctx.accessControlContext;
+            ctx.accessControlContext = null;
+            try {
+                return doPrivileged(PA_TRAMPOLINE2, accessControlContext);
+            } catch (PrivilegedActionException e) {
+                throw e.getException();
+            }
+        }
+    };
+
     /**
      * Execute a parametric privileged action with the given parameter in a privileged context.
      *
@@ -1575,21 +1590,8 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         final Context ctx = CTX.get();
         ctx.action1 = (ParametricPrivilegedAction<Object, Object>) action;
         ctx.parameter = parameter;
-        ctx.entered = true;
-        final AccessControlContext combined;
-        try {
-            ProtectionDomain[] protectionDomainStack;
-            if (accessControlContext == null || (protectionDomainStack = getProtectionDomainStack(accessControlContext)) == null || protectionDomainStack.length == 0) {
-                combined = ACC_CACHE.get(getCallerClass(1));
-            } else {
-                final ProtectionDomain[] finalDomains = Arrays.copyOf(protectionDomainStack, protectionDomainStack.length + 1);
-                finalDomains[protectionDomainStack.length] = getCallerClass(1).getProtectionDomain();
-                combined = new AccessControlContext(finalDomains);
-            }
-        } finally {
-            ctx.entered = false;
-        }
-        return (T) doPrivileged(PA_TRAMPOLINE1, combined);
+        ctx.accessControlContext = accessControlContext;
+        return (T) doPrivileged(accessControlContext == null ? PA_TRAMPOLINE1 : PA_TRAMPOLINE1_WITH_CONTEXT, ACC_CACHE.get(getCallerClass(1)));
     }
 
     /**
@@ -1607,21 +1609,8 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         final Context ctx = CTX.get();
         ctx.action2 = (ParametricPrivilegedExceptionAction<Object, Object>) action;
         ctx.parameter = parameter;
-        ctx.entered = true;
-        final AccessControlContext combined;
-        try {
-            ProtectionDomain[] protectionDomainStack = getProtectionDomainStack(accessControlContext);
-            if (protectionDomainStack == null || protectionDomainStack.length == 0) {
-                combined = ACC_CACHE.get(getCallerClass(1));
-            } else {
-                final ProtectionDomain[] finalDomains = Arrays.copyOf(protectionDomainStack, protectionDomainStack.length + 1);
-                finalDomains[protectionDomainStack.length] = getCallerClass(1).getProtectionDomain();
-                combined = new AccessControlContext(finalDomains);
-            }
-        } finally {
-            ctx.entered = false;
-        }
-        return (T) doPrivileged(PA_TRAMPOLINE2, combined);
+        ctx.accessControlContext = accessControlContext;
+        return (T) doPrivileged(accessControlContext == null ? PA_TRAMPOLINE2 : PA_TRAMPOLINE2_WITH_CONTEXT, ACC_CACHE.get(getCallerClass(1)));
     }
 
     private static AccessControlContext getCallerAccessControlContext() {
