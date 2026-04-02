@@ -29,7 +29,7 @@ jobs:
           echo '127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4' >	%SystemRoot%\System32\drivers\etc\hosts
           echo '::1         localhost localhost.localdomain localhost6 localhost6.localdomain6' >> %SystemRoot%\System32\drivers\etc\hosts
         shell: cmd
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
@@ -45,7 +45,7 @@ jobs:
       #    docker-machine create --driver virtualbox default
       #    docker --version
       - name: Cache Maven packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-${{ matrix.java }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -73,3 +73,46 @@ jobs:
         if: ${{ failure() && ! contains(matrix.os, 'windows') }}
         shell: bash
         run: cat /etc/hosts;  ifconfig -a;
+
+  elytron-web-build:
+    name: Elytron Web Tests - JDK ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['21']
+    steps:
+      - name: Update hosts
+        run: |
+          cat /etc/hosts
+          sudo bash -c "echo '127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4' > /etc/hosts"
+          sudo bash -c "echo '::1         localhost localhost.localdomain localhost6 localhost6.localdomain6' >> /etc/hosts"
+          sudo sysctl -w fs.file-max=2097152
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-${{ matrix.java }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.java }}-m2
+      - name: Version Info
+        run: mvn -version
+      - name: Install wildfly-elytron SNAPSHOT
+        run: mvn -B install -DskipTests --file pom.xml
+      - name: Get wildfly-elytron version
+        id: elytron-version
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        shell: bash
+      - name: Clone Elytron Web
+        run: git clone --depth 1 -b 4.x https://github.com/wildfly-security/elytron-web.git elytron-web
+      - name: Build and test Elytron Web
+        run: mvn -B verify -Dversion.org.wildfly.security.elytron=${{ steps.elytron-version.outputs.version }}
+        working-directory: elytron-web
