@@ -128,4 +128,26 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 11005, value = "Invalid unicode endoding, offending sequence: %s.")
     IOException invalidUnicodeSequence(String s, @Cause NoSuchElementException nsee);
+
+    @Message(id = 13013, value = "Unable to create identity")
+    RealmUnavailableException unableToCreateIdentity();
+
+    @Message(id = 13014, value = "No such identity")
+    RealmUnavailableException noSuchIdentity();
+
+    @Message(id = 13015, value = "The delegate SecurityRealm does not implement ModifiableSecurityRealm")
+    RealmUnavailableException notModifiableRealm();
+
+    @Message(id = 13016, value = "This BruteForceRealmWrapper has already been built")
+    IllegalStateException bruteForceWrapperAlreadyBuilt();
+
+    @Message(id = 13017, value = "Class '%s' is not an interface, only interfaces can be proxied")
+    IllegalStateException notAnInterface(String className);
+
+    @Message(id = 13018, value = "Wrapped SecurityRealm '%s' implementation class '%s' does not implement interface '%s'")
+    IllegalStateException doesNotImplementRequiredInterface(String realmName, String implementationClass, String interfaceName);
+
+    @LogMessage(level = Logger.Level.WARN)
+    @Message(id = 13019, value = "The brute force tracking session cache for security realm '%s' is at capacity, tracking sessions are being evicted.")
+    void bruteForceSessionEvicted(String realmName);
 }

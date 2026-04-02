@@ -216,11 +216,13 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
             return;
         }
 
-        byte[] hA1 = getH_A1(messageDigest, username, messageRealm);
+        byte[] hA1;
 
-        if (hA1 == null) {
-            httpDigest.trace("Failed: unable to get expected proof");
-            fail();
+        try {
+            hA1 = getH_A1(messageDigest, username, messageRealm); // Does not return null.
+        } catch (AuthenticationMechanismException ame) {
+            httpDigest.trace("Failed: unable to get expected proof", ame);
+            failSafely();
             request.authenticationFailed(httpDigest.authenticationFailed(), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
             return;
         }
@@ -426,6 +428,22 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
             callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
         } catch (Throwable t) {
             throw httpDigest.mechCallbackHandlerFailedForUnknownReason(t);
+        }
+    }
+
+    /**
+     * Safely handles the authentication failure callback without throwing exceptions.
+     *
+     * This method attempts to invoke the callback handler with an authentication failure notification.
+     * Unlike {@link #fail()}, any exceptions encountered during callback handling are caught and logged
+     * rather than propagated, making this method safe for use in error handling paths where exceptions
+     * cannot be thrown or where they can be ignored.
+     */
+    private void failSafely() {
+        try {
+            callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
+        } catch (Throwable t) {
+            httpDigest.trace("Error handling AuthenticationCompleteCallback.FAILED", t);
         }
     }
 
