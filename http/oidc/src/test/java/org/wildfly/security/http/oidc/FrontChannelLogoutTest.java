@@ -73,6 +73,9 @@ public class FrontChannelLogoutTest extends AbstractLogoutTest {
 
         // logged out after finishing the redirections during frontchannel logout
         assertUserAuthenticated();
+        // Increase timeout to allow time for Keycloak to complete the backchannel logout callback
+        // The backchannel logout requires Keycloak to POST to the callback URL before responding to the browser
+        webClient.getOptions().setTimeout(60000); // 60 seconds
         webClient.getPage(getClientUrl() + getClientConfig().getLogoutPath());
         assertUserNotAuthenticated();
     }
@@ -102,6 +105,9 @@ public class FrontChannelLogoutTest extends AbstractLogoutTest {
         assertTrue(page.getWebResponse().getContentAsString().contains("Welcome, authenticated user"));
 
         assertUserAuthenticated();
+        // Increase timeout to allow time for Keycloak to complete the backchannel logout callback
+        // The backchannel logout requires Keycloak to POST to the callback URL before responding to the browser
+        webClient.getOptions().setTimeout(60000); // 60 seconds
         HtmlPage continueLogout = webClient.getPage(getClientUrl() + getClientConfig().getLogoutPath());
         page = continueLogout.getElementById("continue").click();
         assertUserNotAuthenticated();
@@ -119,6 +125,9 @@ public class FrontChannelLogoutTest extends AbstractLogoutTest {
                     getCurrentResponse().getCookies()).click();
             assertTrue(page.getContent().contains("Welcome, authenticated user"));
 
+            // Increase timeout to allow time for Keycloak to complete the backchannel logout callback
+            // The backchannel logout requires Keycloak to POST to the callback URL before responding to the browser
+            webClient.getOptions().setTimeout(60000); // 60 seconds
             HtmlPage logoutPage = webClient.getPage(getClientConfig().getEndSessionEndpointUrl() + "?client_id=" + CLIENT_ID);
             HtmlForm form = logoutPage.getForms().get(0);
             assertUserAuthenticated();

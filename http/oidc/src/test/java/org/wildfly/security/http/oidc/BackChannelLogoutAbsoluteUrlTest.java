@@ -73,6 +73,9 @@ public class BackChannelLogoutAbsoluteUrlTest extends AbstractLogoutTest {
 
         // logged out after finishing the redirections during logout
         assertUserAuthenticated();
+        // Increase timeout to allow time for Keycloak to complete the backchannel logout callback
+        // The backchannel logout requires Keycloak to POST to the callback URL before responding to the browser
+        webClient.getOptions().setTimeout(60000); // 60 seconds
         webClient.getPage(getClientUrl() + getClientConfig().getLogoutPath());
         assertUserNotAuthenticated();
     }
