@@ -103,7 +103,7 @@
         <version.org.jboss.logging>3.5.3.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.1.19.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.6.Final</version.org.jboss.logmanager.log4j-jboss>
-        <version.org.jboss.logging.tools>2.2.1.Final</version.org.jboss.logging.tools>
+        <version.org.jboss.logging.tools>2.2.2.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.12.2.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.2.0.Final</version.org.jboss.slf4j>
         <version.jakarta.json.jakarta-json-api>2.1.2</version.jakarta.json.jakarta-json-api>
@@ -138,8 +138,8 @@
         <linkXRef>false</linkXRef>
 
         <!-- Modularized JDK support (various workarounds) - activated via profile -->
-        <modular.jdk.args />
-        <modular.jdk.props />
+        <modular.jdk.args/>
+        <modular.jdk.props/>
     </properties>
 
     <build>
@@ -293,7 +293,7 @@
                         <consoleOutput>true</consoleOutput>
                         <failsOnError>true</failsOnError>
                         <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                        <useFile />
+                        <useFile/>
                         <excludes>**/*$logger.java,**/*$bundle.java</excludes>
                     </configuration>
                     <dependencies>
@@ -1288,8 +1288,8 @@
                 </property>
             </activation>
             <properties>
-                <modular.jdk.args />
-                <modular.jdk.props />
+                <modular.jdk.args/>
+                <modular.jdk.props/>
             </properties>
             <build>
                 <plugins>
@@ -1323,8 +1323,8 @@
                 </property>
             </activation>
             <properties>
-                <modular.jdk.args />
-                <modular.jdk.props />
+                <modular.jdk.args/>
+                <modular.jdk.props/>
             </properties>
             <build>
                 <plugins>
