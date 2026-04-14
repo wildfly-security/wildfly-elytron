@@ -100,7 +100,7 @@
         <version.org.apache.sshd.common>2.12.1</version.org.apache.sshd.common>
         <version.org.apache.httpcomponents.httpclient>4.5.13</version.org.apache.httpcomponents.httpclient>
 
-        <version.org.jboss.logging>3.4.1.Final</version.org.jboss.logging>
+        <version.org.jboss.logging>3.6.3.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.1.18.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.6.Final</version.org.jboss.logmanager.log4j-jboss>
         <version.org.jboss.logging.tools>2.2.1.Final</version.org.jboss.logging.tools>
@@ -138,8 +138,8 @@
         <linkXRef>false</linkXRef>
 
         <!-- Modularized JDK support (various workarounds) - activated via profile -->
-        <modular.jdk.args />
-        <modular.jdk.props />
+        <modular.jdk.args/>
+        <modular.jdk.props/>
     </properties>
 
     <build>
@@ -293,7 +293,7 @@
                         <consoleOutput>true</consoleOutput>
                         <failsOnError>true</failsOnError>
                         <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                        <useFile />
+                        <useFile/>
                         <excludes>**/*$logger.java,**/*$bundle.java</excludes>
                     </configuration>
                     <dependencies>
@@ -1293,8 +1293,8 @@
                 </property>
             </activation>
             <properties>
-                <modular.jdk.args />
-                <modular.jdk.props />
+                <modular.jdk.args/>
+                <modular.jdk.props/>
             </properties>
             <build>
                 <plugins>
@@ -1328,8 +1328,8 @@
                 </property>
             </activation>
             <properties>
-                <modular.jdk.args />
-                <modular.jdk.props />
+                <modular.jdk.args/>
+                <modular.jdk.props/>
             </properties>
             <build>
                 <plugins>
