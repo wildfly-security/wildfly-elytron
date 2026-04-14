@@ -118,7 +118,7 @@
         <version.com.squareup.okhttp3.mockwebserver>3.8.1</version.com.squareup.okhttp3.mockwebserver>
         <version.org.wildfly.checkstyle-config>1.0.8.Final</version.org.wildfly.checkstyle-config>
         <version.org.wildfly.client.config>1.0.1.Final</version.org.wildfly.client.config>
-        <version.org.wildfly.common>1.6.0.Final</version.org.wildfly.common>
+        <version.org.wildfly.common>1.7.0.Final</version.org.wildfly.common>
         <version.commons-io.commons-io>2.7</version.commons-io.commons-io>
         <version.org.mock-server.mockserver-netty>5.4.1</version.org.mock-server.mockserver-netty>
         <version.org.xipki.pki.ocsp-server>3.0.0</version.org.xipki.pki.ocsp-server>
@@ -138,8 +138,8 @@
         <linkXRef>false</linkXRef>
 
         <!-- Modularized JDK support (various workarounds) - activated via profile -->
-        <modular.jdk.args />
-        <modular.jdk.props />
+        <modular.jdk.args/>
+        <modular.jdk.props/>
     </properties>
 
     <build>
@@ -293,7 +293,7 @@
                         <consoleOutput>true</consoleOutput>
                         <failsOnError>true</failsOnError>
                         <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                        <useFile />
+                        <useFile/>
                         <excludes>**/*$logger.java,**/*$bundle.java</excludes>
                     </configuration>
                     <dependencies>
@@ -1288,8 +1288,8 @@
                 </property>
             </activation>
             <properties>
-                <modular.jdk.args />
-                <modular.jdk.props />
+                <modular.jdk.args/>
+                <modular.jdk.props/>
             </properties>
             <build>
                 <plugins>
@@ -1323,8 +1323,8 @@
                 </property>
             </activation>
             <properties>
-                <modular.jdk.args />
-                <modular.jdk.props />
+                <modular.jdk.args/>
+                <modular.jdk.props/>
             </properties>
             <build>
                 <plugins>
