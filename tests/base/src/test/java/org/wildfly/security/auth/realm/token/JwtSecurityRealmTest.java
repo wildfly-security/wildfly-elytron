@@ -31,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -781,6 +782,71 @@ public class JwtSecurityRealmTest {
         // token validation should succeed
         assertIdentityExist(securityRealm, evidence1);
         assertIdentityExist(securityRealm, evidence2);
+    }
+
+    @Test
+    public void testDefaultJkuUrl() throws Exception {
+        // JWTs with kid but no jku — simulates KeyCloak-issued tokens
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", null));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", null));
+        BearerTokenEvidence evidence3 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "3", null));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setDefaultJkuUrl(new URL("https://localhost:50831"))
+                        .setJkuTimeout(0)
+                        .setJkuMinTimeBetweenRequests(0)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        // keys 1 and 2 are served by the mock server
+        assertIdentityExist(securityRealm, evidence1);
+        assertIdentityExist(securityRealm, evidence2);
+        // key 3 is not in the JWKS response
+        assertIdentityNotExist(securityRealm, evidence3);
+    }
+
+    @Test
+    public void testDefaultJkuUrlKeyRotation() throws Exception {
+        // Start with only key 1
+        server.setDispatcher(createTokenDispatcher(jwksToJson(jwk1).toString()));
+
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", null));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", null));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setDefaultJkuUrl(new URL("https://localhost:50831"))
+                        .setJkuTimeout(0)
+                        .setJkuMinTimeBetweenRequests(0)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, evidence1);
+        assertIdentityNotExist(securityRealm, evidence2);
+
+        // Rotate: now serve both keys
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+
+        assertIdentityExist(securityRealm, evidence1);
+        assertIdentityExist(securityRealm, evidence2);
+
+        // Restore default dispatcher
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
     }
 
     private void assertIdentityNotExist(SecurityRealm realm, Evidence evidence) throws RealmUnavailableException {

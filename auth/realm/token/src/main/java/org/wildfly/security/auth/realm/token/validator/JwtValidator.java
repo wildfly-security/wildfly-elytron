@@ -82,6 +82,7 @@ public class JwtValidator implements TokenValidator {
     private final Map<String, PublicKey> namedKeys;
 
     private final PublicKey defaultPublicKey;
+    private final URL defaultJkuUrl;
 
     JwtValidator(Builder configuration) {
         this.issuers = checkNotNullParam("issuers", configuration.issuers);
@@ -89,6 +90,7 @@ public class JwtValidator implements TokenValidator {
         this.allowedJkuValues = checkNotNullParam("allowedJkuValues", configuration.allowedJkuValues);
         this.defaultPublicKey = configuration.publicKey;
         this.namedKeys = configuration.namedKeys;
+        this.defaultJkuUrl = configuration.defaultJkuUrl;
         if (configuration.sslContext != null) {
             this.jwkManager = new JwkManager(configuration.sslContext,
                                             configuration.hostnameVerifier != null ? configuration.hostnameVerifier : HttpsURLConnection.getDefaultHostnameVerifier(),
@@ -99,7 +101,7 @@ public class JwtValidator implements TokenValidator {
             log.tokenRealmJwtNoSSLIgnoringJku();
             this.jwkManager = null;
         }
-        if (defaultPublicKey == null && jwkManager == null && namedKeys.isEmpty()) {
+        if (defaultPublicKey == null && jwkManager == null && namedKeys.isEmpty() && defaultJkuUrl == null) {
             log.tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
         }
 
@@ -182,7 +184,7 @@ public class JwtValidator implements TokenValidator {
     }
 
     private boolean verifySignature(String encodedHeader, String encodedClaims, String encodedSignature) throws RealmUnavailableException {
-        if (defaultPublicKey == null && jwkManager == null && namedKeys.isEmpty()) {
+        if (defaultPublicKey == null && jwkManager == null && namedKeys.isEmpty() && defaultJkuUrl == null) {
             return true;
         }
 
@@ -328,6 +330,9 @@ public class JwtValidator implements TokenValidator {
                 return null;
             }
         } else {
+            if (defaultJkuUrl != null && jwkManager != null) {
+                return jwkManager.getPublicKey(kid.getString(), defaultJkuUrl);
+            }
             if (namedKeys.isEmpty()) {
                 log.debug("Cannot validate token with kid claim.");
                 return null;
@@ -359,6 +364,7 @@ public class JwtValidator implements TokenValidator {
         private int connectionTimeout = CONNECTION_TIMEOUT;
         private int readTimeout = CONNECTION_TIMEOUT;
         private int minTimeBetweenRequests = MIN_TIME_BETWEEN_REQUESTS;
+        private URL defaultJkuUrl;
 
         private Builder() {
         }
@@ -516,6 +522,22 @@ public class JwtValidator implements TokenValidator {
          */
         public Builder setAllowedJkuValues(String... allowedJkuValues) {
             this.allowedJkuValues.addAll(asList(allowedJkuValues));
+            return this;
+        }
+
+        /**
+         * Sets a default JWKS URL to use for fetching signing keys when the JWT contains a {@code kid}
+         * header but no {@code jku} header. This enables key resolution via the {@link JwkManager} with
+         * caching and automatic refresh, which is the standard behavior for OIDC providers like Keycloak
+         * that include {@code kid} but not {@code jku} in their JWT headers.
+         *
+         * <p>Requires an {@link SSLContext} to be configured if the URL uses HTTPS.
+         *
+         * @param defaultJkuUrl the default JWKS URL
+         * @return this instance
+         */
+        public Builder setDefaultJkuUrl(URL defaultJkuUrl) {
+            this.defaultJkuUrl = defaultJkuUrl;
             return this;
         }
 
