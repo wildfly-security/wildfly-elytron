@@ -1,0 +1,123 @@
+---
+layout: post
+title: 'The HashiCorp Vault integration is available for provisioning with WildFly 40 Beta'
+aliases: [/blog/wildfly-vault-feature-pack-wildfly-40-beta]
+date: 2026-04-30
+tags: hashicorp,vault,credential-store,subsystem,feature-pack,wildfly,galleon
+synopsis: The HashiCorp Vault integration is available for provisioning with WildFly 40 Beta.
+author: dvilkola
+---
+
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Introduction
+
+The WildFly Vault feature pack is released for use with https://wildfly.org/downloads/[WildFly 40 Beta] in the community stability level.
+You can add the `hashicorp-vault` layer on top of a WildFly 40 Beta installation provisioned from the standard Galleon packs, with the vault feature pack coordinates published to https://central.sonatype.com/[Maven Central].
+
+This builds on the integration described in our earlier posts (see <<resources,Resources>>): a WildFly Vault feature pack provides the `hashicorp-vault` layer, which provides the `hashicorp-vault` subsystem. This subsystem provides credential store resources backed by HC Vault, and related HC Vault expression resolution capabilities.
+
+This allows you to have a centralized credential storage in HC Vault which WildFly can refer to.
+
+== Provisioning WildFly 40 Beta with the hashicorp-vault layer
+
+Use the Galleon CLI (or the WildFly Maven plugin with equivalent feature pack locations) to install both the WildFly 40 Beta base pack and the WildFly Vault feature pack, and configure the `hashicorp-vault` layer.
+
+Replace `${wildfly.version}` with the WildFly 40 Beta or later and `${vault.pack.version}` with the latest `org.wildfly.security.vault:wildfly-vault-feature-pack` release on Maven Central:
+
+[source,bash]
+----
+galleon.sh install org.wildfly.security.vault:wildfly-vault-feature-pack:${vault.pack.version} \
+  --layers=hashicorp-vault,... \
+  --dir=wildfly
+----
+
+**IMPORTANT NOTE:** The location of this feature pack will most likely change in the WildFly 41 release. Specifically, the `hashicorp-vault` subsystem layer will likely be included in the wildfly-ee feature pack.
+
+== Examples
+
+=== Configure the Vault credential store
+
+Add a `credential-store` resource under `subsystem=hashicorp-vault`. The `name` of that resource is what you can pass as the credential store name in `credential-reference` and as a `storeName` in `+$\{HC_VAULT::...}+` expressions.
+
+[source,bash]
+----
+$WILDFLY_HOME/bin/jboss-cli.sh --connect
+
+/subsystem=elytron/authentication-context=vault_ac:add(match-rules=[{ssl-context=hcVaultSSC,match-host="${vault_host}"])
+
+/subsystem=hashicorp-vault/credential-store=my-vault:add(
+    host-address="${vault_host_and_port}",
+    credential-reference=\{clear-text="myroot"\},
+    authentication-context=vault_ac
+)
+----
+
+You can configure TLS and client certificate authentication by using the `authentication-context` attribute, see the subsystem documentation for the full attribute set.
+
+Secrets in Vault are addressed using **aliases** of the form `+<vault-path>.<key>+`: for example, `secret/myapp.database_password` refers to the `database_password` key under the `secret/myapp` path in the KV store. Populate HC Vault so that path and key exist, or do it through WildFly:
+
+[source,bash]
+----
+/subsystem=hashicorp-vault/credential-store=my-vault:add-alias(
+    alias="secret/myapp.database_password",
+    secret-value="supersecret"
+)
+----
+
+`read-aliases` lists aliases at a given path; optional parameters can limit the listing by Vault path and recursion depth.
+
+=== Using `credential-reference` against the Vault store
+
+Any management attribute that accepts a `credential-reference` can point at your HashiCorp Vault-backed store. The reference names the **credential store resource** (`store`) and the **alias** (`alias`), instead of the raw secret value.
+
+* `store` — must match the `credential-store` resource name (e.g. `my-vault`).
+* `alias` — must use the `+<path>.<key>+` form described above.
+
+Example: configure an Elytron `key-store` with a credential stored in HC Vault:
+
+[source,bash]
+----
+/subsystem=elytron/key-store=exampleKS:add(
+    credential-reference=\{store="my-vault", alias="secret/myapp.keystore_password"\},
+    path="standalone/configuration/example.keystore",
+    type="JKS"
+)
+----
+
+You can use similar `credential-reference` in all places that accept credential references.
+
+=== Using the `HC_VAULT` expression
+
+For attributes that accept expressions, you can configure secrets pointing to the HC Vault using below syntax:
+
+[source,text]
+----
+$\{HC_VAULT::storeName:alias\}
+----
+
+Where:
+
+* `storeName` is the `credential-store` resource name under `subsystem=hashicorp-vault` (same value as in `credential-reference`’s `store`).
+* `alias` is the same `+<vault-path>.<key>+` string used for aliases and for `credential-reference`’s `alias`.
+
+Example: secret as a system property (the attribute `value` supports expressions):
+
+[source,bash]
+----
+/system-property=my.app.password:add(value="$\{HC_VAULT::my-vault:secret/myapp.database_password\}")
+----
+
+* Report issues or ideas at https://github.com/wildfly-security-incubator/wildfly-hashicorp-vault-feature-pack/issues[wildfly-hashicorp-vault-feature-pack issues].
+* Chat with the team on Zulip: https://wildfly.zulipchat.com/#narrow/stream/173102-wildfly-elytron[wildfly-elytron].
+
+== Resources
+
+* link:https://github.com/wildfly-security-incubator/wildfly-hashicorp-vault-feature-pack[WildFly HashiCorp Vault feature pack (source)]
+* link:https://wildfly.org/downloads/[WildFly downloads]
+* link:https://www.vaultproject.io/[HashiCorp Vault documentation]
+* Earlier Elytron blog: link:https://wildfly-security.github.io/wildfly-elytron/blog/hashicorp-vault-releases-and-expression-resolver/[HashiCorp Vault releases and expression resolver]
+* Earlier Elytron blog: link:https://wildfly-security.github.io/wildfly-elytron/blog/hashicorp-vault-credential-store/[Upcoming WildFly HashiCorp Vault integration]
