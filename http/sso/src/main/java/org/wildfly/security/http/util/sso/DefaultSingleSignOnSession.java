@@ -247,6 +247,6 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
         String mechanism = sso.getMechanism();
         boolean programmatic = sso.isProgrammatic();
         SecurityIdentity identity = sso.getIdentity();
-        return (identity != null) ? new CachedIdentity(mechanism, programmatic, identity) : new CachedIdentity(mechanism, programmatic, new NamePrincipal(sso.getName()));
+        return (identity != null) ? new CachedIdentity(mechanism, programmatic, identity) : new CachedIdentity(mechanism, programmatic, new NamePrincipal(sso.getName()), sso.getRoles());
     }
 }
