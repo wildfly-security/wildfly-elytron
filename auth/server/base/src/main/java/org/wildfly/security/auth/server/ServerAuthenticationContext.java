@@ -96,7 +96,7 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.ssl.SSLConnection;
+import org.wildfly.security.auth.ssl.SSLConnection;
 import org.wildfly.security.x500.X500;
 import org.wildfly.security.auth.server._private.ElytronMessages;
 

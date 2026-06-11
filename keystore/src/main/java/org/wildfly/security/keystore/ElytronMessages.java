@@ -44,7 +44,7 @@ import org.jboss.logging.annotations.ValidIdRanges;
     @ValidIdRange(min = 2001, max = 2035),
     @ValidIdRange(min = 8027, max = 8027)
 })
-interface ElytronMessages extends BasicLogger {
+public interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
     ElytronMessages tls = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.tls");

@@ -34,7 +34,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.SSLCallback;
-import org.wildfly.security.ssl.TLSServerEndPointChannelBinding;
+import org.wildfly.security.auth.ssl.TLSServerEndPointChannelBinding;
 import org.wildfly.security.x500.X500;
 
 /**

@@ -22,7 +22,7 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 
 import javax.net.ssl.SSLSession;
 
-import org.wildfly.security.ssl.SSLConnection;
+import org.wildfly.security.auth.ssl.SSLConnection;
 
 /**
  * A callback which provides information to the callback handler about the established SSLSession.

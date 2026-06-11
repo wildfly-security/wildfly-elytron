@@ -29,7 +29,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.auth.callback.SSLCallback;
-import org.wildfly.security.ssl.SSLConnection;
+import org.wildfly.security.auth.ssl.SSLConnection;
 
 /**
  * A callback handler which delegates to another callback handler, passing the authentication's SSL/TLS information to that

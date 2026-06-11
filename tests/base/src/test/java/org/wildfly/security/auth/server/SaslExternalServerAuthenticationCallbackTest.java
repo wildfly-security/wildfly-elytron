@@ -31,7 +31,7 @@ import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
 import org.wildfly.security.sasl.external.ExternalSaslServerFactory;
 import org.wildfly.security.sasl.util.SetMechanismInformationSaslServerFactory;
-import org.wildfly.security.ssl.SSLConnection;
+import org.wildfly.security.auth.ssl.SSLConnection;
 import org.wildfly.security.x500.X500;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
