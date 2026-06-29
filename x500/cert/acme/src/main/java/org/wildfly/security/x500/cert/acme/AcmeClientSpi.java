@@ -34,6 +34,7 @@ import static org.wildfly.security.x500.cert.acme.Acme.CSR;
 import static org.wildfly.security.x500.cert.acme.Acme.DEACTIVATED;
 import static org.wildfly.security.x500.cert.acme.Acme.DETAIL;
 import static org.wildfly.security.x500.cert.acme.Acme.DNS;
+import static org.wildfly.security.x500.cert.acme.Acme.EXTERNAL_ACCOUNT_BINDING;
 import static org.wildfly.security.x500.cert.acme.Acme.EXTERNAL_ACCOUNT_REQUIRED;
 import static org.wildfly.security.x500.cert.acme.Acme.FINALIZE;
 import static org.wildfly.security.x500.cert.acme.Acme.GET;
@@ -123,6 +124,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.common.Assert;
@@ -167,6 +170,8 @@ public abstract class AcmeClientSpi {
     private static final long DEFAULT_RETRY_AFTER_MILLI = 3000;
     private static final int[] CONTENT_TYPE_DELIMS = new int[] {';', '='};
     private static final String CHARSET = "charset";
+    private static final String HMAC_SHA256 = "HmacSHA256";
+    private static final String HS256 = "HS256";
     private static final String UTF_8 = "utf-8";
     private static final String USER_AGENT_STRING = "Elytron ACME Client/" + Version.getVersion();
 
@@ -286,6 +291,9 @@ public abstract class AcmeClientSpi {
                 }
                 payloadBuilder.add(CONTACT, contactBuilder.build());
             }
+        }
+        if (account.hasExternalAccountBinding()) {
+            payloadBuilder.add(EXTERNAL_ACCOUNT_BINDING, getExternalAccountBinding(account, newAccountUrl));
         }
 
         HttpURLConnection connection = sendPostRequestWithRetries(account, staging, newAccountUrl, true,
@@ -1042,6 +1050,15 @@ public abstract class AcmeClientSpi {
         return getEncodedJson(protectedHeader);
     }
 
+    private static String getEncodedExternalAccountBindingProtectedHeader(String keyIdentifier, String resourceUrl) {
+        JsonObject protectedHeader = Json.createObjectBuilder()
+                .add(ALG, HS256)
+                .add(KID, keyIdentifier)
+                .add(URL, resourceUrl)
+                .build();
+        return getEncodedJson(protectedHeader);
+    }
+
     private String getEncodedProtectedHeader(boolean useJwk, String resourceUrl, AcmeAccount account, boolean staging) throws AcmeException {
         JsonObjectBuilder protectedHeaderBuilder = Json.createObjectBuilder().add(ALG, account.getAlgHeader());
         if (useJwk) {
@@ -1101,6 +1118,16 @@ public abstract class AcmeClientSpi {
         }
     }
 
+    private static String getEncodedMacSignature(byte[] key, String encodedProtectedHeader, String encodedPayload) throws AcmeException {
+        try {
+            Mac mac = Mac.getInstance(HMAC_SHA256);
+            mac.init(new SecretKeySpec(key, HMAC_SHA256));
+            return base64UrlEncode(mac.doFinal((encodedProtectedHeader + "." + encodedPayload).getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw acme.unableToCreateAcmeSignature(e);
+        }
+    }
+
     private static int getECSignatureByteLength(String signatureAlgorithm) throws AcmeException {
         switch(signatureAlgorithm) {
             case "SHA256withECDSA":
@@ -1112,6 +1139,16 @@ public abstract class AcmeClientSpi {
             default:
                 throw acme.unsupportedAcmeAccountSignatureAlgorithm(signatureAlgorithm);
         }
+    }
+
+    /**
+     * Build the nested JWS object required for external account binding during account creation.
+     */
+    private static JsonObject getExternalAccountBinding(AcmeAccount account, String newAccountUrl) throws AcmeException {
+        final String encodedProtectedHeader = getEncodedExternalAccountBindingProtectedHeader(account.getExternalAccountBindingKeyIdentifier(), newAccountUrl);
+        final String encodedPayload = getEncodedJson(getJwk(account.getPublicKey(), account.getAlgHeader()));
+        final String encodedSignature = getEncodedMacSignature(account.getExternalAccountBindingKey(), encodedProtectedHeader, encodedPayload);
+        return getJws(encodedProtectedHeader, encodedPayload, encodedSignature);
     }
 
     private byte[] getNonce(AcmeAccount account, boolean staging) throws AcmeException {

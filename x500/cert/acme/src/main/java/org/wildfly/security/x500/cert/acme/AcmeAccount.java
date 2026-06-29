@@ -36,6 +36,7 @@ import java.util.Map;
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.asn1.ASN1Encodable;
 import org.wildfly.security.x500.X500;
 import org.wildfly.security.x500.X500AttributeTypeAndValue;
@@ -64,6 +65,8 @@ public final class AcmeAccount {
     private int keySize;
     private String keyAlgorithmName;
     private String accountUrl;
+    private String externalAccountBindingKeyIdentifier;
+    private byte[] externalAccountBindingKey;
     private HashMap<AcmeResource, URL> resourceUrls = new HashMap<>(AcmeResource.values().length);
     private HashMap<AcmeResource, URL> stagingResourceUrls = new HashMap<>(AcmeResource.values().length);
     private byte[] nonce;
@@ -80,6 +83,8 @@ public final class AcmeAccount {
         this.keySize = builder.keySize;
         this.keyAlgorithmName = builder.keyAlgorithmName;
         this.dn = builder.dn;
+        this.externalAccountBindingKeyIdentifier = builder.externalAccountBindingKeyIdentifier;
+        this.externalAccountBindingKey = builder.externalAccountBindingKey != null ? builder.externalAccountBindingKey.clone() : null;
     }
 
     /**
@@ -240,6 +245,33 @@ public final class AcmeAccount {
     }
 
     /**
+     * Get the external account binding key identifier (kid) supplied by the certificate authority.
+     *
+     * @return the external account binding key identifier or {@code null} if not configured
+     */
+    public String getExternalAccountBindingKeyIdentifier() {
+        return externalAccountBindingKeyIdentifier;
+    }
+
+    /**
+     * Get the external account binding HMAC key supplied by the certificate authority.
+     *
+     * @return the external account binding HMAC key or {@code null} if not configured
+     */
+    public byte[] getExternalAccountBindingKey() {
+        return externalAccountBindingKey != null ? externalAccountBindingKey.clone() : null;
+    }
+
+    /**
+     * Return whether external account binding credentials have been configured for this account.
+     *
+     * @return {@code true} if external account binding credentials have been configured and {@code false} otherwise
+     */
+    public boolean hasExternalAccountBinding() {
+        return externalAccountBindingKeyIdentifier != null && externalAccountBindingKey != null;
+    }
+
+    /**
      * Set the account location URL provided by the ACME server.
      *
      * @param accountUrl the account location URL (must not be {@code null})
@@ -347,6 +379,8 @@ public final class AcmeAccount {
         private int keySize = -1;
         private String algHeader;
         private String signatureAlgorithm;
+        private String externalAccountBindingKeyIdentifier;
+        private byte[] externalAccountBindingKey;
 
         /**
          * Construct a new uninitialized instance.
@@ -450,6 +484,33 @@ public final class AcmeAccount {
             this.certificate = certificate;
             this.privateKey = privateKey;
             return this;
+        }
+
+        /**
+         * Set the external account binding (EAB) credentials to use when registering this account.
+         *
+         * @param keyIdentifier the key identifier supplied by the certificate authority (must not be empty)
+         * @param hmacKey the HMAC key supplied by the certificate authority (must not be empty)
+         * @return this builder instance
+         */
+        public Builder setExternalAccountBinding(final String keyIdentifier, final byte[] hmacKey) {
+            Assert.checkNotEmptyParam("keyIdentifier", keyIdentifier);
+            Assert.checkNotEmptyParam("hmacKey", hmacKey);
+            this.externalAccountBindingKeyIdentifier = keyIdentifier;
+            this.externalAccountBindingKey = hmacKey.clone();
+            return this;
+        }
+
+        /**
+         * Set the external account binding (EAB) credentials to use when registering this account.
+         *
+         * @param keyIdentifier the key identifier supplied by the certificate authority (must not be empty)
+         * @param base64UrlEncodedHmacKey the base64url-encoded HMAC key supplied by the certificate authority (must not be empty)
+         * @return this builder instance
+         */
+        public Builder setExternalAccountBinding(final String keyIdentifier, final String base64UrlEncodedHmacKey) {
+            Assert.checkNotEmptyParam("base64UrlEncodedHmacKey", base64UrlEncodedHmacKey);
+            return setExternalAccountBinding(keyIdentifier, CodePointIterator.ofString(base64UrlEncodedHmacKey).base64Decode(Acme.BASE64_URL, false).drain());
         }
 
         /**
