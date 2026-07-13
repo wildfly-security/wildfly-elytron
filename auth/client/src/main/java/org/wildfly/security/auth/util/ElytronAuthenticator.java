@@ -79,7 +79,7 @@ public final class ElytronAuthenticator extends Authenticator {
         try {
             authenticationConfiguration = client.getAuthenticationConfiguration(getRequestingURL().toURI(), context);
         } catch (URISyntaxException e) {
-            log.tracef("URISyntaxException getting URI from the requesting URL [%s]:", getRequestingURL(), e);
+            log.tracef(e, "URISyntaxException getting URI from the requesting URL [%s]:", getRequestingURL());
             return null;
         }
         if (authenticationConfiguration == null) return null;

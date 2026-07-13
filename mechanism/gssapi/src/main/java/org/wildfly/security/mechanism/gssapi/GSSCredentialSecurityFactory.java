@@ -174,7 +174,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
                 log.tracef("KerberosTicket refreshed until %s", ticket.getEndTime());
                 stillValid = true;
             } catch (RefreshFailedException e) {
-                log.tracef("Unable to refresh KerberosTicket.", e);
+                log.trace("Unable to refresh KerberosTicket.", e);
             }
         }
 

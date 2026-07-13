@@ -118,7 +118,7 @@ public class TokenValidator {
             }
         } catch (InvalidJwtException e) {
             String msg = e.getErrorDetails().get(0).getErrorMessage();
-            log.tracef(msg, e);
+            log.trace(msg, e);
             throw new OidcException(msg, e);
         }
 
@@ -152,7 +152,7 @@ public class TokenValidator {
             JwtClaims jwtClaims = new JwtConsumerBuilder().setSkipSignatureVerification().setSkipAllValidators().build().processToClaims(accessToken);
             return new VerifiedTokens(new IDToken(idJwtClaims), new AccessToken(jwtClaims));
         } catch (InvalidJwtException e) {
-            log.tracef("Problem parsing ID token: " + idToken, e);
+            log.tracef(e, "Problem parsing ID token: %s", idToken);
             throw log.invalidIDToken(e);
         }
     }
@@ -191,7 +191,7 @@ public class TokenValidator {
                 throw log.invalidTokenClaims();
             }
         } catch (InvalidJwtException e) {
-            log.tracef("Problem parsing bearer token: " + token, e);
+            log.tracef(e, "Problem parsing bearer token: %s", token);
             throw log.invalidBearerToken(e);
         }
         return jwtClaims;
