@@ -178,26 +178,22 @@ public class OAuth2IntrospectValidator implements TokenValidator {
 
         boolean isHttps = url.getProtocol().equalsIgnoreCase("https");
 
-        try {
-            log.debugf("Opening connection to token introspection endpoint [%s]", url);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        log.debugf("Opening connection to token introspection endpoint [%s]", url);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-            if (isHttps) {
-                HttpsURLConnection https = (HttpsURLConnection) connection;
+        if (isHttps) {
+            HttpsURLConnection https = (HttpsURLConnection) connection;
 
-                https.setSSLSocketFactory(sslContext.getSocketFactory());
+            https.setSSLSocketFactory(sslContext.getSocketFactory());
 
-                if (hostnameVerifier != null) {
-                    https.setHostnameVerifier(hostnameVerifier);
-                }
+            if (hostnameVerifier != null) {
+                https.setHostnameVerifier(hostnameVerifier);
             }
-            connection.setConnectTimeout(connectionTimeout);
-            connection.setReadTimeout(readTimeout);
-
-            return connection;
-        } catch (IOException cause) {
-            throw cause;
         }
+        connection.setConnectTimeout(connectionTimeout);
+        connection.setReadTimeout(readTimeout);
+
+        return connection;
     }
 
     static byte[] buildParameters(Map<String, String> parameters) throws UnsupportedEncodingException {
