@@ -209,6 +209,9 @@ public class DERDecoder implements ASN1Decoder {
     public byte[] decodeBitString() throws ASN1Exception {
         readTag(BIT_STRING_TYPE);
         int length = readLength();
+        if (length == 0) {
+            throw log.asnEmptyBitString();
+        }
         byte[] result = new byte[length - 1];
 
         int numUnusedBits = bi.next();
@@ -253,6 +256,9 @@ public class DERDecoder implements ASN1Decoder {
     public String decodeBitStringAsString() throws ASN1Exception {
         readTag(BIT_STRING_TYPE);
         int length = readLength();
+        if (length == 0) {
+            throw log.asnEmptyBitString();
+        }
         int numUnusedBits = bi.next();
         if (numUnusedBits < 0 || numUnusedBits > 7) {
             throw log.asnInvalidNumberOfUnusedBits();

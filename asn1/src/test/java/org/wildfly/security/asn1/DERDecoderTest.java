@@ -488,4 +488,30 @@ public class DERDecoderTest {
         }
     }
 
+    // --- Tests for bit string with zero-length content ---
+
+    private static final String EMPTY_BIT_STRING_MESSAGE = "ELY28002: Bit string must contain at least one byte for the unused bits count";
+
+    @Test
+    public void testDecodeBitStringZeroLength() {
+        byte[] payload = new byte[] { 0x03, 0x00 };
+        try {
+            new DERDecoder(payload).decodeBitString();
+            fail("Expected ASN1Exception for zero-length bit string");
+        } catch (ASN1Exception e) {
+            assertEquals(EMPTY_BIT_STRING_MESSAGE, e.getMessage());
+        }
+    }
+
+    @Test
+    public void testDecodeBitStringAsStringZeroLength() {
+        byte[] payload = new byte[] { 0x03, 0x00 };
+        try {
+            new DERDecoder(payload).decodeBitStringAsString();
+            fail("Expected ASN1Exception for zero-length bit string");
+        } catch (ASN1Exception e) {
+            assertEquals(EMPTY_BIT_STRING_MESSAGE, e.getMessage());
+        }
+    }
+
 }

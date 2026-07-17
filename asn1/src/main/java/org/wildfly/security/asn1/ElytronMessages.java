@@ -106,4 +106,7 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 28001, value = "Invalid negative length in DER encoded data")
     ASN1Exception asnInvalidNegativeLength();
 
+    @Message(id = 28002, value = "Bit string must contain at least one byte for the unused bits count")
+    ASN1Exception asnEmptyBitString();
+
 }
