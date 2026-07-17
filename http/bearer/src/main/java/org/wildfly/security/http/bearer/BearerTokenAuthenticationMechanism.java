@@ -67,6 +67,11 @@ final class BearerTokenAuthenticationMechanism implements HttpServerAuthenticati
 
     private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer *([^ ]+) *$", Pattern.CASE_INSENSITIVE);
 
+    static String extractBearerToken(String authorizationHeader) {
+        Matcher matcher = BEARER_TOKEN_PATTERN.matcher(authorizationHeader);
+        return matcher.matches() ? matcher.group(1) : null;
+    }
+
     private final CallbackHandler callbackHandler;
 
     BearerTokenAuthenticationMechanism(CallbackHandler callbackHandler) {
@@ -83,10 +88,10 @@ final class BearerTokenAuthenticationMechanism implements HttpServerAuthenticati
         List<String> authorizationValues = request.getRequestHeaderValues(HttpConstants.AUTHORIZATION);
 
         if (authorizationValues != null) {
-            Matcher matcher;
             for (String current : authorizationValues) {
-                if ((matcher = BEARER_TOKEN_PATTERN.matcher(current)).matches()) {
-                    BearerTokenEvidence tokenEvidence = new BearerTokenEvidence(matcher.group(1));
+                String bearerToken = extractBearerToken(current);
+                if (bearerToken != null) {
+                    BearerTokenEvidence tokenEvidence = new BearerTokenEvidence(bearerToken);
                     EvidenceVerifyCallback verifyCallback = new EvidenceVerifyCallback(tokenEvidence);
 
                     handleCallback(verifyCallback);
