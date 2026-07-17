@@ -36,7 +36,8 @@ import org.jboss.logging.annotations.ValidIdRanges;
 @MessageLogger(projectCode = "ELY", length = 5)
 @ValidIdRanges({
     @ValidIdRange(min = 12, max = 12),
-    @ValidIdRange(min = 7004, max = 7024)
+    @ValidIdRange(min = 7004, max = 7024),
+    @ValidIdRange(min = 28000, max = 28999)
 })
 interface ElytronMessages extends BasicLogger {
 
@@ -98,5 +99,8 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 7024, value = "Invalid length encountered for boolean type tag")
     ASN1Exception asnInvalidLengthForBooleanTypeTag();
+
+    @Message(id = 28000, value = "Declared length exceeds available bytes in DER encoded data")
+    ASN1Exception asnDeclaredLengthExceedsAvailableBytes();
 
 }

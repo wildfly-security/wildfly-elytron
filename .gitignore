@@ -42,3 +42,6 @@ hs_err_pid*.log
 /.m2
 settings.xml
 .codenvy
+# Local AI Agent Files
+.bob
+TASK.md

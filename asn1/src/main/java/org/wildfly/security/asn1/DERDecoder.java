@@ -42,6 +42,7 @@ public class DERDecoder implements ASN1Decoder {
     private static final Charset UTF_32BE = Charset.forName("UTF-32BE");
 
     private final ByteIterator bi;
+    private final int bufferSize;
     private final ArrayDeque<DecoderState> states = new ArrayDeque<DecoderState>();
     private int implicitTag = -1;
 
@@ -51,7 +52,7 @@ public class DERDecoder implements ASN1Decoder {
      * @param buf the byte array to decode
      */
     public DERDecoder(byte[] buf) {
-        this.bi = ByteIterator.ofBytes(buf);
+        this(ByteIterator.ofBytes(buf), buf.length);
     }
 
     /**
@@ -62,16 +63,18 @@ public class DERDecoder implements ASN1Decoder {
      * @param length the maximum number of bytes to read from the byte array
      */
     public DERDecoder(byte[] buf, int offset, int length) {
-        this.bi = ByteIterator.ofBytes(buf, offset, length);
+        this(ByteIterator.ofBytes(buf, offset, length), length);
     }
 
     /**
      * Create a DER decoder that will decode values from the given {@code ByteIterator}.
      *
      * @param bi the {@code ByteIterator} from which DER encoded values will be decoded
+     * @param bufferSize the total number of bytes available in the iterator
      */
-    DERDecoder(ByteIterator bi) {
+    DERDecoder(ByteIterator bi, int bufferSize) {
         this.bi = bi;
+        this.bufferSize = bufferSize;
     }
 
     @Override
@@ -586,6 +589,9 @@ public class DERDecoder implements ASN1Decoder {
                     nextOctet = bi.next();
                     length = (length << 8) + nextOctet;
                 }
+            }
+            if (length > bufferSize - bi.getIndex()) {
+                throw log.asnDeclaredLengthExceedsAvailableBytes();
             }
             return length;
         } catch (NoSuchElementException e) {
