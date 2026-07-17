@@ -590,6 +590,9 @@ public class DERDecoder implements ASN1Decoder {
                     length = (length << 8) + nextOctet;
                 }
             }
+            if (length < 0) {
+                throw log.asnInvalidNegativeLength();
+            }
             if (length > bufferSize - bi.getIndex()) {
                 throw log.asnDeclaredLengthExceedsAvailableBytes();
             }

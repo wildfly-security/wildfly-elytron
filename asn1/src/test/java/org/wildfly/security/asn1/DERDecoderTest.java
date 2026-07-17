@@ -470,4 +470,22 @@ public class DERDecoderTest {
     public void testStartSetInflatedLength() {
         assertInflatedLengthRejected(() -> new DERDecoder(inflatedPayload(0x31)).startSet());
     }
+
+    // --- Tests for negative length overflow (long-form length with high bit set) ---
+
+    private static final String NEGATIVE_LENGTH_MESSAGE = "ELY28001: Invalid negative length in DER encoded data";
+
+    @Test
+    public void testNegativeLengthOverflow() {
+        // 0x84 = long form, 4 length octets follow
+        // 0x80 0x00 0x00 0x01 = 2147483649 as unsigned, but overflows to -2147483647 as signed int
+        byte[] payload = new byte[] { 0x04, (byte) 0x84, (byte) 0x80, 0x00, 0x00, 0x01, 0x00 };
+        try {
+            new DERDecoder(payload).decodeOctetString();
+            fail("Expected ASN1Exception for negative length overflow");
+        } catch (ASN1Exception e) {
+            assertEquals(NEGATIVE_LENGTH_MESSAGE, e.getMessage());
+        }
+    }
+
 }

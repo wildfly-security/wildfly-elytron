@@ -103,4 +103,7 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 28000, value = "Declared length exceeds available bytes in DER encoded data")
     ASN1Exception asnDeclaredLengthExceedsAvailableBytes();
 
+    @Message(id = 28001, value = "Invalid negative length in DER encoded data")
+    ASN1Exception asnInvalidNegativeLength();
+
 }
