@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.realm.token.validator;
+package org.wildfly.security.credential.source;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -27,11 +27,11 @@ import java.util.Map;
 import org.junit.Test;
 
 /**
- * Tests for {@link OAuth2IntrospectValidator} parameter encoding.
+ * Tests for {@link OAuth2CredentialSource} parameter encoding.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class OAuth2IntrospectValidatorTest {
+public class OAuth2CredentialSourceTest {
 
     @Test
     public void testBuildParametersEncodesInjectionCharacters() throws Exception {
@@ -39,7 +39,7 @@ public class OAuth2IntrospectValidatorTest {
         parameters.put("token", "legitimate_token&injected=evil");
         parameters.put("token_type_hint", "access_token");
 
-        byte[] result = OAuth2IntrospectValidator.buildParameters(parameters);
+        byte[] result = OAuth2CredentialSource.buildParameters(parameters);
         String body = new String(result, "UTF-8");
 
         assertFalse("Token value containing '&' must be URL-encoded to prevent parameter injection, "
@@ -55,7 +55,7 @@ public class OAuth2IntrospectValidatorTest {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("token", "token_value=with_equals");
 
-        byte[] result = OAuth2IntrospectValidator.buildParameters(parameters);
+        byte[] result = OAuth2CredentialSource.buildParameters(parameters);
         String body = new String(result, "UTF-8");
 
         String[] parts = body.split("&");

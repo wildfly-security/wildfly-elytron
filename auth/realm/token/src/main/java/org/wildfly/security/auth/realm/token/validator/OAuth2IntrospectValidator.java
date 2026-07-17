@@ -200,7 +200,7 @@ public class OAuth2IntrospectValidator implements TokenValidator {
         }
     }
 
-    private byte[] buildParameters(Map<String, String> parameters) throws UnsupportedEncodingException {
+    static byte[] buildParameters(Map<String, String> parameters) throws UnsupportedEncodingException {
         ByteStringBuilder params = new ByteStringBuilder();
 
         for (Map.Entry<String, String> entry : parameters.entrySet()) {
