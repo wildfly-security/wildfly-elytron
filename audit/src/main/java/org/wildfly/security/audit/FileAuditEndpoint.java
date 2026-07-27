@@ -95,6 +95,10 @@ public class FileAuditEndpoint implements AuditEndpoint {
         return file;
     }
 
+    final Charset getCharset() {
+        return charset;
+    }
+
     private void safeClose(Closeable c) {
         try {
             if (c != null) c.close();

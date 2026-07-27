@@ -32,13 +32,15 @@ import org.keycloak.representations.idm.ClientRepresentation;
 
 public class BackChannelLogoutTest extends AbstractLogoutTest {
 
+    private static final String LOGOUT_CALLBACK_PATH = "/logout/callback";
+
     @Override
     protected void doConfigureClient(ClientRepresentation client) {
         List<String> redirectUris = client.getRedirectUris();
         String redirectUri = redirectUris.get(0);
 
         OidcClientConfiguration config = new OidcClientConfiguration();
-        config.setLogoutCallbackPath(Oidc.DEFAULT_LOGOUT_CALLBACK_PATH);
+        config.setLogoutCallbackPath(LOGOUT_CALLBACK_PATH);
         client.setFrontchannelLogout(false);
         client.getAttributes().put("backchannel.logout.session.required", "true");
         client.getAttributes().put("backchannel.logout.url", rewriteHost(redirectUri)
@@ -71,7 +73,7 @@ public class BackChannelLogoutTest extends AbstractLogoutTest {
                 // Increase timeout to allow time for Keycloak to complete the backchannel logout callback
                 // The backchannel logout requires Keycloak to POST to the callback URL before responding to the browser
                 webClient2.getOptions().setTimeout(60000); // 60 seconds
-                webClient2.getPage(getClientUrl() + getClientConfig().getLogoutPath());
+                webClient2.getPage(getLogoutUrl());
                 assertUserNotAuthenticated();
             }
         }

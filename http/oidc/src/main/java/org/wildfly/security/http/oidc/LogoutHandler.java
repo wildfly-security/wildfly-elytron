@@ -67,6 +67,23 @@ final class LogoutHandler {
     });
 
     boolean tryLogout(OidcHttpFacade facade) {
+        if (isLogoutCallbackPath(facade)) {
+            log.trace("isLogoutCallbackPath");
+            if (isFrontChannel(facade)) {
+                log.trace("isFrontChannel");
+                handleFrontChannelLogoutRequest(facade);
+                return true;
+            }
+            RefreshableOidcSecurityContext activeSession = (RefreshableOidcSecurityContext) facade.getSecurityContext();
+            if (activeSession != null) {
+                // we have an active session, should have received a GET logout request
+                facade.getResponse().setStatus(HttpStatus.SC_METHOD_NOT_ALLOWED);
+                facade.authenticationFailed();
+                return true;
+            }
+            return false;
+        }
+
         RefreshableOidcSecurityContext securityContext = getSecurityContext(facade);
         if (securityContext == null) {
             // no active session
@@ -78,19 +95,6 @@ final class LogoutHandler {
             log.trace("isRpInitiatedLogoutPath");
             redirectEndSessionEndpoint(facade);
             return true;
-        }
-
-        if (isLogoutCallbackPath(facade)) {
-            log.trace("isLogoutCallbackPath");
-            if (isFrontChannel(facade)) {
-                log.trace("isFrontChannel");
-                handleFrontChannelLogoutRequest(facade);
-                return true;
-            } else {
-                // we have an active session, should have received a GET logout request
-                facade.getResponse().setStatus(HttpStatus.SC_METHOD_NOT_ALLOWED);
-                facade.authenticationFailed();
-            }
         }
         return false;
     }
@@ -141,6 +145,9 @@ final class LogoutHandler {
             throw log.unableToCreateEndSessionEndpointRequest(
                     clientConfiguration.getEndSessionEndpointUrl(), e.getMessage());
         }
+
+        log.debugf("Invalidating local session during RP-initiated logout");
+        facade.getTokenStore().logout(false);
 
         log.debugf("Sending redirect to the end_session_endpoint: %s", logoutUri);
         facade.getResponse().setStatus(HttpStatus.SC_MOVED_TEMPORARILY);
@@ -235,10 +242,30 @@ final class LogoutHandler {
             }
 
             RefreshableOidcSecurityContext context = getSecurityContext(facade);
+            if (context == null) {
+                return;
+            }
             IDToken idToken = context.getIDToken();
             String issuer = request.getQueryParamValue(ISS);
 
-            if (idToken == null || !sessionId.equals(idToken.getNonce()) || !idToken.getIssuer().equals(issuer)) {
+            String validationFailure = null;
+            if (idToken == null) {
+                validationFailure = "ID token is missing";
+            } else if (idToken.getSid() == null) {
+                validationFailure = "ID token sid claim is missing";
+            } else if (!sessionId.equals(idToken.getSid())) {
+                validationFailure = String.format("request sid [%s] does not match ID token sid [%s]",
+                        sessionId, idToken.getSid());
+            } else if (issuer == null) {
+                validationFailure = "iss query parameter is missing";
+            } else if (idToken.getIssuer() == null) {
+                validationFailure = "ID token issuer claim is missing";
+            } else if (!idToken.getIssuer().equals(issuer)) {
+                validationFailure = String.format("request iss [%s] does not match ID token issuer [%s]",
+                        issuer, idToken.getIssuer());
+            }
+            if (validationFailure != null) {
+                log.debugf("Front-channel logout validation failed: %s", validationFailure);
                 facade.getResponse().setStatus(HttpStatus.SC_BAD_REQUEST);
                 facade.authenticationFailed();
                 return;
@@ -250,34 +277,60 @@ final class LogoutHandler {
     }
 
     private boolean isLogoutCallbackPath(OidcHttpFacade facade) {
-        String uriStr = facade.getRequest().getURI();
-        // logoutCallbackPath can be either an URL path component or an absolute path.
-        // Only the path components are to be compared.
-        String tmpLogoutCallbackPath = getLogoutCallbackPath(facade);
+        return matchesLogoutCallbackPath(facade.getRequest().getRelativePath(), getLogoutCallbackPath(facade));
+    }
 
-        try {
-            if (tmpLogoutCallbackPath != null) {
-                // check path as valid format
-                URL url = new URL(tmpLogoutCallbackPath);
-                if (facade.getRequest().getRelativePath().equals(tmpLogoutCallbackPath)) {
-                    return true;
-                }
-            }
-
-        } catch (MalformedURLException e) {
-            // no-op
+    /**
+     * Returns whether the incoming request path matches the configured logout callback path.
+     * The configured value may be a relative path (e.g. {@code /logout/callback}) or an absolute
+     * {@code http}/{@code https} URI; only its path component is compared to the request path.
+     */
+    static boolean matchesLogoutCallbackPath(String requestRelativePath, String configuredLogoutCallbackPath) {
+        String configuredPath = extractPathFromLogoutCallbackConfiguration(configuredLogoutCallbackPath);
+        String requestPath = toComparablePath(requestRelativePath);
+        if (configuredPath == null || requestPath == null) {
+            return false;
         }
+        return configuredPath.equals(requestPath);
+    }
 
-        return false;
+    static String extractPathFromLogoutCallbackConfiguration(String configuredLogoutCallbackPath) {
+        if (configuredLogoutCallbackPath == null || configuredLogoutCallbackPath.isEmpty()) {
+            return null;
+        }
+        String trimmed = configuredLogoutCallbackPath.trim();
+        try {
+            return toComparablePath(new URL(trimmed).getPath());
+        } catch (MalformedURLException e) {
+            if (OidcClientConfigurationBuilder.isValidRelativePath(trimmed)) {
+                return toComparablePath(trimmed);
+            }
+            // Ignoring invalid logout-callback-path
+            return null;
+        }
+    }
+
+    private static String toComparablePath(String path) {
+        if (path == null || path.isEmpty()) {
+            return null;
+        }
+        return path.startsWith("/") ? path : "/" + path;
     }
 
     private boolean isRpInitiatedLogoutPath(OidcHttpFacade facade) {
-        String path = facade.getRequest().getRelativePath();
-        String logoutPath = getLogoutPath(facade);
-        if (logoutPath == null) {
+        return matchesLogoutPath(facade.getRequest().getRelativePath(), getLogoutPath(facade));
+    }
+
+    /**
+     * Returns whether the incoming request path matches the configured RP-initiated logout path.
+     */
+    static boolean matchesLogoutPath(String requestRelativePath, String configuredLogoutPath) {
+        String requestPath = toComparablePath(requestRelativePath);
+        String configuredPath = toComparablePath(configuredLogoutPath);
+        if (configuredPath == null || requestPath == null) {
             return false;
         }
-        return path.endsWith(logoutPath);
+        return configuredPath.equals(requestPath);
     }
 
     private boolean isLogoutSessionRequired(OidcHttpFacade facade) {

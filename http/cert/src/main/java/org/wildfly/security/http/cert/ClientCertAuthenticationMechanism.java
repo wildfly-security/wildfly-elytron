@@ -23,6 +23,8 @@ import static org.wildfly.security.mechanism._private.ElytronMessages.httpClient
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
@@ -58,6 +60,8 @@ import org.wildfly.security.x500.X500;
  */
 final class ClientCertAuthenticationMechanism implements HttpServerAuthenticationMechanism {
 
+    private static final String IDENTITY_CACHE_KEY = "org.wildfly.elytron.identity-cache";
+
     private final CallbackHandler callbackHandler;
     private final boolean skipVerification;
 
@@ -85,32 +89,33 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
      */
     @Override
     public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
-        Function<SecurityDomain, IdentityCache> cacheFunction = createIdentityCacheFunction(request);
+        Certificate[] rawCerts = request.getPeerCertificates();
+        if (rawCerts == null) {
+            httpClientCert.trace("Peer Unverified");
+            request.noAuthenticationInProgress();
+            return;
+        }
+
+        final X509Certificate[] peerCertificates = X500.asX509CertificateArray(rawCerts);
+
+        Function<SecurityDomain, IdentityCache> cacheFunction = createIdentityCacheFunction(request, peerCertificates);
 
         if (cacheFunction != null && attemptReAuthentication(request, cacheFunction)) {
             httpClientCert.trace("Re-authentication succeed");
             return;
         }
-        if (attemptAuthentication(request, cacheFunction)) {
+        if (attemptAuthentication(request, peerCertificates, cacheFunction)) {
             return;
         }
         httpClientCert.trace("Both, re-authentication and authentication, failed");
         fail(request);
     }
 
-    private boolean attemptAuthentication(HttpServerRequest request, Function<SecurityDomain, IdentityCache> cacheFunction) throws HttpAuthenticationException {
-        Certificate[] peerCertificates = request.getPeerCertificates();
-        if (peerCertificates == null) {
-            httpClientCert.trace("Peer Unverified");
-            request.noAuthenticationInProgress();
-            return true;
-        }
-
-        X509Certificate[] x509Certificates = X500.asX509CertificateArray(peerCertificates);
-        X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(x509Certificates);
+    private boolean attemptAuthentication(HttpServerRequest request, X509Certificate[] peerCertificates, Function<SecurityDomain, IdentityCache> cacheFunction) throws HttpAuthenticationException {
+        X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(peerCertificates);
 
         if (httpClientCert.isTraceEnabled()) {
-            httpClientCert.tracef("Authenticating using following certificates: [%s]", Arrays.toString(x509Certificates));
+            httpClientCert.tracef("Authenticating using following certificates: [%s]", Arrays.toString(peerCertificates));
         }
 
         EvidenceVerifyCallback callback = new EvidenceVerifyCallback(evidence);
@@ -205,32 +210,123 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
         return false;
     }
 
-    private Function<SecurityDomain, IdentityCache> createIdentityCacheFunction(HttpServerRequest request) {
-        HttpScope scope = request.getScope(Scope.SSL_SESSION);
-        return scope == null ? null : securityDomain -> new IdentityCache() {
+    private Function<SecurityDomain, IdentityCache> createIdentityCacheFunction(HttpServerRequest request, X509Certificate[] peerCertificates) {
+        final HttpScope sslSessionScope = resolveScope(request, Scope.SSL_SESSION);
+        final HttpScope connectionScope = resolveScope(request, Scope.CONNECTION);
 
-            final Map<SecurityDomain, CachedIdentity> identities = MechanismUtil.computeIfAbsent(scope,
-                    "org.wildfly.elytron.identity-cache", key -> new ConcurrentHashMap<>());
+        if ((sslSessionScope == null || !sslSessionScope.exists()) &&
+            (connectionScope == null || !connectionScope.exists())) {
+            return null;
+        }
+
+        return securityDomain -> new IdentityCache() {
 
             @Override
             public void put(SecurityIdentity identity) {
-                CachedIdentity cachedIdentity = new CachedIdentity(CLIENT_CERT_NAME, false, identity);
-                httpClientCert.tracef("storing into cache: %s", cachedIdentity);
-                identities.putIfAbsent(securityDomain, cachedIdentity);
+                if (securityDomain == null) {
+                    return;
+                }
+                Function<X509Certificate[], CachedIdentity> entry =
+                        createCacheEntry(new CachedIdentity(CLIENT_CERT_NAME, false, identity), peerCertificates);
+                httpClientCert.tracef("storing into cache: %s", identity);
+                // Overwrite (not putIfAbsent): a fresh authentication always supersedes a stale entry.
+                if (sslSessionScope != null && sslSessionScope.exists()) {
+                    entryMap(sslSessionScope).put(securityDomain, entry);
+                }
+                if (connectionScope != null && connectionScope.exists()) {
+                    entryMap(connectionScope).put(securityDomain, entry);
+                }
             }
 
             @Override
             public CachedIdentity get() {
-                CachedIdentity cachedIdentity = identities.get(securityDomain);
-                httpClientCert.tracef("loading from cache: %s", cachedIdentity);
-                return cachedIdentity;
+                if (securityDomain == null) {
+                    return null;
+                }
+                if (sslSessionScope != null && sslSessionScope.exists()) {
+                    CachedIdentity cached = getCachedOrEvict(sslSessionScope, peerCertificates);
+                    if (cached != null) {
+                        httpClientCert.tracef("loading from SSL_SESSION cache: %s", cached);
+                        return cached;
+                    }
+                }
+                if (connectionScope != null && connectionScope.exists()) {
+                    CachedIdentity cached = getCachedOrEvict(connectionScope, peerCertificates);
+                    if (cached != null) {
+                        httpClientCert.tracef("loading from CONNECTION cache: %s", cached);
+                        return cached;
+                    }
+                }
+                httpClientCert.tracef("loading from cache: null");
+                return null;
             }
 
             @Override
             public CachedIdentity remove() {
+                if (securityDomain == null) {
+                    return null;
+                }
                 httpClientCert.tracef("clearing identity cache");
-                return identities.remove(securityDomain);
+                removeFromScope(sslSessionScope);
+                removeFromScope(connectionScope);
+                // The lambda returned by createCacheEntry is opaque after creation — the stored
+                // identity cannot be extracted back. Callers universally discard remove()'s return
+                // value across the codebase, so returning null is safe.
+                return null;
+            }
+
+            @SuppressWarnings("unchecked")
+            private CachedIdentity getCachedOrEvict(HttpScope scope, X509Certificate[] currentCerts) {
+                Map<SecurityDomain, Function<X509Certificate[], CachedIdentity>> map =
+                        (Map<SecurityDomain, Function<X509Certificate[], CachedIdentity>>) scope.getAttachment(IDENTITY_CACHE_KEY);
+                if (map == null) {
+                    return null;
+                }
+                Function<X509Certificate[], CachedIdentity> entry = map.get(securityDomain);
+                if (entry == null) {
+                    return null;
+                }
+                CachedIdentity cached = entry.apply(currentCerts);
+                if (cached == null) {
+                    // Cert chain changed — evict stale entry so a subsequent put() stores a fresh one.
+                    map.remove(securityDomain);
+                }
+                return cached;
+            }
+
+            @SuppressWarnings("unchecked")
+            private void removeFromScope(HttpScope scope) {
+                if (scope == null || !scope.exists()) {
+                    return;
+                }
+                Map<SecurityDomain, ?> map =
+                        (Map<SecurityDomain, ?>) scope.getAttachment(IDENTITY_CACHE_KEY);
+                if (map != null) {
+                    map.remove(securityDomain);
+                }
             }
         };
+    }
+
+    /**
+     * Returns a cache entry function that yields the given identity only when applied to the
+     * same certificate chain that was used to authenticate it. This ensures a scope cache entry
+     * cannot be reused by a different peer (e.g. after TLS 1.2 renegotiation with different
+     * client credentials). Applying this check uniformly across all scopes — including
+     * SSL_SESSION — keeps the logic consistent and safe for future scope additions.
+     */
+    private static Function<X509Certificate[], CachedIdentity> createCacheEntry(
+            CachedIdentity identity, X509Certificate[] certChain) {
+        final List<X509Certificate> storedChain = Collections.unmodifiableList(Arrays.asList(certChain.clone()));
+        return presentedCerts -> Arrays.asList(presentedCerts).equals(storedChain) ? identity : null;
+    }
+
+    private static HttpScope resolveScope(HttpServerRequest request, Scope scope) {
+        HttpScope httpScope = request.getScope(scope);
+        return (httpScope != null && httpScope.supportsAttachments()) ? httpScope : null;
+    }
+
+    private static Map<SecurityDomain, Function<X509Certificate[], CachedIdentity>> entryMap(HttpScope scope) {
+        return MechanismUtil.computeIfAbsent(scope, IDENTITY_CACHE_KEY, key -> new ConcurrentHashMap<>());
     }
 }

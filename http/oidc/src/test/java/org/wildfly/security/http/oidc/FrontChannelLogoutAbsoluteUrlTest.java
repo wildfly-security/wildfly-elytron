@@ -44,13 +44,22 @@ import org.keycloak.representations.idm.ClientRepresentation;
  */
 public class FrontChannelLogoutAbsoluteUrlTest extends AbstractLogoutTest {
 
+    private static final String LOGOUT_CALLBACK_PATH = "/logout/callback";
+
+    @Override
+    protected OidcJsonConfiguration getClientConfiguration() {
+        OidcJsonConfiguration config = super.getClientConfiguration();
+        config.setLogoutCallbackPath(getClientUrl() + LOGOUT_CALLBACK_PATH);
+        return config;
+    }
+
     @Override
     protected void doConfigureClient(ClientRepresentation client) {
         client.setFrontchannelLogout(true);
         List<String> redirectUris = client.getRedirectUris();
         String redirectUri = redirectUris.get(0);
         OidcClientConfiguration config = new OidcClientConfiguration();
-        config.setLogoutCallbackPath(redirectUri + Oidc.DEFAULT_LOGOUT_CALLBACK_PATH);
+        config.setLogoutCallbackPath(redirectUri + LOGOUT_CALLBACK_PATH);
         client.getAttributes().put("frontchannel.logout.url", config.getLogoutCallbackPath());
     }
 
@@ -72,7 +81,7 @@ public class FrontChannelLogoutAbsoluteUrlTest extends AbstractLogoutTest {
 
                 // logged out after finishing the redirections during frontchannel logout
                 assertUserAuthenticated();
-                webClient2.getPage(getClientUrl() + getClientConfig().getLogoutPath());
+                webClient2.getPage(getLogoutUrl());
                 assertUserNotAuthenticated();
             }
         }
@@ -103,7 +112,7 @@ public class FrontChannelLogoutAbsoluteUrlTest extends AbstractLogoutTest {
             assertTrue(page.getWebResponse().getContentAsString().contains("Welcome, authenticated user"));
 
             assertUserAuthenticated();
-            HtmlPage continueLogout = webClient.getPage(getClientUrl() + getClientConfig().getLogoutPath());
+            HtmlPage continueLogout = webClient.getPage(getLogoutUrl());
             page = continueLogout.getElementById("continue").click();
             assertUserNotAuthenticated();
             assertTrue(page.getWebResponse().getContentAsString().contains("you are logged out from app"));

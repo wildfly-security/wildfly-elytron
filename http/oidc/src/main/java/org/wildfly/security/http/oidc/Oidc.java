@@ -191,8 +191,6 @@ public class Oidc {
     public static final String LOGOUT_CALLBACK_PATH = "logout-callback-path";
     public static final String POST_LOGOUT_REDIRECT_URI= "post-logout-redirect-uri";
     public static final String LOGOUT_SESSION_REQUIRED = "logout-session-required";
-    static final String DEFAULT_LOGOUT_PATH = "/logout";
-    static final String DEFAULT_LOGOUT_CALLBACK_PATH = "/logout/callback";
     static final int DEFAULT_BACK_CHANNEL_LOGOUT_SESSION_INVALIDATION_LIMIT = 16;
     static final String BACK_CHANNEL_LOGOUT_SESSION_INVALIDATION_LIMIT = "back-channel-logout-session-invalidation-limit";
     static final String PROVIDER_JWT_CLAIMS_TYP = "provider-jwt-claims-typ";

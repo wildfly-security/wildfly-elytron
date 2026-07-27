@@ -52,6 +52,9 @@ import org.wildfly.security.http.Scope;
  */
 public abstract class AbstractLogoutTest extends OidcBaseTest {
 
+    private static final String LOGOUT_PATH = "/logout";
+    private static final String LOGOUT_CALLBACK_PATH = "/logout/callback";
+
     private ElytronDispatcher dispatcher;
     private OidcClientConfiguration clientConfig;
 
@@ -123,6 +126,9 @@ public abstract class AbstractLogoutTest extends OidcBaseTest {
         config.setCredentials(new HashMap<>());
         config.getCredentials().put("secret", CLIENT_SECRET);
 
+        config.setLogoutPath("/" + CLIENT_APP + LOGOUT_PATH);
+        config.setLogoutCallbackPath("/" + CLIENT_APP + LOGOUT_CALLBACK_PATH);
+
         return config;
     }
 
@@ -136,6 +142,10 @@ public abstract class AbstractLogoutTest extends OidcBaseTest {
 
     protected OidcClientConfiguration getClientConfig() {
         return clientConfig;
+    }
+
+    protected String getLogoutUrl() {
+        return getClientUrl() + LOGOUT_PATH;
     }
 
     protected TestingHttpServerResponse getCurrentResponse() {
@@ -227,7 +237,7 @@ public abstract class AbstractLogoutTest extends OidcBaseTest {
 
     protected void assertUserNotAuthenticated() {
         URI requestURI = getCurrentRequest().getRequestURI();
-        if (requestURI == null || !requestURI.getPath().contains("/clientApp/logout")){
+        if (requestURI == null || !requestURI.getPath().contains("/" + CLIENT_APP + LOGOUT_PATH)) {
             assertNull(getCurrentSession());
         }
     }

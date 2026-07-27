@@ -32,13 +32,22 @@ import org.keycloak.representations.idm.ClientRepresentation;
 
 public class BackChannelLogoutAbsoluteUrlTest extends AbstractLogoutTest {
 
+    private static final String LOGOUT_CALLBACK_PATH = "/logout/callback";
+
+    @Override
+    protected OidcJsonConfiguration getClientConfiguration() {
+        OidcJsonConfiguration config = super.getClientConfiguration();
+        config.setLogoutCallbackPath(rewriteHost(getClientUrl()) + LOGOUT_CALLBACK_PATH);
+        return config;
+    }
+
     @Override
     protected void doConfigureClient(ClientRepresentation client) {
         List<String> redirectUris = client.getRedirectUris();
         String redirectUri = redirectUris.get(0);
 
         OidcClientConfiguration config = new OidcClientConfiguration();
-        config.setLogoutCallbackPath(rewriteHost(redirectUri)+ Oidc.DEFAULT_LOGOUT_CALLBACK_PATH);
+        config.setLogoutCallbackPath(rewriteHost(redirectUri) + LOGOUT_CALLBACK_PATH);
         client.setFrontchannelLogout(false);
         client.getAttributes().put("backchannel.logout.session.required", "true");
         client.getAttributes().put("backchannel.logout.url", config.getLogoutCallbackPath());
@@ -68,7 +77,7 @@ public class BackChannelLogoutAbsoluteUrlTest extends AbstractLogoutTest {
                 // logged out after finishing the redirections during logout
                 assertUserAuthenticated();
                 webClient2.getOptions().setTimeout(60000); // Allow time for backchannel callback to complete
-                webClient2.getPage(getClientUrl() + getClientConfig().getLogoutPath());
+                webClient2.getPage(getLogoutUrl());
                 assertUserNotAuthenticated();
             }
         }

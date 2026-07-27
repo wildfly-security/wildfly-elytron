@@ -61,15 +61,19 @@ public class SizeRotatingFileAuditEndpoint extends FileAuditEndpoint {
         this.dateTimeFormatter = this.suffix != null ? DateTimeFormatter.ofPattern(this.suffix).withZone(builder.timeZone) : null;
 
         final File file = getFile();
-        if (rotateOnBoot && maxBackupIndex > 0 && file != null && file.exists() && file.length() > 0L) {
-            rotate(file);
+        if (file != null && file.exists() && file.length() > 0L) {
+            if (rotateOnBoot && maxBackupIndex > 0) {
+                rotate(file);
+            } else {
+                currentSize = file.length();
+            }
         }
     }
 
     @Override
     protected void write(String toWrite) throws IOException {
         super.write(toWrite);
-        currentSize += toWrite.getBytes().length;
+        currentSize += toWrite.getBytes(getCharset()).length;
     }
 
     @Override

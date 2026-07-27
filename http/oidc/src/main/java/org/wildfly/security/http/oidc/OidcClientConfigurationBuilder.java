@@ -25,10 +25,13 @@ import static org.wildfly.security.http.oidc.Oidc.AuthenticationRequestFormat.RE
 import static org.wildfly.security.http.oidc.Oidc.AuthenticationRequestFormat.REQUEST_URI;
 import static org.wildfly.security.http.oidc.Oidc.SSLRequired;
 import static org.wildfly.security.http.oidc.Oidc.TokenStore;
+import static org.wildfly.security.http.oidc.Oidc.LOGOUT_CALLBACK_PATH;
 import static org.wildfly.security.http.oidc.Oidc.LOGOUT_PATH;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.PublicKey;
 import java.util.concurrent.Callable;
 
@@ -196,34 +199,8 @@ public class OidcClientConfigurationBuilder {
 
         oidcClientConfiguration.setTokenSignatureAlgorithm(oidcJsonConfiguration.getTokenSignatureAlgorithm());
 
-        String tmpLogoutPath = oidcJsonConfiguration.getLogoutPath();
-        log.debugf("LOGOUT_PATH: " + tmpLogoutPath);
-        if (tmpLogoutPath != null) {
-            if (isValidPath(tmpLogoutPath)) {
-                oidcClientConfiguration.setLogoutPath(tmpLogoutPath);
-            } else {
-                throw log.invalidLogoutPath(tmpLogoutPath, LOGOUT_PATH);
-            }
-        } else {
-            oidcClientConfiguration.setLogoutPath(Oidc.DEFAULT_LOGOUT_PATH);
-        }
+        configureLogout(oidcJsonConfiguration, oidcClientConfiguration);
 
-        String tmpLogoutCallbackPath = oidcJsonConfiguration.getLogoutCallbackPath();
-        log.debugf("LOGOUT_CALLBACK_PATH: " + tmpLogoutCallbackPath);
-        if (tmpLogoutCallbackPath != null) {
-            oidcClientConfiguration.setLogoutCallbackPath(tmpLogoutCallbackPath);
-        } else {
-            oidcClientConfiguration.setLogoutCallbackPath(Oidc.DEFAULT_LOGOUT_CALLBACK_PATH);
-        }
-
-        String tmpPostLogoutUri = oidcJsonConfiguration.getPostLogoutRedirectUri();
-        log.debugf("POST_LOGOUT_REDIRECT_URI: " + tmpPostLogoutUri);
-        if (tmpPostLogoutUri != null) {
-            oidcClientConfiguration.setPostLogoutRedirectUri(tmpPostLogoutUri);
-        }
-
-        oidcClientConfiguration.setLogoutSessionRequired(oidcJsonConfiguration.isLogoutSessionRequired());
-        oidcClientConfiguration.setBackChannelLogoutSessionInvalidationLimit(oidcJsonConfiguration.getBackChannelLogoutSessionInvalidationLimit());
         oidcClientConfiguration.setProviderJwtClaimsTyp(oidcJsonConfiguration.getProviderJwtClaimsTyp());
         return oidcClientConfiguration;
     }
@@ -266,8 +243,72 @@ public class OidcClientConfigurationBuilder {
         return new OidcClientConfigurationBuilder().internalBuild(oidcJsonConfiguration);
     }
 
-    private boolean isValidPath(String path) {
+    private static void configureLogout(OidcJsonConfiguration oidcJsonConfiguration,
+            OidcClientConfiguration oidcClientConfiguration) {
+        if (!isLogoutConfigured(oidcJsonConfiguration)) {
+            return;
+        }
+
+        String logoutPath = oidcJsonConfiguration.getLogoutPath();
+        if (logoutPath != null && !logoutPath.trim().isEmpty()) {
+            String tmpLogoutPath = logoutPath.trim();
+            log.debugf("LOGOUT_PATH: " + tmpLogoutPath);
+            if (isValidRelativePath(tmpLogoutPath)) {
+                oidcClientConfiguration.setLogoutPath(tmpLogoutPath);
+            } else {
+                throw log.invalidLogoutPath(tmpLogoutPath, LOGOUT_PATH);
+            }
+        }
+
+        String logoutCallbackPath = oidcJsonConfiguration.getLogoutCallbackPath();
+        if (logoutCallbackPath != null && !logoutCallbackPath.trim().isEmpty()) {
+            String tmpLogoutCallbackPath = logoutCallbackPath.trim();
+            log.debugf("LOGOUT_CALLBACK_PATH: " + tmpLogoutCallbackPath);
+            if (isValidAbsoluteUri(tmpLogoutCallbackPath)) {
+                oidcClientConfiguration.setLogoutCallbackPath(tmpLogoutCallbackPath);
+            } else if (isValidRelativePath(tmpLogoutCallbackPath)) {
+                oidcClientConfiguration.setLogoutCallbackPath(tmpLogoutCallbackPath);
+            } else {
+                throw log.invalidLogoutCallbackPathOrUri(tmpLogoutCallbackPath, LOGOUT_CALLBACK_PATH);
+            }
+        }
+
+        String tmpPostLogoutUri = oidcJsonConfiguration.getPostLogoutRedirectUri();
+        if (tmpPostLogoutUri != null) {
+            log.debugf("POST_LOGOUT_REDIRECT_URI: " + tmpPostLogoutUri);
+            oidcClientConfiguration.setPostLogoutRedirectUri(tmpPostLogoutUri.trim());
+        }
+
+        oidcClientConfiguration.setLogoutSessionRequired(oidcJsonConfiguration.isLogoutSessionRequired());
+        oidcClientConfiguration.setBackChannelLogoutSessionInvalidationLimit(
+                oidcJsonConfiguration.getBackChannelLogoutSessionInvalidationLimit());
+    }
+
+    private static boolean isLogoutConfigured(OidcJsonConfiguration oidcJsonConfiguration) {
+        return oidcJsonConfiguration.getLogoutPath() != null
+                || oidcJsonConfiguration.getLogoutCallbackPath() != null
+                || oidcJsonConfiguration.getPostLogoutRedirectUri() != null;
+    }
+
+    static boolean isValidRelativePath(String path) {
+        if (path == null) {
+            return false;
+        }
         String tmpPath = path.trim();
         return tmpPath.length() > 1 && tmpPath.startsWith("/");
+    }
+
+    private static boolean isValidAbsoluteUri(String uri) {
+        String tmpUri = uri.trim();
+        if (tmpUri.isEmpty()) {
+            return false;
+        }
+        try {
+            URL url = new URL(tmpUri);
+            String protocol = url.getProtocol();
+            return "http".equalsIgnoreCase(protocol) || "https".equalsIgnoreCase(protocol);
+        } catch (MalformedURLException e) {
+            return false;
+        }
     }
 }

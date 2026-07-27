@@ -291,6 +291,9 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 23074, value = "Invalid logout path: %s is not a valid value for %s")
     IllegalArgumentException invalidLogoutPath(String pathValue, String pathName);
 
+    @Message(id = 23075, value = "Invalid logout callback path: %s is not a valid relative path or absolute http(s) URI for %s")
+    IllegalArgumentException invalidLogoutCallbackPathOrUri(String value, String attributeName);
+
     @Message(id = 23076, value = "Unable to create end session endpoint request: %s . [%s]")
     RuntimeException unableToCreateEndSessionEndpointRequest(String url, String msg);
 
