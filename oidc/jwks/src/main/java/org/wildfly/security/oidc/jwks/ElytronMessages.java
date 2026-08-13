@@ -18,8 +18,16 @@
 
 package org.wildfly.security.oidc.jwks;
 
+import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.WARN;
+
+import java.net.URL;
+
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
+import org.jboss.logging.annotations.Cause;
+import org.jboss.logging.annotations.LogMessage;
+import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.ValidIdRange;
 import org.jboss.logging.annotations.ValidIdRanges;
@@ -37,5 +45,13 @@ import org.jboss.logging.annotations.ValidIdRanges;
 interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.oidc.jwks");
+
+    @LogMessage(level = WARN)
+    @Message(id = 25000, value = "JWKS fetch rate-limited for URL '%s' (last fetch at %d ms)")
+    void jwksRateLimited(URL url, long lastFetchTimeMs);
+
+    @LogMessage(level = ERROR)
+    @Message(id = 25001, value = "Failed to fetch JWKS from URL '%s'")
+    void jwksFetchFailed(URL url, @Cause Throwable cause);
 
 }
