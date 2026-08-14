@@ -53,14 +53,18 @@ public class JwksCache {
 
     /**
      * Returns the {@link PublicKey} matching the given {@code kid} from the JWKS at {@code url},
-     * fetching and caching as needed. Returns {@code null} if no matching key is found.
+     * fetching and caching as needed. Returns {@code null} if no matching key is found or if
+     * {@code kid} is {@code null}. Callers wanting any available key regardless of kid should
+     * use {@link #getAnyKey(URL)} instead.
      *
-     * @param kid the key ID to look up (must not be null)
+     * @param kid the key ID to look up
      * @param url the JWKS endpoint URL
      * @return the matching public key, or null
      */
     public PublicKey getPublicKey(String kid, URL url) {
-        checkNotNullParam("kid", kid);
+        if (kid == null) {
+            return null;
+        }
         checkNotNullParam("url", url);
 
         CacheEntry cacheEntry = getOrCreateEntry(url);
@@ -98,7 +102,8 @@ public class JwksCache {
 
     /**
      * Returns any available {@link PublicKey} from the JWKS at {@code url}, or {@code null}
-     * if no keys are cached after a fetch attempt.
+     * if no keys are cached after a fetch attempt. Because there is no kid to check,
+     * both {@link JwksConfig.TtlBehavior} values reduce to TTL-expiry-only behavior.
      *
      * @param url the JWKS endpoint URL
      * @return any available public key, or null
@@ -113,7 +118,7 @@ public class JwksCache {
         Map<String, PublicKey> keys = cacheEntry.keys;
         long now = System.currentTimeMillis();
 
-        if (!needsRefetch(keys, null, lastFetchMs, now, JwksConfig.TtlBehavior.UNCONDITIONAL)) {
+        if (!needsRefetch(keys, null, lastFetchMs, now, config.getTtlBehavior())) {
             return firstValue(keys);
         }
 
@@ -127,7 +132,7 @@ public class JwksCache {
             lastFetchMs = cacheEntry.lastFetchTimeMs;
             now = System.currentTimeMillis();
 
-            if (!needsRefetch(keys, null, lastFetchMs, now, JwksConfig.TtlBehavior.UNCONDITIONAL)) {
+            if (!needsRefetch(keys, null, lastFetchMs, now, config.getTtlBehavior())) {
                 return firstValue(keys);
             }
             if (isRateLimited(lastFetchMs, now)) {
@@ -140,24 +145,18 @@ public class JwksCache {
     }
 
     /**
-     * Invalidates the cache for the given URL, forcing the next {@link #getPublicKey} or
-     * {@link #getAnyKey} call to re-fetch. No-op if no cache entry exists for the URL.
+     * Immediately re-fetches the JWKS from the given URL, bypassing rate limiting.
+     * On success, the cache is updated atomically. On failure, stale keys are preserved.
+     * If no cache entry exists for the URL, one is created.
      *
      * @param url the JWKS endpoint URL to reset
      */
     public void reset(URL url) {
         checkNotNullParam("url", url);
 
-        CacheEntry cacheEntry;
-        synchronized (entries) {
-            cacheEntry = entries.get(url);
-        }
-        if (cacheEntry == null) {
-            return;
-        }
-
+        CacheEntry cacheEntry = getOrCreateEntry(url);
         synchronized (cacheEntry) {
-            cacheEntry.lastFetchTimeMs = 0;
+            fetchAndUpdate(cacheEntry, url, System.currentTimeMillis());
         }
     }
 
@@ -193,6 +192,7 @@ public class JwksCache {
 
     private void fetchAndUpdate(CacheEntry cacheEntry, URL url, long now) {
         try {
+            log.jwksFetchStarting(url);
             byte[] rawBytes = config.getFetcher().fetch(url);
             JsonWebKeySet jwks = JsonSerialization.readValue(rawBytes, JsonWebKeySet.class);
             Map<String, PublicKey> newKeys = JsonWebKeySetUtil.getKeys(jwks, config.getKeyFilter());
@@ -200,6 +200,7 @@ public class JwksCache {
             // ORDERING: Always prioritize an up-to-date map
             cacheEntry.keys = Collections.unmodifiableMap(newKeys);
             cacheEntry.lastFetchTimeMs = now;
+            log.jwksFetchSucceeded(url, newKeys.keySet());
         } catch (JwksException e) {
             log.jwksFetchFailed(url, e);
             cacheEntry.lastFetchTimeMs = now;
