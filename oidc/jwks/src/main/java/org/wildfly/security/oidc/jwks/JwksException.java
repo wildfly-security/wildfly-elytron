@@ -20,7 +20,7 @@ package org.wildfly.security.oidc.jwks;
 
 /**
  * Checked exception thrown when a JWKS fetch operation fails.
- * 
+ *
  * @author <a href="mailto:rojeda@redhat.com">Raul Ojeda Robles</a>
  */
 public class JwksException extends Exception {

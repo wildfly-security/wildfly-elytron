@@ -24,6 +24,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -69,9 +70,13 @@ class JdkJwksFetcher implements JwksFetcher {
         try {
             httpsConn.setRequestMethod("GET");
             httpsConn.connect();
-            return httpsConn.getInputStream().readAllBytes();
+            try (InputStream in = httpsConn.getInputStream()) {
+                return in.readAllBytes();
+            }
         } catch (IOException e) {
             throw new JwksException("Failed to fetch JWKS from " + url, e);
+        } finally {
+            httpsConn.disconnect();
         }
     }
 }
