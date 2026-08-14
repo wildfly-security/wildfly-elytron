@@ -64,8 +64,10 @@ public class JwksCache {
         checkNotNullParam("url", url);
 
         CacheEntry cacheEntry = getOrCreateEntry(url);
-        Map<String, PublicKey> keys = cacheEntry.keys;
+
+        // ORDERING: Always prioritize an up-to-date map
         long lastFetchMs = cacheEntry.lastFetchTimeMs;
+        Map<String, PublicKey> keys = cacheEntry.keys;
         long now = System.currentTimeMillis();
 
         if (!needsRefetch(keys, kid, lastFetchMs, now, config.getTtlBehavior())) {
@@ -105,8 +107,10 @@ public class JwksCache {
         checkNotNullParam("url", url);
 
         CacheEntry cacheEntry = getOrCreateEntry(url);
-        Map<String, PublicKey> keys = cacheEntry.keys;
+
+        // ORDERING: Always prioritize an up-to-date map
         long lastFetchMs = cacheEntry.lastFetchTimeMs;
+        Map<String, PublicKey> keys = cacheEntry.keys;
         long now = System.currentTimeMillis();
 
         if (!needsRefetch(keys, null, lastFetchMs, now, JwksConfig.TtlBehavior.UNCONDITIONAL)) {
@@ -192,6 +196,8 @@ public class JwksCache {
             byte[] rawBytes = config.getFetcher().fetch(url);
             JsonWebKeySet jwks = JsonSerialization.readValue(rawBytes, JsonWebKeySet.class);
             Map<String, PublicKey> newKeys = JsonWebKeySetUtil.getKeys(jwks, config.getKeyFilter());
+
+            // ORDERING: Always prioritize an up-to-date map
             cacheEntry.keys = Collections.unmodifiableMap(newKeys);
             cacheEntry.lastFetchTimeMs = now;
         } catch (JwksException e) {
@@ -211,6 +217,7 @@ public class JwksCache {
         return it.next();
     }
 
+    // ORDERING: Always prioritize an up-to-date map
     private static class CacheEntry {
         volatile Map<String, PublicKey> keys = Collections.emptyMap();
         volatile long lastFetchTimeMs = 0;
