@@ -383,7 +383,7 @@ public class JwtSecurityRealmTest {
     }
 
     @Test
-    public void testStoppedJkuEndpoint() throws Exception {
+    public void testStoppedJkuEndpointPreservesStaleCache() throws Exception {
         server.setDispatcher(createOneTimeDispatcher(jwksResponse)); //Server will provide the keys only once
 
         BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
@@ -405,7 +405,40 @@ public class JwtSecurityRealmTest {
 
         assertIdentityExist(securityRealm, evidence);
 
-        //Now the keys need to be re-cached
+        // JwksCache preserves previously cached keys when a fetch fails
+        int requestsBefore = server.getRequestCount();
+        assertIdentityExist(securityRealm, evidence);
+        assertTrue(server.getRequestCount() > requestsBefore);
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testJkuEndpointFailureWithNoCachedKeys() throws Exception {
+        Dispatcher alwaysFail = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest recordedRequest) {
+                return new MockResponse().setResponseCode(HttpsURLConnection.HTTP_NOT_FOUND);
+            }
+        };
+        server.setDispatcher(alwaysFail);
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50831")
+                        .setJkuTimeout(0)
+                        .setJkuMinTimeBetweenRequests(0)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
 
         assertIdentityNotExist(securityRealm, evidence);
 
