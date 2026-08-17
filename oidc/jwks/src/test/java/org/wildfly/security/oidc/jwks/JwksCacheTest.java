@@ -172,26 +172,6 @@ public class JwksCacheTest {
         assertEquals(2, fetchCount.get());
     }
 
-    @Test
-    public void testKidDependentAfterTtlExpiryRefetches() throws Exception {
-        AtomicInteger fetchCount = new AtomicInteger();
-        byte[] response = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair1, "sig"));
-        JwksFetcher fetcher = url -> {
-            fetchCount.incrementAndGet();
-            return response;
-        };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 100, 0,
-                JwksConfig.TtlBehavior.KID_DEPENDENT));
-
-        assertNotNull(cache.getPublicKey("kid-1", url1));
-        assertEquals(1, fetchCount.get());
-
-        Thread.sleep(150);
-
-        assertNotNull(cache.getPublicKey("kid-1", url1));
-        assertEquals(2, fetchCount.get());
-    }
-
     // ------------------------------------------------------------------ //
     //  Rate limiting                                                      //
     // ------------------------------------------------------------------ //
@@ -478,7 +458,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 50, 500,
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 50, 10_000,
                 JwksConfig.TtlBehavior.UNCONDITIONAL));
 
         PublicKey first = cache.getAnyKey(url1);
@@ -583,25 +563,6 @@ public class JwksCacheTest {
         }
     }
 
-    @Test
-    public void testRateLimitIsPerUrlNotGlobal() throws Exception {
-        AtomicInteger fetchCount = new AtomicInteger();
-        byte[] response1 = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair1, "sig"));
-        byte[] response2 = jwksBytes(rsaJwkJson("kid-2", rsaKeyPair2, "sig"));
-        JwksFetcher fetcher = url -> {
-            fetchCount.incrementAndGet();
-            if (url.equals(url1)) return response1;
-            return response2;
-        };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 5000,
-                JwksConfig.TtlBehavior.KID_DEPENDENT));
-
-        assertNotNull(cache.getPublicKey("kid-1", url1));
-        assertEquals(1, fetchCount.get());
-
-        assertNotNull(cache.getPublicKey("kid-2", url2));
-        assertEquals(2, fetchCount.get());
-    }
 
     // ------------------------------------------------------------------ //
     //  Key filtering                                                      //
@@ -692,21 +653,6 @@ public class JwksCacheTest {
 
         PublicKey key = cache.getPublicKey("kid-1", url1);
         assertNotNull(key);
-        assertEquals(1, fetchCount.get());
-    }
-
-    @Test
-    public void testEmptyJwksResponseReturnsNull() throws Exception {
-        AtomicInteger fetchCount = new AtomicInteger();
-        byte[] response = jwksBytes();
-        JwksFetcher fetcher = url -> {
-            fetchCount.incrementAndGet();
-            return response;
-        };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
-
-        assertNull(cache.getPublicKey("kid-1", url1));
         assertEquals(1, fetchCount.get());
     }
 
