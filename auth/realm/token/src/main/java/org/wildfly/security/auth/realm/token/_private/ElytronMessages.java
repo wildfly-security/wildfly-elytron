@@ -20,8 +20,6 @@ package org.wildfly.security.auth.realm.token._private;
 
 import static org.jboss.logging.Logger.Level.WARN;
 
-import java.net.URL;
-
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -84,20 +82,8 @@ public interface ElytronMessages extends BasicLogger {
     void tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
 
     @LogMessage(level = WARN)
-    @Message(id = 1178, value = "Unable to update jwk set from \"%1$s\".")
-    void unableToFetchJwks(String url);
-
-    @LogMessage(level = WARN)
     @Message(id = 1179, value = "SSL not configured. jku claim will not be supported.")
     void tokenRealmJwtNoSSLIgnoringJku();
-
-    @LogMessage
-    @Message(id = 1180, value = "Fetched jwk does not contain \"%1$s\" claim, ignoring...")
-    void tokenRealmJwkMissingClaim(String claim);
-
-    @LogMessage(level = WARN)
-    @Message(id = 1181, value = "Not sending new request to jwks url \"%s\". Last request time was %d.")
-    void avoidingFetchJwks(URL url, long timestamp);
 
     @LogMessage(level = WARN)
     @Message(id = 1182, value = "Allowed jku values haven't been configured for the JWT validator. Token validation will fail if the token contains a 'jku' header parameter.")
