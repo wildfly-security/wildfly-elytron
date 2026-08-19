@@ -354,7 +354,7 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-oidc-jwks</artifactId>
+            <artifactId>wildfly-elytron-jose-jwks</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
@@ -713,7 +713,7 @@
                                 </dependency>
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
-                                    <artifactId>wildfly-elytron-oidc-jwks</artifactId>
+                                    <artifactId>wildfly-elytron-jose-jwks</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
                                 <dependency>

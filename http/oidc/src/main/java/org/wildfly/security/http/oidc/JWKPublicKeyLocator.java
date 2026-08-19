@@ -24,8 +24,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.PublicKey;
 
-import org.wildfly.security.oidc.jwks.JwksCache;
-import org.wildfly.security.oidc.jwks.JwksConfig;
+import org.wildfly.security.jose.jwks.JwksCache;
+import org.wildfly.security.jose.jwks.JwksConfig;
 
 /**
  * A public key locator that dynamically obtains the public key from an OpenID

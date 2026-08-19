@@ -17,8 +17,8 @@
  */
 package org.wildfly.security.auth.realm.token.validator;
 
-import org.wildfly.security.oidc.jwks.JwksException;
-import org.wildfly.security.oidc.jwks.JwksFetcher;
+import org.wildfly.security.jose.jwks.JwksException;
+import org.wildfly.security.jose.jwks.JwksFetcher;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;

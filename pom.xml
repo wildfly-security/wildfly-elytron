@@ -569,7 +569,7 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
-                <artifactId>wildfly-elytron-oidc-jwks</artifactId>
+                <artifactId>wildfly-elytron-jose-jwks</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -1606,7 +1606,7 @@
                                 ${project.basedir}/http/oidc/src/main/java/;
                                 ${project.basedir}/http/util/src/main/java/;
                                 ${project.basedir}/jose/jwk/src/main/java/;
-                                ${project.basedir}/oidc/jwks/src/main/java/;
+                                ${project.basedir}/jose/jwks/src/main/java/;
                                 ${project.basedir}/jose/util/src/main/java/;
                                 ${project.basedir}/json-util/src/main/java/;
                                 ${project.basedir}/keystore/src/main/java/;
@@ -1796,7 +1796,7 @@
         <module>http/sso</module>
         <module>http/util</module>
         <module>jose/jwk</module>
-        <module>oidc/jwks</module>
+        <module>jose/jwks</module>
         <module>jose/util</module>
         <module>json-util</module>
         <module>keystore</module>

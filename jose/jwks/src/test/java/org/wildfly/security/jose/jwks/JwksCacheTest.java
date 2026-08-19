@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.wildfly.security.oidc.jwks;
+package org.wildfly.security.jose.jwks;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

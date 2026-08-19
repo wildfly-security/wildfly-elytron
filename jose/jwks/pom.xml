@@ -28,10 +28,10 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-oidc-jwks</artifactId>
+    <artifactId>wildfly-elytron-jose-jwks</artifactId>
 
-    <name>WildFly Elytron - OIDC JWKS</name>
-    <description>WildFly Security OIDC JWKS Classes</description>
+    <name>WildFly Elytron - JOSE JWKS</name>
+    <description>WildFly Security JOSE JWKS Classes</description>
 
     <dependencies>
         <dependency>

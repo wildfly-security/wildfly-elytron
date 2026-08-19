@@ -27,8 +27,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
-import org.wildfly.security.oidc.jwks.JwksException;
-import org.wildfly.security.oidc.jwks.JwksFetcher;
+import org.wildfly.security.jose.jwks.JwksException;
+import org.wildfly.security.jose.jwks.JwksFetcher;
 
 /**
  * A {@link JwksFetcher} that delegates to a pre-built Apache {@link HttpClient}.

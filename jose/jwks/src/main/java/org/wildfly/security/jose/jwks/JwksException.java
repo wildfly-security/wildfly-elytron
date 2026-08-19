@@ -16,24 +16,20 @@
  *  limitations under the License.
  */
 
-package org.wildfly.security.oidc.jwks;
-
-import java.net.URL;
+package org.wildfly.security.jose.jwks;
 
 /**
- * HTTP transport abstraction for fetching a JWKS document from a remote endpoint.
+ * Checked exception thrown when a JWKS fetch operation fails.
  *
  * @author <a href="mailto:rojeda@redhat.com">Raul Ojeda Robles</a>
  */
-@FunctionalInterface
-public interface JwksFetcher {
+public class JwksException extends Exception {
 
-    /**
-     * Fetch the JWKS document from the given URL.
-     *
-     * @param url the JWKS endpoint URL
-     * @return the raw response body as bytes (expected to be a JSON JWKS document)
-     * @throws JwksException if the fetch fails for any reason (I/O error, non-200 status, etc.)
-     */
-    byte[] fetch(URL url) throws JwksException;
+    public JwksException(String message) {
+        super(message);
+    }
+
+    public JwksException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

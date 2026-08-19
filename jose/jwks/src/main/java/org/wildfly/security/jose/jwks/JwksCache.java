@@ -16,10 +16,10 @@
  *  limitations under the License.
  */
 
-package org.wildfly.security.oidc.jwks;
+package org.wildfly.security.jose.jwks;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.oidc.jwks.ElytronMessages.log;
+import static org.wildfly.security.jose.jwks.ElytronMessages.log;
 
 import java.io.IOException;
 import java.net.URL;
