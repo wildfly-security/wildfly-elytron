@@ -51,8 +51,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.wildfly.security.jose.jwk.JsonWebKeySetUtil;
-import org.wildfly.security.oidc.jwks.JwksCache;
-import org.wildfly.security.oidc.jwks.JwksConfig;
+import org.wildfly.security.jose.jwks.JwksCache;
+import org.wildfly.security.jose.jwks.JwksConfig;
 
 import static java.util.Arrays.asList;
 import static org.wildfly.common.Assert.checkNotNullParam;

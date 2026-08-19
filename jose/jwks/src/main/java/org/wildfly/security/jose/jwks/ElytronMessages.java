@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.wildfly.security.oidc.jwks;
+package org.wildfly.security.jose.jwks;
 
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
@@ -46,7 +46,7 @@ import org.jboss.logging.annotations.ValidIdRanges;
 })
 interface ElytronMessages extends BasicLogger {
 
-    ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.oidc.jwks");
+    ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.jose.jwks");
 
     @LogMessage(level = DEBUG)
     @Message(id = 25000, value = "JWKS fetch rate-limited for URL '%s' (last fetch at %d ms)")
