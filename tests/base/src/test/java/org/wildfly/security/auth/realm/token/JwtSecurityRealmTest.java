@@ -383,7 +383,7 @@ public class JwtSecurityRealmTest {
     }
 
     @Test
-    public void testStoppedJkuEndpointPreservesStaleCache() throws Exception {
+    public void testStoppedJkuEndpoint() throws Exception {
         server.setDispatcher(createOneTimeDispatcher(jwksResponse)); //Server will provide the keys only once
 
         BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
@@ -405,9 +405,8 @@ public class JwtSecurityRealmTest {
 
         assertIdentityExist(securityRealm, evidence);
 
-        // JwksCache preserves previously cached keys when a fetch fails
         int requestsBefore = server.getRequestCount();
-        assertIdentityExist(securityRealm, evidence);
+        assertIdentityNotExist(securityRealm, evidence);
         assertTrue(server.getRequestCount() > requestsBefore);
 
         server.setDispatcher(createTokenDispatcher(jwksResponse));

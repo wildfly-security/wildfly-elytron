@@ -57,6 +57,7 @@ public final class JwksConfig {
     private final long cacheTtlMs;
     private final long minTimeBetweenRequestsMs;
     private final TtlBehavior ttlBehavior;
+    private final boolean preserveStaleOnFailure;
 
     private JwksConfig(Builder builder) {
         this.fetcher = builder.fetcher;
@@ -64,6 +65,7 @@ public final class JwksConfig {
         this.cacheTtlMs = builder.cacheTtlMs;
         this.minTimeBetweenRequestsMs = builder.minTimeBetweenRequestsMs;
         this.ttlBehavior = builder.ttlBehavior;
+        this.preserveStaleOnFailure = builder.preserveStaleOnFailure;
     }
 
     public JwksFetcher getFetcher() {
@@ -86,6 +88,10 @@ public final class JwksConfig {
         return ttlBehavior;
     }
 
+    public boolean isPreserveStaleOnFailure() {
+        return preserveStaleOnFailure;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -96,6 +102,7 @@ public final class JwksConfig {
         private long cacheTtlMs = 120_000;
         private long minTimeBetweenRequestsMs = 10_000;
         private TtlBehavior ttlBehavior = TtlBehavior.UNCONDITIONAL;
+        private boolean preserveStaleOnFailure = true;
 
         private Builder() {
         }
@@ -122,6 +129,11 @@ public final class JwksConfig {
 
         public Builder ttlBehavior(TtlBehavior ttlBehavior) {
             this.ttlBehavior = ttlBehavior;
+            return this;
+        }
+
+        public Builder preserveStaleOnFailure(boolean preserveStaleOnFailure) {
+            this.preserveStaleOnFailure = preserveStaleOnFailure;
             return this;
         }
 
