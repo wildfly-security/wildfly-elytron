@@ -104,6 +104,7 @@ public class JwtValidator implements TokenValidator {
                     .cacheTtlMs(configuration.updateTimeout)
                     .minTimeBetweenRequestsMs(configuration.minTimeBetweenRequests)
                     .ttlBehavior(JwksConfig.TtlBehavior.KID_DEPENDENT)
+                    .preserveStaleOnFailure(false)
                     .build());
         }
         else {

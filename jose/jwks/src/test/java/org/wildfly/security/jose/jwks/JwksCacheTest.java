@@ -306,6 +306,129 @@ public class JwksCacheTest {
     }
 
     @Test
+    public void testFailureReturnsNullWhenPreserveStaleDisabled() throws Exception {
+        AtomicInteger fetchCount = new AtomicInteger();
+        AtomicBoolean shouldFail = new AtomicBoolean(false);
+        byte[] response = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair1, "sig"));
+        JwksFetcher fetcher = url -> {
+            fetchCount.incrementAndGet();
+            if (shouldFail.get()) {
+                throw new JwksException("simulated failure");
+            }
+            return response;
+        };
+        JwksCache cache = new JwksCache(JwksConfig.builder()
+                .fetcher(fetcher)
+                .keyFilter(FOR_SIGNATURE_VALIDATION)
+                .cacheTtlMs(100)
+                .minTimeBetweenRequestsMs(0)
+                .preserveStaleOnFailure(false)
+                .build());
+
+        PublicKey first = cache.getPublicKey("kid-1", url1);
+        assertNotNull(first);
+        assertEquals(1, fetchCount.get());
+
+        Thread.sleep(150);
+        shouldFail.set(true);
+
+        PublicKey afterFailure = cache.getPublicKey("kid-1", url1);
+        assertNull(afterFailure);
+        assertEquals(2, fetchCount.get());
+    }
+
+    @Test
+    public void testFailureWithRateLimitReturnsNullForAllKids() throws Exception {
+        AtomicInteger fetchCount = new AtomicInteger();
+        AtomicBoolean shouldFail = new AtomicBoolean(false);
+        byte[] response = jwksBytes(
+                rsaJwkJson("kid-1", rsaKeyPair1, "sig"),
+                rsaJwkJson("kid-2", rsaKeyPair2, "sig"));
+        JwksFetcher fetcher = url -> {
+            fetchCount.incrementAndGet();
+            if (shouldFail.get()) {
+                throw new JwksException("simulated failure");
+            }
+            return response;
+        };
+        JwksCache cache = new JwksCache(JwksConfig.builder()
+                .fetcher(fetcher)
+                .keyFilter(FOR_SIGNATURE_VALIDATION)
+                .cacheTtlMs(150)
+                .minTimeBetweenRequestsMs(300)
+                .ttlBehavior(JwksConfig.TtlBehavior.KID_DEPENDENT)
+                .preserveStaleOnFailure(false)
+                .build());
+
+        assertNotNull(cache.getPublicKey("kid-1", url1));
+        assertNotNull(cache.getPublicKey("kid-2", url1));
+        assertEquals(1, fetchCount.get());
+
+        Thread.sleep(300);
+        shouldFail.set(true);
+
+        assertNull(cache.getPublicKey("kid-1", url1));
+        assertEquals(2, fetchCount.get());
+
+        // rate-limited blocks the fetch, returns null(map's empty)
+        assertNull(cache.getPublicKey("kid-2", url1));
+        assertEquals(2, fetchCount.get());
+
+        Thread.sleep(300);
+        shouldFail.set(false);
+
+        assertNotNull(cache.getPublicKey("kid-1", url1));
+        assertEquals(3, fetchCount.get());
+        assertNotNull(cache.getPublicKey("kid-2", url1));
+        assertEquals(3, fetchCount.get());
+    }
+
+    @Test
+    public void testFailureWithNoRateLimitAttemptsFreshFetch() throws Exception {
+        AtomicInteger fetchCount = new AtomicInteger();
+        AtomicBoolean shouldFail = new AtomicBoolean(false);
+        byte[] response = jwksBytes(
+                rsaJwkJson("kid-1", rsaKeyPair1, "sig"),
+                rsaJwkJson("kid-2", rsaKeyPair2, "sig"));
+        JwksFetcher fetcher = url -> {
+            fetchCount.incrementAndGet();
+            if (shouldFail.get()) {
+                throw new JwksException("simulated failure");
+            }
+            return response;
+        };
+        JwksCache cache = new JwksCache(JwksConfig.builder()
+                .fetcher(fetcher)
+                .keyFilter(FOR_SIGNATURE_VALIDATION)
+                .cacheTtlMs(200)
+                .minTimeBetweenRequestsMs(0)
+                .ttlBehavior(JwksConfig.TtlBehavior.KID_DEPENDENT)
+                .preserveStaleOnFailure(false)
+                .build());
+
+        assertNotNull(cache.getPublicKey("kid-1", url1));
+        assertNotNull(cache.getPublicKey("kid-2", url1));
+        assertEquals(1, fetchCount.get());
+
+        Thread.sleep(250);
+        shouldFail.set(true);
+
+        assertNull(cache.getPublicKey("kid-1", url1));
+        assertEquals(2, fetchCount.get());
+
+        assertNull(cache.getPublicKey("kid-2", url1));
+        assertEquals(3, fetchCount.get());
+
+        Thread.sleep(250);
+        shouldFail.set(false);
+
+        assertNotNull(cache.getPublicKey("kid-1", url1));
+        assertEquals(4, fetchCount.get());
+        assertNotNull(cache.getPublicKey("kid-2", url1));
+        assertEquals(4, fetchCount.get());
+    }
+
+    @Test
     public void testFailureAdvancesTimestampPreventsRetryStorm() throws Exception {
         AtomicInteger fetchCount = new AtomicInteger();
         AtomicBoolean shouldFail = new AtomicBoolean(false);

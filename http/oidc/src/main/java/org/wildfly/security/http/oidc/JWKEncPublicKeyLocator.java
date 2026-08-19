@@ -70,6 +70,7 @@ class JWKEncPublicKeyLocator implements PublicKeyLocator {
                             .cacheTtlMs(config.getPublicKeyCacheTtl() * 1000L)
                             .minTimeBetweenRequestsMs(config.getMinTimeBetweenJwksRequests() * 1000L)
                             .ttlBehavior(JwksConfig.TtlBehavior.KID_DEPENDENT)
+                            .preserveStaleOnFailure(true)
                             .build());
                     jwksCache = cache;
                 }

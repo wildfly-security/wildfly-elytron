@@ -201,11 +201,11 @@ public class JwksCache {
             cacheEntry.keys = Collections.unmodifiableMap(newKeys);
             cacheEntry.lastFetchTimeMs = now;
             log.jwksFetchSucceeded(url, newKeys.keySet());
-        } catch (JwksException e) {
+        } catch (JwksException | IOException e) {
             log.jwksFetchFailed(url, e);
-            cacheEntry.lastFetchTimeMs = now;
-        } catch (IOException e) {
-            log.jwksFetchFailed(url, e);
+            if (!config.isPreserveStaleOnFailure()) {
+                cacheEntry.keys = Collections.emptyMap();
+            }
             cacheEntry.lastFetchTimeMs = now;
         }
     }
