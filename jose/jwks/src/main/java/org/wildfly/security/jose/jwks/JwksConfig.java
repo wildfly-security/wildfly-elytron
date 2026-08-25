@@ -33,30 +33,10 @@ import org.wildfly.security.jose.jwk.JWK;
  */
 public final class JwksConfig {
 
-    /**
-     * Controls when a cached JWKS entry is considered stale and triggers a re-fetch.
-     */
-    public enum TtlBehavior {
-        /**
-         * Re-fetch only if the requested kid is missing from cache OR cache TTL has expired.
-         * A known kid is served from cache as long as TTL is valid.
-         *
-         * <p><b>TRANSITIONAL</b>: exists to preserve token-realm's current behavior.
-         */
-        KID_DEPENDENT,
-
-        /**
-         * Re-fetch when cache TTL has expired, regardless of whether the requested kid is
-         * present (Used by OIDC).
-         */
-        UNCONDITIONAL
-    }
-
     private final JwksFetcher fetcher;
     private final Predicate<JWK> keyFilter;
     private final long cacheTtlMs;
     private final long minTimeBetweenRequestsMs;
-    private final TtlBehavior ttlBehavior;
     private final boolean preserveStaleOnFailure;
 
     private JwksConfig(Builder builder) {
@@ -64,7 +44,6 @@ public final class JwksConfig {
         this.keyFilter = builder.keyFilter;
         this.cacheTtlMs = builder.cacheTtlMs;
         this.minTimeBetweenRequestsMs = builder.minTimeBetweenRequestsMs;
-        this.ttlBehavior = builder.ttlBehavior;
         this.preserveStaleOnFailure = builder.preserveStaleOnFailure;
     }
 
@@ -84,10 +63,6 @@ public final class JwksConfig {
         return minTimeBetweenRequestsMs;
     }
 
-    public TtlBehavior getTtlBehavior() {
-        return ttlBehavior;
-    }
-
     public boolean isPreserveStaleOnFailure() {
         return preserveStaleOnFailure;
     }
@@ -101,7 +76,6 @@ public final class JwksConfig {
         private Predicate<JWK> keyFilter;
         private long cacheTtlMs = 120_000;
         private long minTimeBetweenRequestsMs = 10_000;
-        private TtlBehavior ttlBehavior = TtlBehavior.UNCONDITIONAL;
         private boolean preserveStaleOnFailure = true;
 
         private Builder() {
@@ -124,11 +98,6 @@ public final class JwksConfig {
 
         public Builder minTimeBetweenRequestsMs(long minTimeBetweenRequestsMs) {
             this.minTimeBetweenRequestsMs = minTimeBetweenRequestsMs;
-            return this;
-        }
-
-        public Builder ttlBehavior(TtlBehavior ttlBehavior) {
-            this.ttlBehavior = ttlBehavior;
             return this;
         }
 

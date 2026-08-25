@@ -103,7 +103,6 @@ public class JwtValidator implements TokenValidator {
                     .keyFilter(JsonWebKeySetUtil.SUPPORTED_KEY_TYPE)
                     .cacheTtlMs(configuration.updateTimeout)
                     .minTimeBetweenRequestsMs(configuration.minTimeBetweenRequests)
-                    .ttlBehavior(JwksConfig.TtlBehavior.KID_DEPENDENT)
                     .preserveStaleOnFailure(false)
                     .build());
         }

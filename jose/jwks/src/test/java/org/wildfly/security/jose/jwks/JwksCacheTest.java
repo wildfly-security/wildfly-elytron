@@ -84,8 +84,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 200,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 200));
 
         PublicKey key = cache.getPublicKey("kid-1", url1);
         assertNotNull(key);
@@ -93,23 +92,7 @@ public class JwksCacheTest {
     }
 
     @Test
-    public void testUnconditionalWithinTtlNoRefetchForUnknownKid() throws Exception {
-        AtomicInteger fetchCount = new AtomicInteger();
-        byte[] response = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair1, "sig"));
-        JwksFetcher fetcher = url -> {
-            fetchCount.incrementAndGet();
-            return response;
-        };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
-
-        assertNotNull(cache.getPublicKey("kid-1", url1));
-        assertNull(cache.getPublicKey("kid-unknown", url1));
-        assertEquals(1, fetchCount.get());
-    }
-
-    @Test
-    public void testUnconditionalAfterTtlExpiryRefetches() throws Exception {
+    public void testAfterTtlExpiryRefetches() throws Exception {
         AtomicInteger fetchCount = new AtomicInteger();
         byte[] response1 = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair1, "sig"));
         byte[] response2 = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair2, "sig"));
@@ -118,8 +101,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response.get();
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 100, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 100, 0));
 
         PublicKey first = cache.getPublicKey("kid-1", url1);
         assertNotNull(first);
@@ -141,8 +123,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.KID_DEPENDENT));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
 
         assertNotNull(cache.getPublicKey("kid-1", url1));
         assertNotNull(cache.getPublicKey("kid-1", url1));
@@ -161,8 +142,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response.get();
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.KID_DEPENDENT));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
 
         assertNotNull(cache.getPublicKey("kid-1", url1));
         assertEquals(1, fetchCount.get());
@@ -184,8 +164,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 100, 500,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 100, 500));
 
         assertNotNull(cache.getPublicKey("kid-1", url1));
         assertEquals(1, fetchCount.get());
@@ -205,8 +184,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 100, 200,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 100, 200));
 
         assertNotNull(cache.getPublicKey("kid-1", url1));
         assertEquals(1, fetchCount.get());
@@ -225,8 +203,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 500,
-                JwksConfig.TtlBehavior.KID_DEPENDENT));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 500));
 
         assertNotNull(cache.getPublicKey("kid-1", url1));
         assertEquals(1, fetchCount.get());
@@ -246,8 +223,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             throw new JwksException("simulated failure");
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
 
         assertNull(cache.getPublicKey("kid-1", url1));
         assertEquals(1, fetchCount.get());
@@ -265,8 +241,7 @@ public class JwksCacheTest {
             }
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 100, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 100, 0));
 
         PublicKey first = cache.getPublicKey("kid-1", url1);
         assertNotNull(first);
@@ -290,8 +265,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response.get();
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 100, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 100, 0));
 
         PublicKey first = cache.getPublicKey("kid-1", url1);
         assertNotNull(first);
@@ -356,7 +330,6 @@ public class JwksCacheTest {
                 .keyFilter(FOR_SIGNATURE_VALIDATION)
                 .cacheTtlMs(150)
                 .minTimeBetweenRequestsMs(300)
-                .ttlBehavior(JwksConfig.TtlBehavior.KID_DEPENDENT)
                 .preserveStaleOnFailure(false)
                 .build());
 
@@ -402,7 +375,6 @@ public class JwksCacheTest {
                 .keyFilter(FOR_SIGNATURE_VALIDATION)
                 .cacheTtlMs(200)
                 .minTimeBetweenRequestsMs(0)
-                .ttlBehavior(JwksConfig.TtlBehavior.KID_DEPENDENT)
                 .preserveStaleOnFailure(false)
                 .build());
 
@@ -440,8 +412,7 @@ public class JwksCacheTest {
             }
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 200,
-                JwksConfig.TtlBehavior.KID_DEPENDENT));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 200));
 
         assertNotNull(cache.getPublicKey("kid-1", url1));
         assertEquals(1, fetchCount.get());
@@ -468,8 +439,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 5000,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 5000));
 
         assertNotNull(cache.getPublicKey("kid-1", url1));
         assertEquals(1, fetchCount.get());
@@ -486,8 +456,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
 
         cache.reset(url1);
         assertEquals(1, fetchCount.get());
@@ -505,8 +474,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response.get();
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 5000,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 5000));
 
         assertNotNull(cache.getPublicKey("kid-1", url1));
         assertNull(cache.getPublicKey("kid-2", url1));
@@ -532,8 +500,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
 
         PublicKey key = cache.getAnyKey(url1);
         assertNotNull(key);
@@ -550,8 +517,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
 
         PublicKey key = cache.getAnyKey(url1);
         assertNotNull(key);
@@ -566,8 +532,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
 
         assertNull(cache.getAnyKey(url1));
         assertEquals(1, fetchCount.get());
@@ -581,8 +546,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 50, 10_000,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 50, 10_000));
 
         PublicKey first = cache.getAnyKey(url1);
         assertNotNull(first);
@@ -609,8 +573,7 @@ public class JwksCacheTest {
             if (url.equals(url1)) return response1;
             return response2;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 5000));
 
         assertNotNull(cache.getPublicKey("kid-1", url1));
         assertNull(cache.getPublicKey("kid-1", url2));
@@ -630,8 +593,7 @@ public class JwksCacheTest {
             }
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
 
         assertNotNull(cache.getPublicKey("kid-1", url1));
         assertNull(cache.getPublicKey("kid-1", url2));
@@ -658,8 +620,7 @@ public class JwksCacheTest {
             }
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
 
         int threadCount = 4;
         Thread[] threads = new Thread[threadCount];
@@ -718,8 +679,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
 
         assertNull(cache.getPublicKey("kid-enc", url1));
         assertEquals(1, fetchCount.get());
@@ -733,8 +693,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
 
         PublicKey key = cache.getPublicKey("kid-ec", url1);
         assertNotNull(key);
@@ -754,8 +713,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
 
         assertNull(cache.getPublicKey(null, url1));
         assertEquals(0, fetchCount.get());
@@ -771,8 +729,7 @@ public class JwksCacheTest {
             fetchCount.incrementAndGet();
             return response;
         };
-        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0,
-                JwksConfig.TtlBehavior.UNCONDITIONAL));
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
 
         PublicKey key = cache.getPublicKey("kid-1", url1);
         assertNotNull(key);
@@ -783,14 +740,12 @@ public class JwksCacheTest {
     //  Test infrastructure                                                //
     // ------------------------------------------------------------------ //
 
-    private static JwksConfig sigConfig(JwksFetcher fetcher, long ttlMs, long minTimeMs,
-                                        JwksConfig.TtlBehavior behavior) {
+    private static JwksConfig sigConfig(JwksFetcher fetcher, long ttlMs, long minTimeMs) {
         return JwksConfig.builder()
                 .fetcher(fetcher)
                 .keyFilter(FOR_SIGNATURE_VALIDATION)
                 .cacheTtlMs(ttlMs)
                 .minTimeBetweenRequestsMs(minTimeMs)
-                .ttlBehavior(behavior)
                 .build();
     }
 

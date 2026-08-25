@@ -74,7 +74,7 @@ public class JwksCache {
         Map<String, PublicKey> keys = cacheEntry.keys;
         long now = System.currentTimeMillis();
 
-        if (!needsRefetch(keys, kid, lastFetchMs, now, config.getTtlBehavior())) {
+        if (!needsRefetch(keys, kid, lastFetchMs, now)) {
             return keys.get(kid);
         }
 
@@ -88,7 +88,7 @@ public class JwksCache {
             lastFetchMs = cacheEntry.lastFetchTimeMs;
             now = System.currentTimeMillis();
 
-            if (!needsRefetch(keys, kid, lastFetchMs, now, config.getTtlBehavior())) {
+            if (!needsRefetch(keys, kid, lastFetchMs, now)) {
                 return keys.get(kid);
             }
             if (isRateLimited(lastFetchMs, now)) {
@@ -103,7 +103,7 @@ public class JwksCache {
     /**
      * Returns any available {@link PublicKey} from the JWKS at {@code url}, or {@code null}
      * if no keys are cached after a fetch attempt. Because there is no kid to check,
-     * both {@link JwksConfig.TtlBehavior} values reduce to TTL-expiry-only behavior.
+     * refetch is triggered only when the cache TTL expires.
      *
      * @param url the JWKS endpoint URL
      * @return any available public key, or null
@@ -118,7 +118,7 @@ public class JwksCache {
         Map<String, PublicKey> keys = cacheEntry.keys;
         long now = System.currentTimeMillis();
 
-        if (!needsRefetch(keys, null, lastFetchMs, now, config.getTtlBehavior())) {
+        if (!needsRefetch(keys, null, lastFetchMs, now)) {
             return firstValue(keys);
         }
 
@@ -132,7 +132,7 @@ public class JwksCache {
             lastFetchMs = cacheEntry.lastFetchTimeMs;
             now = System.currentTimeMillis();
 
-            if (!needsRefetch(keys, null, lastFetchMs, now, config.getTtlBehavior())) {
+            if (!needsRefetch(keys, null, lastFetchMs, now)) {
                 return firstValue(keys);
             }
             if (isRateLimited(lastFetchMs, now)) {
@@ -171,18 +171,11 @@ public class JwksCache {
         }
     }
 
-    private boolean needsRefetch(Map<String, PublicKey> keys, String kid, long lastFetchMs, long now,
-                                 JwksConfig.TtlBehavior ttlBehavior) {
+    private boolean needsRefetch(Map<String, PublicKey> keys, String kid, long lastFetchMs, long now) {
         if (lastFetchMs == 0) {
             return true;
         }
         boolean ttlExpired = lastFetchMs + config.getCacheTtlMs() <= now;
-
-        if (ttlBehavior == JwksConfig.TtlBehavior.UNCONDITIONAL) {
-            return ttlExpired;
-        }
-
-        // KID_DEPENDENT: refetch if kid is missing OR TTL expired
         return (kid != null && !keys.containsKey(kid)) || ttlExpired;
     }
 
