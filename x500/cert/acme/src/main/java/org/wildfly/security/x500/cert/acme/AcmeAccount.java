@@ -32,6 +32,7 @@ import java.security.Signature;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -66,7 +67,8 @@ public final class AcmeAccount {
     private String keyAlgorithmName;
     private String accountUrl;
     private String externalAccountBindingKeyIdentifier;
-    private byte[] externalAccountBindingKey;
+    private Supplier<byte[]> externalAccountBindingKeySupplier;
+    private ExternalAccountBindingAlgorithm externalAccountBindingAlgorithm;
     private HashMap<AcmeResource, URL> resourceUrls = new HashMap<>(AcmeResource.values().length);
     private HashMap<AcmeResource, URL> stagingResourceUrls = new HashMap<>(AcmeResource.values().length);
     private byte[] nonce;
@@ -84,7 +86,8 @@ public final class AcmeAccount {
         this.keyAlgorithmName = builder.keyAlgorithmName;
         this.dn = builder.dn;
         this.externalAccountBindingKeyIdentifier = builder.externalAccountBindingKeyIdentifier;
-        this.externalAccountBindingKey = builder.externalAccountBindingKey != null ? builder.externalAccountBindingKey.clone() : null;
+        this.externalAccountBindingKeySupplier = builder.externalAccountBindingKeySupplier;
+        this.externalAccountBindingAlgorithm = builder.externalAccountBindingAlgorithm;
     }
 
     /**
@@ -259,7 +262,23 @@ public final class AcmeAccount {
      * @return the external account binding HMAC key or {@code null} if not configured
      */
     public byte[] getExternalAccountBindingKey() {
-        return externalAccountBindingKey != null ? externalAccountBindingKey.clone() : null;
+        if (externalAccountBindingKeySupplier == null) {
+            return null;
+        }
+        byte[] externalAccountBindingKey = Assert.checkNotNullParam("externalAccountBindingKey",
+                externalAccountBindingKeySupplier.get());
+        Assert.checkMinimumParameter("externalAccountBindingKey.length",
+                externalAccountBindingAlgorithm.getMinimumKeySize(), externalAccountBindingKey.length);
+        return externalAccountBindingKey.clone();
+    }
+
+    /**
+     * Get the algorithm to use for external account binding.
+     *
+     * @return the external account binding algorithm
+     */
+    public ExternalAccountBindingAlgorithm getExternalAccountBindingAlgorithm() {
+        return externalAccountBindingAlgorithm;
     }
 
     /**
@@ -268,7 +287,7 @@ public final class AcmeAccount {
      * @return {@code true} if external account binding credentials have been configured and {@code false} otherwise
      */
     public boolean hasExternalAccountBinding() {
-        return externalAccountBindingKeyIdentifier != null && externalAccountBindingKey != null;
+        return externalAccountBindingKeyIdentifier != null && externalAccountBindingKeySupplier != null;
     }
 
     /**
@@ -349,6 +368,31 @@ public final class AcmeAccount {
         return new Builder();
     }
 
+    /**
+     * The HMAC algorithms supported for ACME external account binding.
+     */
+    public enum ExternalAccountBindingAlgorithm {
+        HS256("HmacSHA256", 32),
+        HS384("HmacSHA384", 48),
+        HS512("HmacSHA512", 64);
+
+        private final String macAlgorithmName;
+        private final int minimumKeySize;
+
+        ExternalAccountBindingAlgorithm(String macAlgorithmName, int minimumKeySize) {
+            this.macAlgorithmName = macAlgorithmName;
+            this.minimumKeySize = minimumKeySize;
+        }
+
+        String getMacAlgorithmName() {
+            return macAlgorithmName;
+        }
+
+        int getMinimumKeySize() {
+            return minimumKeySize;
+        }
+    }
+
     public static class Builder {
 
         /**
@@ -366,6 +410,11 @@ public final class AcmeAccount {
          */
         public static final int DEFAULT_ACCOUNT_EC_KEY_SIZE = 256;
 
+        /**
+         * The default external account binding algorithm.
+         */
+        public static final ExternalAccountBindingAlgorithm DEFAULT_EXTERNAL_ACCOUNT_BINDING_ALGORITHM = ExternalAccountBindingAlgorithm.HS256;
+
         static final String ACCOUNT_KEY_NAME = "account.key";
 
         private String[] contactUrls;
@@ -380,7 +429,8 @@ public final class AcmeAccount {
         private String algHeader;
         private String signatureAlgorithm;
         private String externalAccountBindingKeyIdentifier;
-        private byte[] externalAccountBindingKey;
+        private Supplier<byte[]> externalAccountBindingKeySupplier;
+        private ExternalAccountBindingAlgorithm externalAccountBindingAlgorithm = DEFAULT_EXTERNAL_ACCOUNT_BINDING_ALGORITHM;
 
         /**
          * Construct a new uninitialized instance.
@@ -490,14 +540,29 @@ public final class AcmeAccount {
          * Set the external account binding (EAB) credentials to use when registering this account.
          *
          * @param keyIdentifier the key identifier supplied by the certificate authority (must not be empty)
-         * @param hmacKey the HMAC key supplied by the certificate authority (must not be empty)
+         * @param hmacKey the HMAC key supplied by the certificate authority (must meet the minimum size for the selected algorithm)
          * @return this builder instance
          */
         public Builder setExternalAccountBinding(final String keyIdentifier, final byte[] hmacKey) {
             Assert.checkNotEmptyParam("keyIdentifier", keyIdentifier);
             Assert.checkNotEmptyParam("hmacKey", hmacKey);
+            Assert.checkMinimumParameter("hmacKey.length", externalAccountBindingAlgorithm.getMinimumKeySize(), hmacKey.length);
+            final byte[] copiedHmacKey = hmacKey.clone();
+            return setExternalAccountBinding(keyIdentifier, () -> copiedHmacKey.clone());
+        }
+
+        /**
+         * Set the external account binding (EAB) credentials to use when registering this account.
+         *
+         * @param keyIdentifier the key identifier supplied by the certificate authority (must not be empty)
+         * @param hmacKeySupplier the supplier for the HMAC key supplied by the certificate authority (must not be {@code null})
+         * @return this builder instance
+         */
+        public Builder setExternalAccountBinding(final String keyIdentifier, final Supplier<byte[]> hmacKeySupplier) {
+            Assert.checkNotEmptyParam("keyIdentifier", keyIdentifier);
+            Assert.checkNotNullParam("hmacKeySupplier", hmacKeySupplier);
             this.externalAccountBindingKeyIdentifier = keyIdentifier;
-            this.externalAccountBindingKey = hmacKey.clone();
+            this.externalAccountBindingKeySupplier = hmacKeySupplier;
             return this;
         }
 
@@ -511,6 +576,18 @@ public final class AcmeAccount {
         public Builder setExternalAccountBinding(final String keyIdentifier, final String base64UrlEncodedHmacKey) {
             Assert.checkNotEmptyParam("base64UrlEncodedHmacKey", base64UrlEncodedHmacKey);
             return setExternalAccountBinding(keyIdentifier, CodePointIterator.ofString(base64UrlEncodedHmacKey).base64Decode(Acme.BASE64_URL, false).drain());
+        }
+
+        /**
+         * Set the HMAC algorithm to use for external account binding. The default is {@link ExternalAccountBindingAlgorithm#HS256}.
+         *
+         * @param externalAccountBindingAlgorithm the external account binding algorithm (must not be {@code null})
+         * @return this builder instance
+         */
+        public Builder setExternalAccountBindingAlgorithm(final ExternalAccountBindingAlgorithm externalAccountBindingAlgorithm) {
+            this.externalAccountBindingAlgorithm = Assert.checkNotNullParam("externalAccountBindingAlgorithm",
+                    externalAccountBindingAlgorithm);
+            return this;
         }
 
         /**

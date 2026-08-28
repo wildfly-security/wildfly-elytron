@@ -170,8 +170,6 @@ public abstract class AcmeClientSpi {
     private static final long DEFAULT_RETRY_AFTER_MILLI = 3000;
     private static final int[] CONTENT_TYPE_DELIMS = new int[] {';', '='};
     private static final String CHARSET = "charset";
-    private static final String HMAC_SHA256 = "HmacSHA256";
-    private static final String HS256 = "HS256";
     private static final String UTF_8 = "utf-8";
     private static final String USER_AGENT_STRING = "Elytron ACME Client/" + Version.getVersion();
 
@@ -291,9 +289,9 @@ public abstract class AcmeClientSpi {
                 }
                 payloadBuilder.add(CONTACT, contactBuilder.build());
             }
-        }
-        if (account.hasExternalAccountBinding()) {
-            payloadBuilder.add(EXTERNAL_ACCOUNT_BINDING, getExternalAccountBinding(account, newAccountUrl));
+            if (account.hasExternalAccountBinding()) {
+                payloadBuilder.add(EXTERNAL_ACCOUNT_BINDING, getExternalAccountBinding(account, newAccountUrl));
+            }
         }
 
         HttpURLConnection connection = sendPostRequestWithRetries(account, staging, newAccountUrl, true,
@@ -1050,9 +1048,10 @@ public abstract class AcmeClientSpi {
         return getEncodedJson(protectedHeader);
     }
 
-    private static String getEncodedExternalAccountBindingProtectedHeader(String keyIdentifier, String resourceUrl) {
+    private static String getEncodedExternalAccountBindingProtectedHeader(String keyIdentifier,
+            AcmeAccount.ExternalAccountBindingAlgorithm algorithm, String resourceUrl) {
         JsonObject protectedHeader = Json.createObjectBuilder()
-                .add(ALG, HS256)
+                .add(ALG, algorithm.name())
                 .add(KID, keyIdentifier)
                 .add(URL, resourceUrl)
                 .build();
@@ -1118,10 +1117,11 @@ public abstract class AcmeClientSpi {
         }
     }
 
-    private static String getEncodedMacSignature(byte[] key, String encodedProtectedHeader, String encodedPayload) throws AcmeException {
+    private static String getEncodedMacSignature(byte[] key, String algorithm, String encodedProtectedHeader,
+            String encodedPayload) throws AcmeException {
         try {
-            Mac mac = Mac.getInstance(HMAC_SHA256);
-            mac.init(new SecretKeySpec(key, HMAC_SHA256));
+            Mac mac = Mac.getInstance(algorithm);
+            mac.init(new SecretKeySpec(key, algorithm));
             return base64UrlEncode(mac.doFinal((encodedProtectedHeader + "." + encodedPayload).getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw acme.unableToCreateAcmeSignature(e);
@@ -1145,9 +1145,12 @@ public abstract class AcmeClientSpi {
      * Build the nested JWS object required for external account binding during account creation.
      */
     private static JsonObject getExternalAccountBinding(AcmeAccount account, String newAccountUrl) throws AcmeException {
-        final String encodedProtectedHeader = getEncodedExternalAccountBindingProtectedHeader(account.getExternalAccountBindingKeyIdentifier(), newAccountUrl);
+        final AcmeAccount.ExternalAccountBindingAlgorithm algorithm = account.getExternalAccountBindingAlgorithm();
+        final String encodedProtectedHeader = getEncodedExternalAccountBindingProtectedHeader(
+                account.getExternalAccountBindingKeyIdentifier(), algorithm, newAccountUrl);
         final String encodedPayload = getEncodedJson(getJwk(account.getPublicKey(), account.getAlgHeader()));
-        final String encodedSignature = getEncodedMacSignature(account.getExternalAccountBindingKey(), encodedProtectedHeader, encodedPayload);
+        final String encodedSignature = getEncodedMacSignature(account.getExternalAccountBindingKey(),
+                algorithm.getMacAlgorithmName(), encodedProtectedHeader, encodedPayload);
         return getJws(encodedProtectedHeader, encodedPayload, encodedSignature);
     }
 

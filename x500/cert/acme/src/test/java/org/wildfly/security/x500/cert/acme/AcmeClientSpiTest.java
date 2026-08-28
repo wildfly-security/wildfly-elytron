@@ -71,6 +71,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -210,17 +211,42 @@ public class AcmeClientSpiTest {
 
     @Test
     public void testCreateAccountWithExternalAccountBinding() throws Exception {
+        assertCreateAccountWithExternalAccountBinding(AcmeAccount.ExternalAccountBindingAlgorithm.HS256);
+    }
+
+    @Test
+    public void testCreateAccountWithExternalAccountBindingUsingSha512() throws Exception {
+        assertCreateAccountWithExternalAccountBinding(AcmeAccount.ExternalAccountBindingAlgorithm.HS512);
+    }
+
+    @Test
+    public void testCreateAccountWithExternalAccountBindingUsingSha384() throws Exception {
+        assertCreateAccountWithExternalAccountBinding(AcmeAccount.ExternalAccountBindingAlgorithm.HS384);
+    }
+
+    private void assertCreateAccountWithExternalAccountBinding(
+            AcmeAccount.ExternalAccountBindingAlgorithm externalAccountBindingAlgorithm) throws Exception {
         final String NEW_ACCT_LOCATION = "http://localhost:4001/acme/acct/390";
         final String NEW_ACCT_URL = "http://localhost:4001/acme/new-acct";
+        final byte[] externalAccountBindingKey = new byte[externalAccountBindingAlgorithm.getMinimumKeySize()];
+        final AtomicInteger keySupplierInvocations = new AtomicInteger();
 
-        AcmeAccount account = populateBasicBuilder()
+        AcmeAccount.Builder accountBuilder = populateBasicBuilder()
                 .setKey(aliasToCertificateMap.get(ACCOUNT_1_V2), aliasToPrivateKeyMap.get(ACCOUNT_1_V2))
-                .setExternalAccountBinding("sectigo-account-123", "bWFjLXNlY3JldA")
-                .build();
+                .setExternalAccountBinding("sectigo-account-123", () -> {
+                    keySupplierInvocations.incrementAndGet();
+                    return externalAccountBindingKey;
+                });
+        if (externalAccountBindingAlgorithm != AcmeAccount.Builder.DEFAULT_EXTERNAL_ACCOUNT_BINDING_ALGORITHM) {
+            accountBuilder.setExternalAccountBindingAlgorithm(externalAccountBindingAlgorithm);
+        }
+        AcmeAccount account = accountBuilder.build();
         server = setupTestCreateAccountWithExternalAccountBinding();
 
         assertNull(account.getAccountUrl());
+        assertEquals(0, keySupplierInvocations.get());
         acmeClient.createAccount(account, false);
+        assertEquals(1, keySupplierInvocations.get());
         assertEquals(NEW_ACCT_LOCATION, account.getAccountUrl());
 
         // Inspect the recorded request instead of reconstructing the outer JWS in the test.
@@ -235,14 +261,34 @@ public class AcmeClientSpiTest {
         assertEquals(account.getContactUrls()[0], outerPayload.getJsonArray(CONTACT).getString(0));
 
         JsonObject externalAccountBindingProtectedHeader = decodeJson(externalAccountBinding.getString(PROTECTED));
-        assertEquals("HS256", externalAccountBindingProtectedHeader.getString(ALG));
+        assertEquals(externalAccountBindingAlgorithm.name(), externalAccountBindingProtectedHeader.getString(ALG));
         assertEquals(account.getExternalAccountBindingKeyIdentifier(), externalAccountBindingProtectedHeader.getString(KID));
         assertEquals(NEW_ACCT_URL, externalAccountBindingProtectedHeader.getString(URL));
         assertEquals(Acme.getJwk(account.getPublicKey(), account.getAlgHeader()),
                 decodeJson(externalAccountBinding.getString(PAYLOAD)));
-        assertEquals(getEncodedMacSignature(account.getExternalAccountBindingKey(),
+        assertEquals(getEncodedMacSignature(externalAccountBindingKey,
+                        externalAccountBindingAlgorithm.getMacAlgorithmName(),
                         externalAccountBinding.getString(PROTECTED), externalAccountBinding.getString(PAYLOAD)),
                 externalAccountBinding.getString(SIGNATURE));
+    }
+
+    @Test
+    public void testExternalAccountBindingRejectsUndersizedKeys() throws Exception {
+        try {
+            populateBasicBuilder().setExternalAccountBinding("key-identifier", new byte[15]);
+            fail("Expected IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException expected) {
+        }
+
+        AcmeAccount account = populateBasicBuilder()
+                .setKey(aliasToCertificateMap.get(ACCOUNT_1_V2), aliasToPrivateKeyMap.get(ACCOUNT_1_V2))
+                .setExternalAccountBinding("key-identifier", () -> new byte[31])
+                .build();
+        try {
+            account.getExternalAccountBindingKey();
+            fail("Expected IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException expected) {
+        }
     }
 
     @Test
@@ -252,7 +298,13 @@ public class AcmeClientSpiTest {
         AcmeAccount account = populateBasicAccount(ACCOUNT_2_V2);
         acmeClient.createAccount(account, false);
         assertEquals(NEW_ACCT_LOCATION_1, account.getAccountUrl());
-        AcmeAccount sameAccount = populateBasicAccount(ACCOUNT_2_V2);
+        AcmeAccount sameAccount = populateBasicBuilder()
+                .setKey(aliasToCertificateMap.get(ACCOUNT_2_V2), aliasToPrivateKeyMap.get(ACCOUNT_2_V2))
+                .setExternalAccountBinding("unused-key-identifier", () -> {
+                    fail("The external account binding key must not be requested when onlyReturnExisting is true");
+                    return new byte[AcmeAccount.ExternalAccountBindingAlgorithm.HS256.getMinimumKeySize()];
+                })
+                .build();
 
         // the key corresponding to ACCOUNT_2 is associated with an already registered account
         acmeClient.createAccount(sameAccount, false, true);
@@ -2513,19 +2565,16 @@ public class AcmeClientSpiTest {
         return account;
     }
 
-    private static String getEncodedJson(JsonObject jsonObject) {
-        return CodePointIterator.ofString(jsonObject.toString()).asUtf8().base64Encode(BASE64_URL, false).drainToString();
-    }
-
     private static JsonObject decodeJson(String encodedJson) {
         String decodedJson = new String(CodePointIterator.ofString(encodedJson).base64Decode(BASE64_URL, false).drain(),
                 StandardCharsets.UTF_8);
         return Json.createReader(new StringReader(decodedJson)).readObject();
     }
 
-    private static String getEncodedMacSignature(byte[] key, String encodedProtectedHeader, String encodedPayload) throws Exception {
-        Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(key, "HmacSHA256"));
+    private static String getEncodedMacSignature(byte[] key, String algorithm, String encodedProtectedHeader,
+            String encodedPayload) throws Exception {
+        Mac mac = Mac.getInstance(algorithm);
+        mac.init(new SecretKeySpec(key, algorithm));
         return ByteIterator.ofBytes(mac.doFinal((encodedProtectedHeader + "." + encodedPayload).getBytes(StandardCharsets.UTF_8)))
                 .base64Encode(BASE64_URL, false)
                 .drainToString();
