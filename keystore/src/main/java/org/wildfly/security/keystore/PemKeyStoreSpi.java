@@ -47,7 +47,7 @@ import java.util.List;
  */
 public final class PemKeyStoreSpi extends KeyStoreSpi {
 
-    private KeyStore keyStore;
+    private volatile KeyStore keyStore;
 
     @Override
     public Key engineGetKey(String alias, char[] password) throws NoSuchAlgorithmException, UnrecoverableKeyException {

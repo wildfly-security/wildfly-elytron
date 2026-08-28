@@ -272,7 +272,7 @@ public class PemKeyStoreTest {
     }
 
     @Test
-    public void testEncryptedPrivateKeyFailsClearly() throws Exception {
+    public void testEncryptedPrivateKeyFails() throws Exception {
         TestMaterial material = createMaterial("EncryptedPrivateKey");
         ByteStringBuilder target = new ByteStringBuilder();
         Pem.generatePemContent(target, "ENCRYPTED PRIVATE KEY",
@@ -283,7 +283,8 @@ public class PemKeyStoreTest {
         IOException exception = Assert.assertThrows(IOException.class,
                 () -> keyStore.load(new ByteArrayInputStream(target.toArray()), PASSWORD));
 
-        Assert.assertEquals("Encrypted PEM private keys are not supported", exception.getMessage());
+        Assert.assertEquals("Unable to parse PEM content", exception.getMessage());
+        Assert.assertNotNull(exception.getCause());
     }
 
     @Test
@@ -310,6 +311,35 @@ public class PemKeyStoreTest {
 
         Assert.assertEquals(0, empty.size());
         Assert.assertEquals(0, whitespace.size());
+    }
+
+    @Test
+    public void testCertificatesWithDuplicateSubjectsUseUniqueAliases() throws Exception {
+        TestMaterial first = createMaterial("DuplicateSubject");
+        TestMaterial second = createMaterial("DuplicateSubject");
+        ByteStringBuilder target = new ByteStringBuilder();
+        Pem.generatePemX509Certificate(target, first.subjectCertificate);
+        Pem.generatePemX509Certificate(target, second.subjectCertificate);
+        KeyStore keyStore = createPemKeyStore();
+
+        keyStore.load(new ByteArrayInputStream(target.toArray()), PASSWORD);
+
+        String subjectName = first.subjectCertificate.getSubjectX500Principal().getName();
+        Assert.assertEquals(2, keyStore.size());
+        Assert.assertEquals(first.subjectCertificate, keyStore.getCertificate(subjectName));
+        Assert.assertEquals(second.subjectCertificate, keyStore.getCertificate(subjectName + "-1"));
+    }
+
+    @Test
+    public void testOversizedPemFails() throws Exception {
+        byte[] oversizedPem = new byte[PemKeyStoreUtil.MAX_PEM_CONTENT_SIZE + 1];
+        KeyStore keyStore = createPemKeyStore();
+
+        IOException exception = Assert.assertThrows(IOException.class,
+                () -> keyStore.load(new ByteArrayInputStream(oversizedPem), PASSWORD));
+
+        Assert.assertEquals("PEM content exceeds maximum size of " + PemKeyStoreUtil.MAX_PEM_CONTENT_SIZE + " bytes",
+                exception.getMessage());
     }
 
     @Test

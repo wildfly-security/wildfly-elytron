@@ -45,6 +45,7 @@ import org.wildfly.security.pem.PemEntry;
 final class PemKeyStoreUtil {
 
     static final String DEFAULT_ALIAS = "tls";
+    static final int MAX_PEM_CONTENT_SIZE = 10 * 1024 * 1024;
 
     private static final String BACKING_KEY_STORE_TYPE = "PKCS12";
     private static final byte[] KEY_MATCH_PROBE = "WildFly Elytron PEM key match probe".getBytes(StandardCharsets.UTF_8);
@@ -56,7 +57,6 @@ final class PemKeyStoreUtil {
         PrivateKey privateKey = null;
         List<X509Certificate> certificates = new ArrayList<X509Certificate>();
         byte[] pem = readAllBytes(is);
-        rejectEncryptedPrivateKeys(pem);
         try {
             for (Iterator<PemEntry<?>> it = Pem.parsePemContent(CodePointIterator.ofUtf8Bytes(pem)); it.hasNext(); ) {
                 Object entry = it.next().getEntry();
@@ -77,23 +77,6 @@ final class PemKeyStoreUtil {
         return new PemEntries(privateKey, certificates);
     }
 
-    private static void rejectEncryptedPrivateKeys(byte[] pem) throws IOException {
-        CodePointIterator iterator = CodePointIterator.ofUtf8Bytes(pem);
-        try {
-            String type;
-            while ((type = Pem.parsePemContent(iterator, (pemType, content) -> {
-                content.drain();
-                return pemType;
-            })) != null) {
-                if ("ENCRYPTED PRIVATE KEY".equals(type)) {
-                    throw new IOException("Encrypted PEM private keys are not supported");
-                }
-            }
-        } catch (IllegalArgumentException e) {
-            throw new IOException("Unable to parse PEM content", e);
-        }
-    }
-
     static KeyStore createKeyStore(PemEntries pemEntries, String alias, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
         KeyStore keyStore = createEmptyKeyStore();
         PrivateKey privateKey = pemEntries.getPrivateKey();
@@ -108,9 +91,14 @@ final class PemKeyStoreUtil {
                 String keyAlias = alias != null ? alias : certificate.getSubjectX500Principal().getName();
                 keyStore.setKeyEntry(keyAlias, privateKey, password != null ? password : new char[0], certificates.toArray(new Certificate[0]));
             } else {
-                int i = 1;
                 for (X509Certificate certificate : certificates) {
-                    keyStore.setCertificateEntry(certificate.getSubjectX500Principal().getName() != null ? certificate.getSubjectX500Principal().getName() : Integer.toString(i++), certificate);
+                    String subjectName = certificate.getSubjectX500Principal().getName();
+                    String certificateAlias = subjectName;
+                    int i = 1;
+                    while (keyStore.containsAlias(certificateAlias)) {
+                        certificateAlias = subjectName + "-" + i++;
+                    }
+                    keyStore.setCertificateEntry(certificateAlias, certificate);
                 }
             }
         } catch (KeyStoreException e) {
@@ -158,6 +146,9 @@ final class PemKeyStoreUtil {
         int readBytes = inputStream.read(buffer);
 
         while (readBytes != -1) {
+            if (outputStream.size() > MAX_PEM_CONTENT_SIZE - readBytes) {
+                throw new IOException("PEM content exceeds maximum size of " + MAX_PEM_CONTENT_SIZE + " bytes");
+            }
             outputStream.write(buffer, 0, readBytes);
             readBytes = inputStream.read(buffer);
         }
