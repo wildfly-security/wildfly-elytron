@@ -305,7 +305,8 @@ public class Oidc {
     public enum ClientCredentialsProviderType {
         SECRET("secret"),
         JWT("jwt"),
-        SECRET_JWT("secret-jwt")
+        SECRET_JWT("secret-jwt"),
+        X509_CERTIFICATE("x509-certificate")
         ;
 
         private final String value;
