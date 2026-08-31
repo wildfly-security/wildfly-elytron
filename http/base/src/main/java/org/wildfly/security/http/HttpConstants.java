@@ -170,6 +170,10 @@ public class HttpConstants {
     public static final String FORM_NAME = "FORM";
     public static final String SPNEGO_NAME = "SPNEGO";
     public static final String BEARER_TOKEN = "BEARER_TOKEN";
+    public static final String EC_TOKEN = "EC_TOKEN";
+    public static final String ECDSA_SHA256 = "ecdsa-sha256";
+    public static final String ECDSA_SHA384 = "ecdsa-sha384";
+    public static final String ECDSA_SHA521 = "ecdsa-sha521";
 
     /*
      * Response Codes

@@ -7,7 +7,6 @@ package org.wildfly.security.realm.token.test.util;
 import java.math.BigInteger;
 import java.net.URI;
 import java.security.KeyPair;
-import java.security.PrivateKey;
 import java.util.Arrays;
 
 import com.nimbusds.jose.JOSEObjectType;
@@ -42,13 +41,19 @@ public final class JwtTestUtil extends JwkTestUtil {
         return createJwt(keyPair, expirationOffset, -1);
     }
 
+    // Retain the original method signature for RSA (Bearer JWT token) generation
     public static String createJwt(KeyPair keyPair, int expirationOffset, int notBeforeOffset, String kid, URI jku) throws Exception {
-        PrivateKey privateKey = keyPair.getPrivate();
-        JWSSigner signer = new RSASSASigner(privateKey);
+        return createJwt(new RSASSASigner(keyPair.getPrivate()), JWSAlgorithm.RS256,
+            expirationOffset, notBeforeOffset, kid, jku);
+    }
+
+    // Support for RSA and EC JWT token generation.
+    public static String createJwt(JWSSigner signer, JWSAlgorithm algorithm, int expirationOffset, int notBeforeOffset, String kid, URI jku) throws Exception {
+
         JsonObjectBuilder claimsBuilder = createClaims(expirationOffset, notBeforeOffset);
 
-        JWSHeader.Builder headerBuilder = new JWSHeader.Builder(JWSAlgorithm.RS256)
-                .type(new JOSEObjectType("jwt"));
+        JWSHeader.Builder headerBuilder = new JWSHeader.Builder(algorithm)
+            .type(new JOSEObjectType("jwt"));
 
         if (jku != null) {
             headerBuilder.jwkURL(jku);

@@ -21,6 +21,7 @@ package org.wildfly.security.auth.realm.token;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.evidence.BearerTokenEvidence;
+import org.wildfly.security.evidence.Evidence;
 
 /**
  * <p>A {@link TokenValidator} is responsible to validate a {@link BearerTokenEvidence} and support validation and transformation
@@ -40,4 +41,6 @@ public interface TokenValidator {
      * @throws RealmUnavailableException if any error occurs when validating the evidence
      */
     Attributes validate(BearerTokenEvidence evidence) throws RealmUnavailableException;
+
+    Attributes validate(Evidence evidence) throws RealmUnavailableException;
 }
