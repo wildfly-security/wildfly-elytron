@@ -21,6 +21,7 @@ package org.wildfly.security.http.oidc;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertNull;
 
 import java.math.BigInteger;
 import java.security.KeyPair;
@@ -100,18 +101,13 @@ public class JWKEncPublicKeyLocatorTest {
         assertEquals(rsaKeyPair2.getPublic(), result);
     }
 
-    /**
-     * CURRENT BUG: when the JWKS response contains NO
-     * encryption keys, the internal list is empty after sendRequest(). The
-     * lookupCachedKey() method unconditionally calls currentKeys.get(0) without
-     * checking if the list is empty, causing an IndexOutOfBoundsException.
-     */
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void testEmptyEncryptionKeysThrowsIndexOutOfBounds() throws Exception {
+    @Test
+    public void testEmptyEncryptionKeysReturnsNull() throws Exception {
         server.enqueue(jwksResponse(rsaJwkJson("kid-sig", rsaKeyPair1, "sig")));
 
         OidcClientConfiguration config = createConfig(300, 0);
-        locator.getPublicKey("any", config);
+        PublicKey result = locator.getPublicKey("any", config);
+        assertNull(result);
     }
 
     // ------------------------------------------------------------------ //

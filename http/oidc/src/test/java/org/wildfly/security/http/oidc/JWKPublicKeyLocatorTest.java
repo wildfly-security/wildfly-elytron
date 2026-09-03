@@ -227,26 +227,14 @@ public class JWKPublicKeyLocatorTest {
         assertNull(result);
     }
 
-    /**
-     * CURRENT BUG: when the JWKS response contains a key
-     * without a "kid" field, JWKParser.getKeyId() returns null. The resulting
-     * HashMap has a null key. ConcurrentHashMap.putAll() throws
-     * NullPointerException because ConcurrentHashMap rejects null keys. Since
-     * the catch block in sendRequest() only handles OidcException, the NPE
-     * propagates to the caller. Additionally, currentKeys.clear() has already
-     * executed before the NPE, so the cache is left empty.
-     *
-     * This test captures the current behavior, NOT the intended behavior.
-     * A correct implementation should either skip keys without kid or handle
-     * this case gracefully.
-     */
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testJwksKeyWithoutKid() throws Exception {
         String keyJson = rsaJwkJsonNoKid(rsaKeyPair1, "sig");
         server.enqueue(jwksResponse(keyJson));
 
         OidcClientConfiguration config = createConfig(300, 0);
-        locator.getPublicKey("any-kid", config);
+        PublicKey result = locator.getPublicKey("any-kid", config);
+        assertNull(result);
     }
 
     // ------------------------------------------------------------------ //
