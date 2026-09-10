@@ -129,8 +129,7 @@ public class OidcClientConfigurationBuilder {
         if (oidcJsonConfiguration.getRequestObjectEncryptionAlgValue() != null && oidcJsonConfiguration.getRequestObjectEncryptionEncValue() != null) { //both are required to encrypt the request object
             oidcClientConfiguration.setRequestObjectEncryptionAlgValue(oidcJsonConfiguration.getRequestObjectEncryptionAlgValue());
             oidcClientConfiguration.setRequestObjectEncryptionEncValue(oidcJsonConfiguration.getRequestObjectEncryptionEncValue());
-            JWKEncPublicKeyLocator encryptionPublicKeyLocator = new JWKEncPublicKeyLocator();
-            oidcClientConfiguration.setEncryptionPublicKeyLocator(encryptionPublicKeyLocator);
+            oidcClientConfiguration.setEncryptionKeyLocator(new JWKEncPublicKeyLocator());
         } else if (oidcJsonConfiguration.getRequestObjectEncryptionAlgValue() != null || oidcJsonConfiguration.getRequestObjectEncryptionEncValue() != null) {   //if only one is specified, that is not correct
             throw log.invalidRequestObjectEncryptionAlgorithmConfiguration();
         }

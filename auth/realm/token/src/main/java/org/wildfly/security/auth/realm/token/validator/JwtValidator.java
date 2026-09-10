@@ -50,6 +50,10 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.wildfly.security.jose.jwk.JsonWebKeySetUtil;
+import org.wildfly.security.jose.jwks.JwksCache;
+import org.wildfly.security.jose.jwks.JwksConfig;
+
 import static java.util.Arrays.asList;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.auth.realm.token._private.ElytronMessages.log;
@@ -78,7 +82,7 @@ public class JwtValidator implements TokenValidator {
     private final Set<String> issuers;
     private final Set<String> audiences;
     private final Set<String> allowedJkuValues;
-    private final JwkManager jwkManager;
+    private final JwksCache jwksCache;
     private final Map<String, PublicKey> namedKeys;
 
     private final PublicKey defaultPublicKey;
@@ -90,16 +94,23 @@ public class JwtValidator implements TokenValidator {
         this.defaultPublicKey = configuration.publicKey;
         this.namedKeys = configuration.namedKeys;
         if (configuration.sslContext != null) {
-            this.jwkManager = new JwkManager(configuration.sslContext,
-                                            configuration.hostnameVerifier != null ? configuration.hostnameVerifier : HttpsURLConnection.getDefaultHostnameVerifier(),
-                                            configuration.updateTimeout, configuration.connectionTimeout, configuration.readTimeout, configuration.minTimeBetweenRequests,
-                                            configuration.allowedJkuValues);
+            this.jwksCache = new JwksCache(JwksConfig.builder()
+                    .fetcher(new JdkJwksFetcher(
+                            configuration.sslContext,
+                            configuration.hostnameVerifier != null ? configuration.hostnameVerifier : HttpsURLConnection.getDefaultHostnameVerifier(),
+                            configuration.connectionTimeout,
+                            configuration.readTimeout))
+                    .keyFilter(JsonWebKeySetUtil.SUPPORTED_KEY_TYPE)
+                    .cacheTtlMs(configuration.updateTimeout)
+                    .minTimeBetweenRequestsMs(configuration.minTimeBetweenRequests)
+                    .preserveStaleOnFailure(false)
+                    .build());
         }
         else {
             log.tokenRealmJwtNoSSLIgnoringJku();
-            this.jwkManager = null;
+            this.jwksCache = null;
         }
-        if (defaultPublicKey == null && jwkManager == null && namedKeys.isEmpty()) {
+        if (defaultPublicKey == null && jwksCache == null && namedKeys.isEmpty()) {
             log.tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
         }
 
@@ -182,7 +193,7 @@ public class JwtValidator implements TokenValidator {
     }
 
     private boolean verifySignature(String encodedHeader, String encodedClaims, String encodedSignature) throws RealmUnavailableException {
-        if (defaultPublicKey == null && jwkManager == null && namedKeys.isEmpty()) {
+        if (defaultPublicKey == null && jwksCache == null && namedKeys.isEmpty()) {
             return true;
         }
 
@@ -313,7 +324,7 @@ public class JwtValidator implements TokenValidator {
             return defaultPublicKey;
         }
         if (jku != null) {
-            if (jwkManager == null) {
+            if (jwksCache == null) {
                 log.debugf("Cannot validate token with jku [%s]. SSL is not configured and jku claim is not supported.", jku);
                 return null;
             }
@@ -322,7 +333,7 @@ public class JwtValidator implements TokenValidator {
                 return null;
             }
             try {
-                return jwkManager.getPublicKey(kid.getString(), new URL(jku.getString()));
+                return jwksCache.getPublicKey(kid.getString(), new URL(jku.getString()));
             } catch (MalformedURLException e) {
                 log.debug("Invalid jku URL.");
                 return null;

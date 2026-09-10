@@ -18,16 +18,14 @@
 
 package org.wildfly.security.http.oidc;
 
-import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.wildfly.security.jose.jwk.JsonWebKeySetUtil.FOR_SIGNATURE_VALIDATION;
-import static org.wildfly.security.jose.jwk.JsonWebKeySetUtil.getKeys;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.PublicKey;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.http.client.methods.HttpGet;
-import org.wildfly.security.jose.jwk.JsonWebKeySet;
+import org.wildfly.security.jose.jwks.JwksCache;
+import org.wildfly.security.jose.jwks.JwksConfig;
 
 /**
  * A public key locator that dynamically obtains the public key from an OpenID
@@ -38,80 +36,55 @@ import org.wildfly.security.jose.jwk.JsonWebKeySet;
  */
 class JWKPublicKeyLocator implements PublicKeyLocator {
 
-    private Map<String, PublicKey> currentKeys = new ConcurrentHashMap<>();
-
-    private volatile int lastRequestTime = 0;
+    private volatile JwksCache jwksCache;
 
     @Override
-    public PublicKey getPublicKey(String kid, OidcClientConfiguration oidcClientConfiguration) {
-        int minTimeBetweenRequests = oidcClientConfiguration.getMinTimeBetweenJwksRequests();
-        int publicKeyCacheTtl = oidcClientConfiguration.getPublicKeyCacheTtl();
-        int currentTime = getCurrentTime();
-
-        // check if key is in cache
-        PublicKey publicKey = lookupCachedKey(publicKeyCacheTtl, currentTime, kid);
-        if (publicKey != null) {
-            return publicKey;
-        }
-
-        // check if we are allowed to send request
-        synchronized (this) {
-            currentTime = getCurrentTime();
-            if (currentTime > lastRequestTime + minTimeBetweenRequests) {
-                sendRequest(oidcClientConfiguration);
-                lastRequestTime = currentTime;
-            } else {
-                log.debug("Won't send request to jwks url. Last request time was " + lastRequestTime);
-            }
-            return lookupCachedKey(publicKeyCacheTtl, currentTime, kid);
-        }
-    }
-
-
-    @Override
-    public void reset(OidcClientConfiguration oidcClientConfiguration) {
-        synchronized (this) {
-            sendRequest(oidcClientConfiguration);
-            lastRequestTime = getCurrentTime();
-        }
-    }
-
-
-    private PublicKey lookupCachedKey(int publicKeyCacheTtl, int currentTime, String kid) {
-        if (lastRequestTime + publicKeyCacheTtl > currentTime && kid != null) {
-            return currentKeys.get(kid);
-        } else {
+    public PublicKey getPublicKey(String kid, OidcClientConfiguration config) {
+        URL jwksUrl = resolveJwksUrl(config);
+        if (jwksUrl == null) {
             return null;
         }
+        return ensureInitialized(config).getPublicKey(kid, jwksUrl);
     }
 
-
-    private void sendRequest(OidcClientConfiguration oidcClientConfiguration) {
-        if (log.isTraceEnabled()) {
-            log.trace("Going to send request to retrieve new set of public keys for client " + oidcClientConfiguration.getResourceName());
+    @Override
+    public void reset(OidcClientConfiguration config) {
+        URL jwksUrl = resolveJwksUrl(config);
+        if (jwksUrl == null) {
+            return;
         }
+        ensureInitialized(config).reset(jwksUrl);
+    }
 
-        HttpGet getMethod = new HttpGet(oidcClientConfiguration.getJwksUrl());
-        try {
-            JsonWebKeySet jwks = Oidc.sendJsonHttpRequest(oidcClientConfiguration, getMethod, JsonWebKeySet.class);
-
-            Map<String, PublicKey> publicKeys = getKeys(jwks, FOR_SIGNATURE_VALIDATION);
-
-            if (log.isDebugEnabled()) {
-                log.debug("Public keys successfully retrieved for client " +  oidcClientConfiguration.getResourceName() + ". New kids: " + publicKeys.keySet().toString());
+    private JwksCache ensureInitialized(OidcClientConfiguration config) {
+        JwksCache cache = jwksCache;
+        if (cache == null) {
+            synchronized (this) {
+                cache = jwksCache;
+                if (cache == null) {
+                    cache = new JwksCache(JwksConfig.builder()
+                            .fetcher(new ApacheHttpJwksFetcher(config.getClient()))
+                            .keyFilter(FOR_SIGNATURE_VALIDATION)
+                            .cacheTtlMs(config.getPublicKeyCacheTtl() * 1000L)
+                            .minTimeBetweenRequestsMs(config.getMinTimeBetweenJwksRequests() * 1000L)
+                            .preserveStaleOnFailure(true)
+                            .build());
+                    jwksCache = cache;
+                }
             }
+        }
+        return cache;
+    }
 
-            // update current keys
-            currentKeys.clear();
-            currentKeys.putAll(publicKeys);
-
-        } catch (OidcException e) {
-            log.error("Error when sending request to retrieve public keys", e);
+    private static URL resolveJwksUrl(OidcClientConfiguration config) {
+        String jwksUrlString = config.getJwksUrl();
+        if (jwksUrlString == null) {
+            return null;
+        }
+        try {
+            return new URL(jwksUrlString);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Invalid JWKS URL: " + jwksUrlString, e);
         }
     }
-
-    private static int getCurrentTime() {
-        return (int) (System.currentTimeMillis() / 1000);
-    }
-
 }
