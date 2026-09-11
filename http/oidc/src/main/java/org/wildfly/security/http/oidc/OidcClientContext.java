@@ -95,8 +95,7 @@ public class OidcClientContext {
             OidcClientConfigurationDelegate delegate = new OidcClientConfigurationDelegate(this.oidcClientConfig);
             if (oidcClientConfig.getAuthServerBaseUrl() != null) {
                 delegate.setAuthServerBaseUrl(getAuthServerBaseUrl(facade, this.oidcClientConfig.getAuthServerBaseUrl()));
-            }
-            if (oidcClientConfig.getProviderUrl() != null) {
+            } else if (oidcClientConfig.getProviderUrl() != null) {
                 delegate.setProviderUrl(oidcClientConfig.getProviderUrl());
             }
             return delegate;
