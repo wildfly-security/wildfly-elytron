@@ -552,7 +552,7 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron</artifactId>
-                                    <version>2.8.4.Final</version> <!-- When updating to next release, clear all exclusions. -->
+                                    <version>2.8.5.Final</version> <!-- When updating to next release, clear all exclusions. -->
                                     <type>jar</type>
                                 </dependency>
                             </oldVersion>
