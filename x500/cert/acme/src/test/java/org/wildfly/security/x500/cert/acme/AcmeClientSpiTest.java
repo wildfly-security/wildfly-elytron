@@ -29,9 +29,20 @@ import static org.junit.Assert.fail;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 import static org.wildfly.security.x500.cert.acme.Acme.ACCOUNT;
+import static org.wildfly.security.x500.cert.acme.Acme.ALG;
 import static org.wildfly.security.x500.cert.acme.Acme.BASE64_URL;
+import static org.wildfly.security.x500.cert.acme.Acme.CONTACT;
+import static org.wildfly.security.x500.cert.acme.Acme.EXTERNAL_ACCOUNT_BINDING;
+import static org.wildfly.security.x500.cert.acme.Acme.KID;
 import static org.wildfly.security.x500.cert.acme.Acme.ORDER;
+import static org.wildfly.security.x500.cert.acme.Acme.PAYLOAD;
+import static org.wildfly.security.x500.cert.acme.Acme.PROTECTED;
+import static org.wildfly.security.x500.cert.acme.Acme.SIGNATURE;
+import static org.wildfly.security.x500.cert.acme.Acme.TERMS_OF_SERVICE_AGREED;
+import static org.wildfly.security.x500.cert.acme.Acme.URL;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -47,6 +58,7 @@ import org.wildfly.security.x500.cert.X509CertificateChainAndSigningKey;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -59,7 +71,10 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
 import mockit.Mock;
@@ -195,13 +210,101 @@ public class AcmeClientSpiTest {
     }
 
     @Test
+    public void testCreateAccountWithExternalAccountBinding() throws Exception {
+        assertCreateAccountWithExternalAccountBinding(AcmeAccount.ExternalAccountBindingAlgorithm.HS256);
+    }
+
+    @Test
+    public void testCreateAccountWithExternalAccountBindingUsingSha512() throws Exception {
+        assertCreateAccountWithExternalAccountBinding(AcmeAccount.ExternalAccountBindingAlgorithm.HS512);
+    }
+
+    @Test
+    public void testCreateAccountWithExternalAccountBindingUsingSha384() throws Exception {
+        assertCreateAccountWithExternalAccountBinding(AcmeAccount.ExternalAccountBindingAlgorithm.HS384);
+    }
+
+    private void assertCreateAccountWithExternalAccountBinding(
+            AcmeAccount.ExternalAccountBindingAlgorithm externalAccountBindingAlgorithm) throws Exception {
+        final String NEW_ACCT_LOCATION = "http://localhost:4001/acme/acct/390";
+        final String NEW_ACCT_URL = "http://localhost:4001/acme/new-acct";
+        final byte[] externalAccountBindingKey = new byte[externalAccountBindingAlgorithm.getMinimumKeySize()];
+        final AtomicInteger keySupplierInvocations = new AtomicInteger();
+
+        AcmeAccount.Builder accountBuilder = populateBasicBuilder()
+                .setKey(aliasToCertificateMap.get(ACCOUNT_1_V2), aliasToPrivateKeyMap.get(ACCOUNT_1_V2))
+                .setExternalAccountBinding("sectigo-account-123", () -> {
+                    keySupplierInvocations.incrementAndGet();
+                    return externalAccountBindingKey;
+                });
+        if (externalAccountBindingAlgorithm != AcmeAccount.Builder.DEFAULT_EXTERNAL_ACCOUNT_BINDING_ALGORITHM) {
+            accountBuilder.setExternalAccountBindingAlgorithm(externalAccountBindingAlgorithm);
+        }
+        AcmeAccount account = accountBuilder.build();
+        server = setupTestCreateAccountWithExternalAccountBinding();
+
+        assertNull(account.getAccountUrl());
+        assertEquals(0, keySupplierInvocations.get());
+        acmeClient.createAccount(account, false);
+        assertEquals(1, keySupplierInvocations.get());
+        assertEquals(NEW_ACCT_LOCATION, account.getAccountUrl());
+
+        // Inspect the recorded request instead of reconstructing the outer JWS in the test.
+        HttpRequest[] recordedRequests = server.retrieveRecordedRequests(request().withMethod("POST").withPath("/acme/new-acct"));
+        assertEquals(1, recordedRequests.length);
+
+        JsonObject outerJws = Json.createReader(new StringReader(recordedRequests[0].getBodyAsString())).readObject();
+        JsonObject outerPayload = decodeJson(outerJws.getString(PAYLOAD));
+        JsonObject externalAccountBinding = outerPayload.getJsonObject(EXTERNAL_ACCOUNT_BINDING);
+        assertNotNull(externalAccountBinding);
+        assertTrue(outerPayload.getBoolean(TERMS_OF_SERVICE_AGREED));
+        assertEquals(account.getContactUrls()[0], outerPayload.getJsonArray(CONTACT).getString(0));
+
+        JsonObject externalAccountBindingProtectedHeader = decodeJson(externalAccountBinding.getString(PROTECTED));
+        assertEquals(externalAccountBindingAlgorithm.name(), externalAccountBindingProtectedHeader.getString(ALG));
+        assertEquals(account.getExternalAccountBindingKeyIdentifier(), externalAccountBindingProtectedHeader.getString(KID));
+        assertEquals(NEW_ACCT_URL, externalAccountBindingProtectedHeader.getString(URL));
+        assertEquals(Acme.getJwk(account.getPublicKey(), account.getAlgHeader()),
+                decodeJson(externalAccountBinding.getString(PAYLOAD)));
+        assertEquals(getEncodedMacSignature(externalAccountBindingKey,
+                        externalAccountBindingAlgorithm.getMacAlgorithmName(),
+                        externalAccountBinding.getString(PROTECTED), externalAccountBinding.getString(PAYLOAD)),
+                externalAccountBinding.getString(SIGNATURE));
+    }
+
+    @Test
+    public void testExternalAccountBindingRejectsUndersizedKeys() throws Exception {
+        try {
+            populateBasicBuilder().setExternalAccountBinding("key-identifier", new byte[15]);
+            fail("Expected IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException expected) {
+        }
+
+        AcmeAccount account = populateBasicBuilder()
+                .setKey(aliasToCertificateMap.get(ACCOUNT_1_V2), aliasToPrivateKeyMap.get(ACCOUNT_1_V2))
+                .setExternalAccountBinding("key-identifier", () -> new byte[31])
+                .build();
+        try {
+            account.getExternalAccountBindingKey();
+            fail("Expected IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
     public void testCreateAccountOnlyReturnExisting() throws Exception {
         final String NEW_ACCT_LOCATION_1 = "http://localhost:4001/acme/acct/387";
         server = setupTestCreateAccountOnlyReturnExisting();
         AcmeAccount account = populateBasicAccount(ACCOUNT_2_V2);
         acmeClient.createAccount(account, false);
         assertEquals(NEW_ACCT_LOCATION_1, account.getAccountUrl());
-        AcmeAccount sameAccount = populateBasicAccount(ACCOUNT_2_V2);
+        AcmeAccount sameAccount = populateBasicBuilder()
+                .setKey(aliasToCertificateMap.get(ACCOUNT_2_V2), aliasToPrivateKeyMap.get(ACCOUNT_2_V2))
+                .setExternalAccountBinding("unused-key-identifier", () -> {
+                    fail("The external account binding key must not be requested when onlyReturnExisting is true");
+                    return new byte[AcmeAccount.ExternalAccountBindingAlgorithm.HS256.getMinimumKeySize()];
+                })
+                .build();
 
         // the key corresponding to ACCOUNT_2 is associated with an already registered account
         acmeClient.createAccount(sameAccount, false, true);
@@ -868,6 +971,50 @@ public class AcmeClientSpiTest {
                 .addDirectoryResponseBody(DIRECTORY_RESPONSE_BODY_3)
                 .addNewNonceResponse(NEW_NONCE_RESPONSE_3)
                 .addNewAccountRequestAndResponse(NEW_ACCT_REQUEST_BODY_3, NEW_ACCT_RESPONSE_BODY_3, NEW_ACCT_REPLAY_NONCE_3, NEW_ACCT_LOCATION_3, 400, true)
+                .build();
+    }
+
+    private ClientAndServer setupTestCreateAccountWithExternalAccountBinding() {
+        final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator()  +
+                "  \"DYeab-sWdw0\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
+                "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator()  +
+                "  \"meta\": {" + System.lineSeparator()  +
+                "    \"caaIdentities\": [" + System.lineSeparator()  +
+                "      \"happy-hacker-ca.invalid\"" + System.lineSeparator()  +
+                "    ]," + System.lineSeparator()  +
+                "    \"termsOfService\": \"https://boulder:4431/terms/v7\"," + System.lineSeparator()  +
+                "    \"website\": \"https://github.com/letsencrypt/boulder\"," + System.lineSeparator()  +
+                "    \"externalAccountRequired\": true" + System.lineSeparator()  +
+                "  }," + System.lineSeparator()  +
+                "  \"newAccount\": \"http://localhost:4001/acme/new-acct\"," + System.lineSeparator()  +
+                "  \"newNonce\": \"http://localhost:4001/acme/new-nonce\"," + System.lineSeparator()  +
+                "  \"newOrder\": \"http://localhost:4001/acme/new-order\"," + System.lineSeparator()  +
+                "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator()  +
+                "}";
+
+        final String NEW_NONCE_RESPONSE = "zincnmsv_eabBindingNonceSIbH0iPBrs1nJQ3Jkx";
+
+        final String NEW_ACCT_RESPONSE_BODY = "{" + System.lineSeparator()  +
+                "  \"key\": {" + System.lineSeparator()  +
+                "    \"kty\": \"RSA\"," + System.lineSeparator()  +
+                "    \"n\": \"h8Oee5beDRgxNPe_eME9H6Vo74Fug8HgrikfbfCaU3lKF648QG1X1kGDZThAy8daqJ8bv6c3PJdnx2Hr8jOzl509bnM6cCWfywTpcIZoUzQQZLY_K8GMDAyglsQrItgCiQalIqbuJEkoc3WQAIxJ23xv9bK5xnVQkTW4rVBAcYNQwoBjGYOWSizTGfjgmQqTXloaamFZJn97Hnb1qjy5VYm06buyqwAaGHs1CLu3cLZgQpVHQ4kFszk8YO5UAEjiodugWpZURu9TtRKzN0bkEdeQPYVpaupUq1cq47Rp2jqVUXdiQLekyxrQbt8A2uG4LzDQu-b4cZppmzc3hlhSGw\"," + System.lineSeparator()  +
+                "    \"e\": \"AQAB\"" + System.lineSeparator()  +
+                "  }," + System.lineSeparator()  +
+                "  \"contact\": [" + System.lineSeparator()  +
+                "    \"mailto:admin@anexample.com\"" + System.lineSeparator()  +
+                "  ]," + System.lineSeparator()  +
+                "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator()  +
+                "  \"createdAt\": \"2019-07-12T16:52:19.171896513Z\"," + System.lineSeparator()  +
+                "  \"status\": \"valid\"" + System.lineSeparator()  +
+                "}";
+
+        final String NEW_ACCT_REPLAY_NONCE = "taroeabReplayNoncenG4pbkz9ZIfFAxFcw1xSWWm4m";
+        final String NEW_ACCT_LOCATION = "http://localhost:4001/acme/acct/390";
+
+        return new AcmeMockServerBuilder(server)
+                .addDirectoryResponseBody(DIRECTORY_RESPONSE_BODY)
+                .addNewNonceResponse(NEW_NONCE_RESPONSE)
+                .addNewAccountRequestAndResponse("", NEW_ACCT_RESPONSE_BODY, NEW_ACCT_REPLAY_NONCE, NEW_ACCT_LOCATION, 201)
                 .build();
     }
 
@@ -2416,5 +2563,20 @@ public class AcmeClientSpiTest {
                 .setKey(aliasToCertificateMap.get(alias), aliasToPrivateKeyMap.get(alias))
                 .build();
         return account;
+    }
+
+    private static JsonObject decodeJson(String encodedJson) {
+        String decodedJson = new String(CodePointIterator.ofString(encodedJson).base64Decode(BASE64_URL, false).drain(),
+                StandardCharsets.UTF_8);
+        return Json.createReader(new StringReader(decodedJson)).readObject();
+    }
+
+    private static String getEncodedMacSignature(byte[] key, String algorithm, String encodedProtectedHeader,
+            String encodedPayload) throws Exception {
+        Mac mac = Mac.getInstance(algorithm);
+        mac.init(new SecretKeySpec(key, algorithm));
+        return ByteIterator.ofBytes(mac.doFinal((encodedProtectedHeader + "." + encodedPayload).getBytes(StandardCharsets.UTF_8)))
+                .base64Encode(BASE64_URL, false)
+                .drainToString();
     }
 }
