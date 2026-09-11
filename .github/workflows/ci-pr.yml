@@ -1,8 +1,8 @@
-name: CI - Pull Request
+name: CI - Pull Request (2.9.x)
 
 on:
   pull_request:
-    branches: [ 2.x ]
+    branches: [ 2.9.x ]
 
 jobs:
   build-and-test-linux:
