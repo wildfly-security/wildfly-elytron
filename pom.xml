@@ -29,7 +29,7 @@
 
     <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-elytron-parent</artifactId>
-    <version>2.9.3.CR1-SNAPSHOT</version>
+    <version>2.9.2.SP1</version>
     <packaging>pom</packaging>
 
     <name>WildFly Elytron Parent</name>
@@ -61,7 +61,7 @@
         <connection>scm:git:git@github.com:wildfly-security/wildfly-elytron.git</connection>
         <developerConnection>scm:git:git@github.com:wildfly-security/wildfly-elytron.git</developerConnection>
         <url>https://github.com/wildfly-security/wildfly-elytron</url>
-      <tag>HEAD</tag>
+      <tag>2.9.2.SP1</tag>
   </scm>
 
     <properties>
