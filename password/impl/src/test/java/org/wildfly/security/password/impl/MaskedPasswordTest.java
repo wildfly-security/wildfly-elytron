@@ -107,7 +107,7 @@ public class MaskedPasswordTest {
     public void testEncryptableSpec() throws Exception {
         char[] initialKeyMaterial = "my deep dark secret".toCharArray();
 
-        MaskedPasswordAlgorithmSpec algorithmSpec = new MaskedPasswordAlgorithmSpec(initialKeyMaterial, 1, new byte[8]);
+        MaskedPasswordAlgorithmSpec algorithmSpec = new MaskedPasswordAlgorithmSpec(initialKeyMaterial, 1, new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
 
         EncryptablePasswordSpec spec = new EncryptablePasswordSpec("myMaskedPassword".toCharArray(), algorithmSpec);
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);

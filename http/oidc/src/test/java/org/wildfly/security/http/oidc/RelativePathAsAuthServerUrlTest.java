@@ -21,6 +21,9 @@ package org.wildfly.security.http.oidc;
 import io.restassured.RestAssured;
 import okhttp3.mockwebserver.MockWebServer;
 import org.apache.http.HttpStatus;
+import org.jboss.logmanager.ExtLogRecord;
+import org.jboss.logmanager.LogContext;
+import org.jboss.logmanager.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -41,8 +44,12 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.wildfly.common.Assert.assertNotNull;
 import static org.wildfly.security.http.oidc.Oidc.AUTH_SERVER_URL;
@@ -151,20 +158,41 @@ public class RelativePathAsAuthServerUrlTest extends OidcBaseTest {
 
     @Test
     public void testUnitRelativeAuthServerUrlIsResolvedCorrectly() throws Exception {
-        OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(getOidcConfigurationInputStream(CLIENT_SECRET, "/keycloak"));
-        assertEquals(OidcClientConfiguration.RelativeUrlsUsed.ALWAYS, oidcClientConfiguration.getRelativeUrls());
-        OidcClientContext oidcClientContext = new OidcClientContext(oidcClientConfiguration);
-        OidcClientConfiguration oidcClientConfigurationWithResolvedUrls = oidcClientContext.resolveUrls(oidcClientConfiguration,
-                // the request will contain "Host" header with value "localhost:1234"
-                new OidcHttpFacade(new TestingHttpServerRequest(null, new URI("http://localhost:1234/keycloak/myTestApp")), oidcClientContext, null));
-        // relative URL is taken from HTTP "Host" header of incoming request
-        assertEquals("http://localhost:1234/keycloak", oidcClientConfigurationWithResolvedUrls.getAuthServerBaseUrl());
+        try (WarnCapture warnCapture = attachOidcWarnCapture()) {
+            OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(getOidcConfigurationInputStream(CLIENT_SECRET, "/keycloak"));
+            assertEquals(OidcClientConfiguration.RelativeUrlsUsed.ALWAYS, oidcClientConfiguration.getRelativeUrls());
+            OidcClientContext oidcClientContext = new OidcClientContext(oidcClientConfiguration);
+            OidcClientConfiguration oidcClientConfigurationWithResolvedUrls = oidcClientContext.resolveUrls(oidcClientConfiguration,
+                    // the request will contain "Host" header with value "localhost:1234"
+                    new OidcHttpFacade(new TestingHttpServerRequest(null, new URI("http://localhost:1234/keycloak/myTestApp")), oidcClientContext, null));
+            // relative URL is taken from HTTP "Host" header of incoming request
+            assertEquals("http://localhost:1234/keycloak", oidcClientConfigurationWithResolvedUrls.getAuthServerBaseUrl());
 
-        oidcClientConfigurationWithResolvedUrls = oidcClientContext.resolveUrls(oidcClientConfiguration,
-                // the request will contain "Host" header with value "test.com:4567"
-                new OidcHttpFacade(new TestingHttpServerRequest(null, new URI("http://test.com:4567/keycloak/myTestApp")), oidcClientContext, null));
-        // relative URL is taken from HTTP "Host" header of incoming request
-        assertEquals("http://test.com:4567/keycloak", oidcClientConfigurationWithResolvedUrls.getAuthServerBaseUrl());
+            oidcClientConfigurationWithResolvedUrls = oidcClientContext.resolveUrls(oidcClientConfiguration,
+                    // the request will contain "Host" header with value "test.com:4567"
+                    new OidcHttpFacade(new TestingHttpServerRequest(null, new URI("http://test.com:4567/keycloak/myTestApp")), oidcClientContext, null));
+            // relative URL is taken from HTTP "Host" header of incoming request
+            assertEquals("http://test.com:4567/keycloak", oidcClientConfigurationWithResolvedUrls.getAuthServerBaseUrl());
+
+            warnCapture.assertNoEly23005UnableToLoadMetadata();
+        }
+    }
+
+    /**
+     * When relative auth-server-url is provided, resolving the request must not trigger an OpenID discovery attempt.
+     */
+    @Test
+    public void testUnitRelativeAuthServerUrlWithProviderUrlDoesNotLogEly23005() throws Exception {
+        try (WarnCapture warnCapture = attachOidcWarnCapture()) {
+            OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(
+                    getOidcConfigurationInputStream(CLIENT_SECRET, "/keycloak", "/oidc"));
+            assertEquals(OidcClientConfiguration.RelativeUrlsUsed.ALWAYS, oidcClientConfiguration.getRelativeUrls());
+            OidcClientContext oidcClientContext = new OidcClientContext(oidcClientConfiguration);
+            OidcClientConfiguration resolved = oidcClientContext.resolveUrls(oidcClientConfiguration,
+                    new OidcHttpFacade(new TestingHttpServerRequest(null, new URI("http://localhost:1234/keycloak/myTestApp")), oidcClientContext, null));
+            assertEquals("http://localhost:1234/keycloak", resolved.getAuthServerBaseUrl());
+            warnCapture.assertNoEly23005UnableToLoadMetadata();
+        }
     }
 
     private URL startProxyAndGetProxyPort(int proxyPort, String keycloakUrl) throws MalformedURLException {
@@ -190,6 +218,13 @@ public class RelativePathAsAuthServerUrlTest extends OidcBaseTest {
     }
 
     private InputStream getOidcConfigurationInputStream(String clientSecret, String authServerUrl) {
+        return getOidcConfigurationInputStream(clientSecret, authServerUrl, null);
+    }
+
+    private InputStream getOidcConfigurationInputStream(String clientSecret, String authServerUrl, String providerUrl) {
+        String providerEntry = providerUrl != null
+                ? ",\n    \"" + "provider-url" + "\" : \"" + providerUrl + "\""
+                : "";
         String oidcConfig = "{\n" +
                 "    \"" + REALM + "\" : \"" + TEST_REALM + "\",\n" +
                 "    \"" + RESOURCE + "\" : \"" + CLIENT_ID + "\",\n" +
@@ -201,5 +236,72 @@ public class RelativePathAsAuthServerUrlTest extends OidcBaseTest {
                 "    }\n" +
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static final String OIDC_HTTP_LOG_CATEGORY = "org.wildfly.security.http.oidc";
+
+    private static WarnCapture attachOidcWarnCapture() {
+        final List<LogRecord> records = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                if (record.getLevel().intValue() >= Level.WARNING.intValue()) {
+                    records.add(record);
+                }
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+        handler.setLevel(Level.ALL);
+        Logger logger = LogContext.getLogContext().getLogger(OIDC_HTTP_LOG_CATEGORY);
+        logger.addHandler(handler);
+        return new WarnCapture(logger, handler, records);
+    }
+
+    private static final class WarnCapture implements AutoCloseable {
+        private final Logger logger;
+        private final Handler handler;
+        private final List<LogRecord> records;
+
+        WarnCapture(Logger logger, Handler handler, List<LogRecord> records) {
+            this.logger = logger;
+            this.handler = handler;
+            this.records = records;
+        }
+
+        @Override
+        public void close() {
+            logger.removeHandler(handler);
+        }
+
+        void assertNoEly23005UnableToLoadMetadata() {
+            for (LogRecord r : records) {
+                String text = formatRecord(r);
+                assertFalse("ELY23005 (unable to load provider metadata) must not be logged when resolving relative URLs; got: " + text,
+                        text.contains("ELY23005") || text.contains("Unable to load OpenID provider metadata"));
+            }
+        }
+    }
+
+    private static String formatRecord(LogRecord r) {
+        if (r instanceof ExtLogRecord) {
+            return ((ExtLogRecord) r).getFormattedMessage();
+        }
+        String msg = r.getMessage();
+        Object[] params = r.getParameters();
+        if (msg != null && params != null && params.length > 0) {
+            try {
+                return String.format(msg, params);
+            } catch (Exception e) {
+                return msg;
+            }
+        }
+        return msg != null ? msg : "";
     }
 }

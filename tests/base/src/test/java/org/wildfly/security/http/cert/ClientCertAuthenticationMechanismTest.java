@@ -23,6 +23,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.cache.IdentityCache;
@@ -30,6 +31,8 @@ import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.impl.AbstractBaseHttpTest;
 
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.x500.X500Principal;
 import java.security.Provider;
 import java.security.Security;
@@ -39,6 +42,7 @@ import static org.wildfly.security.http.HttpConstants.*;
 
 public class ClientCertAuthenticationMechanismTest extends AbstractBaseHttpTest {
     private static final Provider provider = WildFlyElytronHttpClientCertProvider.getInstance();
+    private static SecurityDomain securityDomain;
 
     @Tested
     private IdentityCache identityCache;
@@ -46,7 +50,7 @@ public class ClientCertAuthenticationMechanismTest extends AbstractBaseHttpTest 
     @BeforeClass
     public static void registerCertProvider() {
         Security.insertProviderAt(provider, 1);
-        SecurityDomain securityDomain = SecurityDomain.builder().addRealm("Simple", new SimpleMapBackedSecurityRealm()).build().setDefaultRealmName("Simple").build();
+        securityDomain = SecurityDomain.builder().addRealm("Simple", new SimpleMapBackedSecurityRealm()).build().setDefaultRealmName("Simple").build();
     }
 
     @AfterClass
@@ -56,7 +60,16 @@ public class ClientCertAuthenticationMechanismTest extends AbstractBaseHttpTest 
 
     private HttpServerAuthenticationMechanism createMechanism() throws HttpAuthenticationException {
         Map<String, Object> props = new HashMap<>();
-        return certFactory.createAuthenticationMechanism(CLIENT_CERT_NAME, props, getCallbackHandler("Duk3"));
+        CallbackHandler base = getCallbackHandler("CN=Duk3,OU=T3st,O=W0nd3rl4nd,C=US", "Duk3", null);
+        CallbackHandler handler = callbacks -> {
+            for (Callback cb : callbacks) {
+                if (cb instanceof CachedIdentityAuthorizeCallback) {
+                    ((CachedIdentityAuthorizeCallback) cb).setSecurityDomain(securityDomain);
+                }
+            }
+            base.handle(callbacks);
+        };
+        return certFactory.createAuthenticationMechanism(CLIENT_CERT_NAME, props, handler);
     }
 
     //Test request with no certs
