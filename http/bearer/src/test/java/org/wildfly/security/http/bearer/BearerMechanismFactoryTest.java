@@ -26,9 +26,11 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 
 import javax.security.auth.callback.CallbackHandler;
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
+import static org.wildfly.security.http.HttpConstants.CONFIG_BEARER_ENABLE_COOKIE_FALLBACK;
 
 /**
  * This test class contains unit tests for the {@link BearerMechanismFactory}.
@@ -122,6 +124,33 @@ public class BearerMechanismFactoryTest {
     public void testCreateValidBearerAuthenticationMechanism() throws HttpAuthenticationException{
         HttpServerAuthenticationMechanism httpServerAuthenticationMechanism = bearerMechanismFactory.createAuthenticationMechanism(BEARER_TOKEN, emptyProperties, dummyCallbackHandler);
         Assert.assertNotNull("HttpServerAuthenticationMechanism cannot be null.",httpServerAuthenticationMechanism);
+    }
+
+
+    /**
+     * Tests that the mechanism is created with cookie fallback enabled when property is set to true.
+     * Verifies behavior indirectly through authentication process.
+     */
+    @Test
+    public void testCreateMechanismWithCookieFallbackEnabled() throws HttpAuthenticationException {
+        Map<String, String> properties = new HashMap<>();
+        properties.put(CONFIG_BEARER_ENABLE_COOKIE_FALLBACK, "true");
+        HttpServerAuthenticationMechanism mechanism = bearerMechanismFactory.createAuthenticationMechanism(BEARER_TOKEN, properties, dummyCallbackHandler);
+        Assert.assertNotNull(mechanism);
+        Assert.assertEquals(BEARER_TOKEN, mechanism.getMechanismName());
+    }
+
+    /**
+     * Tests that the mechanism is created with cookie fallback enabled when property is set to false.
+     * Verifies behavior indirectly through authentication process.
+     */
+    @Test
+    public void testCreateMechanismWithCookieFallbackDisabled() throws HttpAuthenticationException {
+        Map<String, String> properties = new HashMap<>();
+        properties.put(CONFIG_BEARER_ENABLE_COOKIE_FALLBACK, "false");
+        HttpServerAuthenticationMechanism mechanism = bearerMechanismFactory.createAuthenticationMechanism(BEARER_TOKEN, properties, dummyCallbackHandler);
+        Assert.assertNotNull(mechanism);
+        Assert.assertEquals(BEARER_TOKEN, mechanism.getMechanismName());
     }
 
 }

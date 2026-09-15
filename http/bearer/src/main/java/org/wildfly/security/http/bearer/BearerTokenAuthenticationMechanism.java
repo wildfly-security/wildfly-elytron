@@ -44,6 +44,7 @@ import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
+import org.wildfly.security.http.HttpServerCookie;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.mechanism._private.MechanismUtil;
@@ -68,9 +69,13 @@ final class BearerTokenAuthenticationMechanism implements HttpServerAuthenticati
     private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer *([^ ]+) *$", Pattern.CASE_INSENSITIVE);
 
     private final CallbackHandler callbackHandler;
+    private final boolean enableCookieFallback;
+    private final String tokenCookie;
 
-    BearerTokenAuthenticationMechanism(CallbackHandler callbackHandler) {
+    BearerTokenAuthenticationMechanism(CallbackHandler callbackHandler, boolean enableCookieFallback, String tokenCookie) {
         this.callbackHandler = callbackHandler;
+        this.enableCookieFallback = enableCookieFallback;
+        this.tokenCookie = tokenCookie;
     }
 
     @Override
@@ -80,38 +85,61 @@ final class BearerTokenAuthenticationMechanism implements HttpServerAuthenticati
 
     @Override
     public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
+        String bearerToken = null;
+
         List<String> authorizationValues = request.getRequestHeaderValues(HttpConstants.AUTHORIZATION);
-
         if (authorizationValues != null) {
-            Matcher matcher;
             for (String current : authorizationValues) {
-                if ((matcher = BEARER_TOKEN_PATTERN.matcher(current)).matches()) {
-                    BearerTokenEvidence tokenEvidence = new BearerTokenEvidence(matcher.group(1));
-                    EvidenceVerifyCallback verifyCallback = new EvidenceVerifyCallback(tokenEvidence);
-
-                    handleCallback(verifyCallback);
-
-                    if (verifyCallback.isVerified()) {
-                        AuthorizeCallback authorizeCallback = new AuthorizeCallback(null, null);
-
-                        handleCallback(authorizeCallback);
-
-                        if (authorizeCallback.isAuthorized()) {
-                            httpBearer.debugf("Token authentication successful.");
-                            handleCallback(new IdentityCredentialCallback(new BearerTokenCredential(tokenEvidence.getToken()), true));
-                            handleCallback(AuthenticationCompleteCallback.SUCCEEDED);
-                            request.authenticationComplete();
-                        } else {
-                            httpBearer.debugf("Token authorization failed.");
-                            request.authenticationFailed("Authorization failed.", response -> response.setStatusCode(FORBIDDEN));
-                        }
-                    } else {
-                        httpBearer.debugf("Token authentication failed.");
-                        request.authenticationFailed(httpBearer.authenticationFailed(), this::unauthorizedResponse);
-                    }
-                    return;
+                Matcher matcher = BEARER_TOKEN_PATTERN.matcher(current);
+                if (matcher.matches()) {
+                    bearerToken = matcher.group(1);
+                    httpBearer.tracef("Bearer token resolved from Authorization header.");
+                    break;
                 }
             }
+        }
+
+        if (bearerToken == null && enableCookieFallback) {
+            List<HttpServerCookie> cookies = request.getCookies();
+            if (cookies != null) {
+                for (HttpServerCookie cookie : cookies) {
+                    if (tokenCookie.equals(cookie.getName())) {
+                        String cookieValue = cookie.getValue();
+                        if (cookieValue != null) {
+                            bearerToken = cookieValue;
+                            httpBearer.tracef("Bearer token resolved from cookie [%s].", tokenCookie);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (bearerToken != null) {
+            BearerTokenEvidence tokenEvidence = new BearerTokenEvidence(bearerToken);
+            EvidenceVerifyCallback verifyCallback = new EvidenceVerifyCallback(tokenEvidence);
+
+            handleCallback(verifyCallback);
+
+            if (verifyCallback.isVerified()) {
+                AuthorizeCallback authorizeCallback = new AuthorizeCallback(null, null);
+
+                handleCallback(authorizeCallback);
+
+                if (authorizeCallback.isAuthorized()) {
+                    httpBearer.debugf("Token authentication successful.");
+                    handleCallback(new IdentityCredentialCallback(new BearerTokenCredential(tokenEvidence.getToken()), true));
+                    handleCallback(AuthenticationCompleteCallback.SUCCEEDED);
+                    request.authenticationComplete();
+                } else {
+                    httpBearer.debugf("Token authorization failed.");
+                    request.authenticationFailed("Authorization failed.", response -> response.setStatusCode(FORBIDDEN));
+                }
+            } else {
+                httpBearer.debugf("Token authentication failed.");
+                request.authenticationFailed(httpBearer.authenticationFailed(), this::unauthorizedResponse);
+            }
+            return;
         }
 
         request.noAuthenticationInProgress(this::unauthorizedResponse);

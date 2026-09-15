@@ -73,6 +73,7 @@ public class OidcHttpFacade {
     private final CallbackHandler callbackHandler;
     private final OidcTokenStore tokenStore;
     private final OidcClientContext oidcClientContext;
+    private OidcClientConfiguration clientConfiguration;
     private Consumer<HttpServerResponse> responseConsumer;
     private OidcAccount account;
     private SecurityIdentity securityIdentity;
@@ -179,13 +180,14 @@ public class OidcHttpFacade {
     }
 
     OidcClientConfiguration getOidcClientConfiguration() {
-        return oidcClientContext.resolveDeployment(this);
+        if (clientConfiguration == null) {
+            clientConfiguration = oidcClientContext.resolveDeployment(this);
+        }
+        return clientConfiguration;
     }
 
     private OidcTokenStore createTokenStore() {
-        OidcClientConfiguration deployment = getOidcClientConfiguration();
-
-        if (Oidc.TokenStore.SESSION.equals(deployment.getTokenStore())) {
+        if (Oidc.TokenStore.SESSION.equals(getOidcClientConfiguration().getTokenStore())) {
             return new OidcSessionTokenStore(this);
         } else {
             return new OidcCookieTokenStore(this);
