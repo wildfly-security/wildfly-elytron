@@ -46,6 +46,7 @@ import static org.wildfly.security.http.oidc.KeycloakConfiguration.ALICE;
 import static org.wildfly.security.http.oidc.KeycloakConfiguration.ALICE_PASSWORD;
 import static org.wildfly.security.http.oidc.Oidc.AuthenticationRequestFormat.REQUEST;
 import static org.wildfly.security.http.oidc.Oidc.AuthenticationRequestFormat.REQUEST_URI;
+import static org.wildfly.security.http.oidc.Oidc.DISCOVERY_PATH;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_NAME;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_SCOPE;
 
@@ -92,6 +93,18 @@ public class MockOidcClientConfiguration extends OidcBaseTest {
     public void testOidcWithRequestUriParameterUnsupported() throws Exception {
         mockOidcClientConfig();
         performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_URI.getValue()), REQUEST_URI.getValue());
+    }
+
+    @Test
+    public void testOidcWithRequestParameterUnsupportedAndCompleteProviderUrl() throws Exception {
+        mockOidcClientConfig();
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameterAndCompleteProviderUrl(REQUEST.getValue()), REQUEST.getValue());
+    }
+
+    @Test
+    public void testOidcWithRequestUriParameterUnsupportedAndCompleteProviderUrl() throws Exception {
+        mockOidcClientConfig();
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameterAndCompleteProviderUrl(REQUEST_URI.getValue()), REQUEST_URI.getValue());
     }
 
     public void performAuthentication(InputStream oidcConfig, String requestFormat) throws Exception {
@@ -141,6 +154,22 @@ public class MockOidcClientConfiguration extends OidcBaseTest {
         String oidcConfig = "{\n" +
                 "    \"client-id\" : \"" + CLIENT_ID + "\",\n" +
                 "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "/" + "\",\n" +
+                "    \"public-client\" : \"false\",\n" +
+                "    \"ssl-required\" : \"EXTERNAL\",\n" +
+                "    \"authentication-request-format\" : \"" + requestParameter + "\",\n" +
+                "    \"request-object-signing-algorithm\" : \"" + HMAC_SHA256 + "\",\n" +
+                "    \"scope\" : \"profile email phone\",\n" +
+                "    \"credentials\" : {\n" +
+                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    }\n" +
+                "}";
+        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private InputStream getOidcConfigurationInputStreamWithRequestParameterAndCompleteProviderUrl(String requestParameter){
+        String oidcConfig = "{\n" +
+                "    \"client-id\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "/" + DISCOVERY_PATH + "\",\n" +
                 "    \"public-client\" : \"false\",\n" +
                 "    \"ssl-required\" : \"EXTERNAL\",\n" +
                 "    \"authentication-request-format\" : \"" + requestParameter + "\",\n" +
