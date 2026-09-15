@@ -202,7 +202,7 @@ public class PemKeyStoreTest {
         CertificateException exception = Assert.assertThrows(CertificateException.class,
                 () -> keyStore.load(new PemKeyStoreLoadParameter(certificatePath, privateKeyPath)));
 
-        Assert.assertEquals("Private key does not match certificate public key", exception.getMessage());
+        Assert.assertEquals("ELY28020: Private key does not match certificate public key", exception.getMessage());
     }
 
     @Test
@@ -215,7 +215,7 @@ public class PemKeyStoreTest {
         CertificateException exception = Assert.assertThrows(CertificateException.class,
                 () -> keyStore.load(new PemKeyStoreLoadParameter(certificatePath, privateKeyPath)));
 
-        Assert.assertEquals("PEM certificate file does not contain an X.509 certificate", exception.getMessage());
+        Assert.assertEquals("ELY28003: PEM certificate file does not contain an X.509 certificate", exception.getMessage());
     }
 
     @Test
@@ -228,7 +228,7 @@ public class PemKeyStoreTest {
         IOException exception = Assert.assertThrows(IOException.class,
                 () -> keyStore.load(new PemKeyStoreLoadParameter(certificatePath, privateKeyPath)));
 
-        Assert.assertEquals("PEM private key file does not contain a private key", exception.getMessage());
+        Assert.assertEquals("ELY28004: PEM private key file does not contain a private key", exception.getMessage());
     }
 
     @Test
@@ -239,7 +239,7 @@ public class PemKeyStoreTest {
         CertificateException exception = Assert.assertThrows(CertificateException.class,
                 () -> keyStore.load(new ByteArrayInputStream(createPrivateKeyPem(material)), PASSWORD));
 
-        Assert.assertEquals("PEM content does not contain an X.509 certificate", exception.getMessage());
+        Assert.assertEquals("ELY28017: PEM content does not contain an X.509 certificate", exception.getMessage());
     }
 
     @Test
@@ -255,7 +255,7 @@ public class PemKeyStoreTest {
         IOException exception = Assert.assertThrows(IOException.class,
                 () -> keyStore.load(new ByteArrayInputStream(target.toArray()), PASSWORD));
 
-        Assert.assertEquals("PEM content contains more than one private key", exception.getMessage());
+        Assert.assertEquals("ELY28014: PEM content contains more than one private key", exception.getMessage());
     }
 
     @Test
@@ -267,7 +267,7 @@ public class PemKeyStoreTest {
         IOException exception = Assert.assertThrows(IOException.class,
                 () -> keyStore.load(new ByteArrayInputStream(malformedPem), PASSWORD));
 
-        Assert.assertEquals("Unable to parse PEM content", exception.getMessage());
+        Assert.assertEquals("ELY28016: Unable to parse PEM content", exception.getMessage());
         Assert.assertNotNull(exception.getCause());
     }
 
@@ -283,7 +283,7 @@ public class PemKeyStoreTest {
         IOException exception = Assert.assertThrows(IOException.class,
                 () -> keyStore.load(new ByteArrayInputStream(target.toArray()), PASSWORD));
 
-        Assert.assertEquals("Unable to parse PEM content", exception.getMessage());
+        Assert.assertEquals("ELY28016: Unable to parse PEM content", exception.getMessage());
         Assert.assertNotNull(exception.getCause());
     }
 
@@ -298,7 +298,7 @@ public class PemKeyStoreTest {
         IOException exception = Assert.assertThrows(IOException.class,
                 () -> keyStore.load(new ByteArrayInputStream(target.toArray()), PASSWORD));
 
-        Assert.assertEquals("PEM content contains an unsupported public key entry", exception.getMessage());
+        Assert.assertEquals("ELY28015: PEM content contains an unsupported public key entry", exception.getMessage());
     }
 
     @Test
@@ -338,7 +338,7 @@ public class PemKeyStoreTest {
         IOException exception = Assert.assertThrows(IOException.class,
                 () -> keyStore.load(new ByteArrayInputStream(oversizedPem), PASSWORD));
 
-        Assert.assertEquals("PEM content exceeds maximum size of " + PemKeyStoreUtil.MAX_PEM_CONTENT_SIZE + " bytes",
+        Assert.assertEquals("ELY28022: PEM content exceeds maximum size of " + PemKeyStoreUtil.MAX_PEM_CONTENT_SIZE + " bytes",
                 exception.getMessage());
     }
 
@@ -350,7 +350,7 @@ public class PemKeyStoreTest {
 
         IOException exception = assertSeparateLoadFails(certificatePath, privateKeyPath);
 
-        Assert.assertEquals("PEM certificate file must not contain a private key: \"" + certificatePath + "\"",
+        Assert.assertEquals("ELY28005: PEM certificate file must not contain a private key: \"" + certificatePath + "\"",
                 exception.getMessage());
     }
 
@@ -362,7 +362,7 @@ public class PemKeyStoreTest {
 
         IOException exception = assertSeparateLoadFails(certificatePath, privateKeyPath);
 
-        Assert.assertEquals("PEM private key file must not contain an X.509 certificate: \"" + privateKeyPath + "\"",
+        Assert.assertEquals("ELY28006: PEM private key file must not contain an X.509 certificate: \"" + privateKeyPath + "\"",
                 exception.getMessage());
     }
 
@@ -377,7 +377,7 @@ public class PemKeyStoreTest {
         IOException exception = Assert.assertThrows(IOException.class,
                 () -> keyStore.load(new PemKeyStoreLoadParameter(certificatePath, privateKeyPath, null, unsupported)));
 
-        Assert.assertEquals("PEM KeyStore only supports KeyStore.PasswordProtection", exception.getMessage());
+        Assert.assertEquals("ELY28011: PEM KeyStore only supports KeyStore.PasswordProtection", exception.getMessage());
     }
 
     @Test
@@ -388,7 +388,7 @@ public class PemKeyStoreTest {
 
         IOException exception = assertSeparateLoadFails(certificatePath, privateKeyPath);
 
-        Assert.assertEquals("PEM certificate file does not exist: \"" + certificatePath + "\"", exception.getMessage());
+        Assert.assertEquals("ELY28007: PEM certificate file does not exist: \"" + certificatePath + "\"", exception.getMessage());
     }
 
     @Test
@@ -399,7 +399,7 @@ public class PemKeyStoreTest {
 
         IOException exception = assertSeparateLoadFails(certificatePath, privateKeyPath);
 
-        Assert.assertEquals("PEM private key file does not exist: \"" + privateKeyPath + "\"", exception.getMessage());
+        Assert.assertEquals("ELY28007: PEM private key file does not exist: \"" + privateKeyPath + "\"", exception.getMessage());
     }
 
     @Test
@@ -410,7 +410,7 @@ public class PemKeyStoreTest {
 
         IOException exception = assertSeparateLoadFails(certificatePath, privateKeyPath);
 
-        Assert.assertEquals("PEM certificate path is not a regular file: \"" + certificatePath + "\"", exception.getMessage());
+        Assert.assertEquals("ELY28008: PEM certificate path is not a regular file: \"" + certificatePath + "\"", exception.getMessage());
     }
 
     @Test
@@ -421,7 +421,7 @@ public class PemKeyStoreTest {
 
         IOException exception = assertSeparateLoadFails(certificatePath, privateKeyPath);
 
-        Assert.assertEquals("PEM private key path is not a regular file: \"" + privateKeyPath + "\"", exception.getMessage());
+        Assert.assertEquals("ELY28008: PEM private key path is not a regular file: \"" + privateKeyPath + "\"", exception.getMessage());
     }
 
     @Test
@@ -450,9 +450,9 @@ public class PemKeyStoreTest {
 
         IOException exception = assertSeparateLoadFails(certificatePath, privateKeyPath);
 
-        Assert.assertEquals("Unable to load PEM certificate file \"" + certificatePath + "\"", exception.getMessage());
+        Assert.assertEquals("ELY28010: Unable to load PEM certificate file \"" + certificatePath + "\"", exception.getMessage());
         Assert.assertNotNull(exception.getCause());
-        Assert.assertEquals("Unable to parse PEM content", exception.getCause().getMessage());
+        Assert.assertEquals("ELY28016: Unable to parse PEM content", exception.getCause().getMessage());
     }
 
     @Test
@@ -463,9 +463,9 @@ public class PemKeyStoreTest {
 
         IOException exception = assertSeparateLoadFails(certificatePath, privateKeyPath);
 
-        Assert.assertEquals("Unable to load PEM private key file \"" + privateKeyPath + "\"", exception.getMessage());
+        Assert.assertEquals("ELY28010: Unable to load PEM private key file \"" + privateKeyPath + "\"", exception.getMessage());
         Assert.assertNotNull(exception.getCause());
-        Assert.assertEquals("Unable to parse PEM content", exception.getCause().getMessage());
+        Assert.assertEquals("ELY28016: Unable to parse PEM content", exception.getCause().getMessage());
     }
 
     @Test
@@ -565,12 +565,12 @@ public class PemKeyStoreTest {
 
     private void assertReadOnly(ThrowingRunnable operation) {
         KeyStoreException exception = Assert.assertThrows(KeyStoreException.class, operation);
-        Assert.assertEquals("PEM KeyStore is read-only", exception.getMessage());
+        Assert.assertEquals("ELY28013: PEM KeyStore is read-only", exception.getMessage());
     }
 
     private void assertStoreUnsupported(ThrowingRunnable operation) {
         UnsupportedOperationException exception = Assert.assertThrows(UnsupportedOperationException.class, operation);
-        Assert.assertEquals("PEM KeyStore does not support storing", exception.getMessage());
+        Assert.assertEquals("ELY28001: PEM KeyStore does not support storing", exception.getMessage());
     }
 
     private IOException assertSeparateLoadFails(Path certificatePath, Path privateKeyPath) throws Exception {
@@ -589,7 +589,7 @@ public class PemKeyStoreTest {
 
             IOException exception = assertSeparateLoadFails(certificatePath, privateKeyPath);
 
-            Assert.assertEquals("PEM " + role + " file is not readable: \"" + unreadablePath + "\"", exception.getMessage());
+            Assert.assertEquals("ELY28009: PEM " + role + " file is not readable: \"" + unreadablePath + "\"", exception.getMessage());
         } finally {
             Files.setPosixFilePermissions(unreadablePath, originalPermissions);
         }

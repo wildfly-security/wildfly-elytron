@@ -18,6 +18,8 @@
 
 package org.wildfly.security.keystore;
 
+import static org.wildfly.security.keystore.ElytronMessages.log;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -54,7 +56,7 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
         try {
             return getKeyStore().getKey(alias, password);
         } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
+            throw log.unableToAccessPemKeyStore(e);
         }
     }
 
@@ -68,7 +70,7 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
         try {
             return getKeyStore().entryInstanceOf(alias, entryClass);
         } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
+            throw log.unableToAccessPemKeyStore(e);
         }
     }
 
@@ -77,7 +79,7 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
         try {
             return getKeyStore().getCertificateChain(alias);
         } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
+            throw log.unableToAccessPemKeyStore(e);
         }
     }
 
@@ -86,7 +88,7 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
         try {
             return getKeyStore().getCertificate(alias);
         } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
+            throw log.unableToAccessPemKeyStore(e);
         }
     }
 
@@ -95,7 +97,7 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
         try {
             return getKeyStore().getCreationDate(alias);
         } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
+            throw log.unableToAccessPemKeyStore(e);
         }
     }
 
@@ -129,7 +131,7 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
         try {
             return getKeyStore().aliases();
         } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
+            throw log.unableToAccessPemKeyStore(e);
         }
     }
 
@@ -138,7 +140,7 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
         try {
             return getKeyStore().containsAlias(alias);
         } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
+            throw log.unableToAccessPemKeyStore(e);
         }
     }
 
@@ -147,7 +149,7 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
         try {
             return getKeyStore().size();
         } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
+            throw log.unableToAccessPemKeyStore(e);
         }
     }
 
@@ -156,7 +158,7 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
         try {
             return getKeyStore().isKeyEntry(alias);
         } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
+            throw log.unableToAccessPemKeyStore(e);
         }
     }
 
@@ -165,7 +167,7 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
         try {
             return getKeyStore().isCertificateEntry(alias);
         } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
+            throw log.unableToAccessPemKeyStore(e);
         }
     }
 
@@ -174,18 +176,18 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
         try {
             return getKeyStore().getCertificateAlias(cert);
         } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
+            throw log.unableToAccessPemKeyStore(e);
         }
     }
 
     @Override
     public void engineStore(OutputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
-        throw new UnsupportedOperationException("PEM KeyStore does not support storing");
+        throw log.pemKeyStoreDoesNotSupportStoring();
     }
 
     @Override
     public void engineStore(KeyStore.LoadStoreParameter param) throws IOException, NoSuchAlgorithmException, CertificateException {
-        throw new UnsupportedOperationException("PEM KeyStore does not support storing");
+        throw log.pemKeyStoreDoesNotSupportStoring();
     }
 
     @Override
@@ -200,7 +202,7 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
     @Override
     public void engineLoad(KeyStore.LoadStoreParameter param) throws IOException, NoSuchAlgorithmException, CertificateException {
         if (! (param instanceof PemKeyStoreLoadParameter)) {
-            throw new IOException("PEM KeyStore requires PemKeyStoreLoadParameter");
+            throw log.pemKeyStoreRequiresLoadParameter();
         }
         PemKeyStoreLoadParameter pemParameter = (PemKeyStoreLoadParameter) param;
         char[] password = getPassword(pemParameter);
@@ -210,34 +212,34 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
         List<X509Certificate> certificates = certificateEntries.getCertificates();
         PrivateKey privateKey = privateKeyEntries.getPrivateKey();
         if (certificates.isEmpty()) {
-            throw new CertificateException("PEM certificate file does not contain an X.509 certificate");
+            throw log.pemCertificateFileDoesNotContainCertificate();
         }
         if (privateKey == null) {
-            throw new IOException("PEM private key file does not contain a private key");
+            throw log.pemPrivateKeyFileDoesNotContainPrivateKey();
         }
         if (certificateEntries.getPrivateKey() != null) {
-            throw new IOException("PEM certificate file must not contain a private key: \"" + pemParameter.getCertificatePath() + "\"");
+            throw log.pemCertificateFileContainsPrivateKey(pemParameter.getCertificatePath());
         }
         if (! privateKeyEntries.getCertificates().isEmpty()) {
-            throw new IOException("PEM private key file must not contain an X.509 certificate: \"" + pemParameter.getPrivateKeyPath() + "\"");
+            throw log.pemPrivateKeyFileContainsCertificate(pemParameter.getPrivateKeyPath());
         }
         keyStore = PemKeyStoreUtil.createKeyStore(new PemKeyStoreUtil.PemEntries(privateKey, certificates), pemParameter.getAlias(), password);
     }
 
     private PemKeyStoreUtil.PemEntries loadPemFile(Path path, String role) throws IOException {
         if (! Files.exists(path)) {
-            throw new IOException("PEM " + role + " file does not exist: \"" + path + "\"");
+            throw log.pemFileDoesNotExist(role, path);
         }
         if (! Files.isRegularFile(path)) {
-            throw new IOException("PEM " + role + " path is not a regular file: \"" + path + "\"");
+            throw log.pemPathIsNotRegularFile(role, path);
         }
         if (! Files.isReadable(path)) {
-            throw new IOException("PEM " + role + " file is not readable: \"" + path + "\"");
+            throw log.pemFileIsNotReadable(role, path);
         }
         try (InputStream stream = Files.newInputStream(path)) {
             return PemKeyStoreUtil.loadPemEntries(stream);
         } catch (IOException e) {
-            throw new IOException("Unable to load PEM " + role + " file \"" + path + "\"", e);
+            throw log.unableToLoadPemFile(role, path, e);
         }
     }
 
@@ -247,7 +249,7 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
             return new char[0];
         }
         if (! (protectionParameter instanceof KeyStore.PasswordProtection)) {
-            throw new IOException("PEM KeyStore only supports KeyStore.PasswordProtection");
+            throw log.pemKeyStoreUnsupportedProtectionParameter();
         }
         char[] password = ((KeyStore.PasswordProtection) protectionParameter).getPassword();
         return password != null ? password : new char[0];
@@ -255,12 +257,12 @@ public final class PemKeyStoreSpi extends KeyStoreSpi {
 
     private KeyStore getKeyStore() {
         if (keyStore == null) {
-            throw new IllegalStateException("PEM KeyStore has not been loaded");
+            throw log.pemKeyStoreNotLoaded();
         }
         return keyStore;
     }
 
     private KeyStoreException readOnly() {
-        return new KeyStoreException("PEM KeyStore is read-only");
+        return log.pemKeyStoreIsReadOnly();
     }
 }

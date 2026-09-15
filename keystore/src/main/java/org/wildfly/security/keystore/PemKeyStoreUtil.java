@@ -18,6 +18,7 @@
 
 package org.wildfly.security.keystore;
 
+import static org.wildfly.security.keystore.ElytronMessages.log;
 import static org.wildfly.security.x500.cert.util.KeyUtil.getDefaultCompatibleSignatureAlgorithmName;
 
 import java.io.ByteArrayOutputStream;
@@ -62,17 +63,17 @@ final class PemKeyStoreUtil {
                 Object entry = it.next().getEntry();
                 if (entry instanceof PrivateKey) {
                     if (privateKey != null) {
-                        throw new IOException("PEM content contains more than one private key");
+                        throw log.pemContentContainsMultiplePrivateKeys();
                     }
                     privateKey = (PrivateKey) entry;
                 } else if (entry instanceof X509Certificate) {
                     certificates.add((X509Certificate) entry);
                 } else if (entry instanceof PublicKey) {
-                    throw new IOException("PEM content contains an unsupported public key entry");
+                    throw log.pemContentContainsUnsupportedPublicKey();
                 }
             }
         } catch (IllegalArgumentException e) {
-            throw new IOException("Unable to parse PEM content", e);
+            throw log.unableToParsePemContent(e);
         }
         return new PemEntries(privateKey, certificates);
     }
@@ -84,7 +85,7 @@ final class PemKeyStoreUtil {
         try {
             if (privateKey != null) {
                 if (certificates.isEmpty()) {
-                    throw new CertificateException("PEM content does not contain an X.509 certificate");
+                    throw log.pemContentDoesNotContainCertificate();
                 }
                 X509Certificate certificate = certificates.get(0);
                 validatePrivateKeyMatchesCertificate(privateKey, certificate);
@@ -102,7 +103,7 @@ final class PemKeyStoreUtil {
                 }
             }
         } catch (KeyStoreException e) {
-            throw new IOException(e);
+            throw log.unableToPopulatePemKeyStore(e);
         }
         return keyStore;
     }
@@ -111,7 +112,7 @@ final class PemKeyStoreUtil {
         try {
             String signatureAlgorithm = getDefaultCompatibleSignatureAlgorithmName(privateKey);
             if (signatureAlgorithm == null) {
-                throw new CertificateException("Unable to determine a compatible signature algorithm for private key algorithm " + privateKey.getAlgorithm());
+                throw log.unableToDetermineCompatibleSignatureAlgorithm(privateKey.getAlgorithm());
             }
             Signature signature = Signature.getInstance(signatureAlgorithm);
             signature.initSign(privateKey);
@@ -121,12 +122,12 @@ final class PemKeyStoreUtil {
             signature.initVerify(certificate.getPublicKey());
             signature.update(KEY_MATCH_PROBE);
             if (! signature.verify(signed)) {
-                throw new CertificateException("Private key does not match certificate public key");
+                throw log.privateKeyDoesNotMatchCertificate(null);
             }
         } catch (CertificateException e) {
             throw e;
         } catch (IllegalArgumentException | GeneralSecurityException e) {
-            throw new CertificateException("Private key does not match certificate public key", e);
+            throw log.privateKeyDoesNotMatchCertificate(e);
         }
     }
 
@@ -136,7 +137,7 @@ final class PemKeyStoreUtil {
             keyStore.load(null, null);
             return keyStore;
         } catch (KeyStoreException e) {
-            throw new IOException(e);
+            throw log.unableToInitializePemKeyStore(e);
         }
     }
 
@@ -147,7 +148,7 @@ final class PemKeyStoreUtil {
 
         while (readBytes != -1) {
             if (outputStream.size() > MAX_PEM_CONTENT_SIZE - readBytes) {
-                throw new IOException("PEM content exceeds maximum size of " + MAX_PEM_CONTENT_SIZE + " bytes");
+                throw log.pemContentExceedsMaximumSize(MAX_PEM_CONTENT_SIZE);
             }
             outputStream.write(buffer, 0, readBytes);
             readBytes = inputStream.read(buffer);
