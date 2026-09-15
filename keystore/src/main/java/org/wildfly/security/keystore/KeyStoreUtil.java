@@ -21,7 +21,6 @@ package org.wildfly.security.keystore;
 import static org.wildfly.security.keystore.ElytronMessages.log;
 import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
 
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -29,18 +28,10 @@ import java.io.InputStream;
 import java.nio.channels.FileChannel;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.PrivateKey;
+import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.security.cert.CertificateException;
 import java.util.function.Supplier;
-
-import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.pem.Pem;
-import org.wildfly.security.pem.PemEntry;
 
 /**
  * Utility functions for manipulating KeyStores.
@@ -149,56 +140,11 @@ public class KeyStoreUtil {
     }
 
     public static KeyStore loadPemAsKeyStore(InputStream is, char[] password) throws KeyStoreException, IOException {
-        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         try {
-            keyStore.load(null, null);
-        } catch (Exception e) {
-            // won't happen
+            return PemKeyStoreUtil.createKeyStore(PemKeyStoreUtil.loadPemEntries(is), null, password);
+        } catch (NoSuchAlgorithmException | CertificateException e) {
+            throw new IOException(e);
         }
-        // try to load it as a PEM
-        PrivateKey pk = null;
-        List<Certificate> certificates = new ArrayList<>();
-        // Reading all of the file should not be an issue
-        byte[] pem = readAllBytes(is);
-        is.read(pem);
-        for (Iterator<PemEntry<?>> it = Pem.parsePemContent(CodePointIterator.ofUtf8Bytes(pem)); it.hasNext(); ) {
-            Object entry = it.next().getEntry();
-            if (entry instanceof PrivateKey) {
-                // Private key
-                pk = (PrivateKey) entry;
-            } else if (entry instanceof Certificate) {
-                // Certificate
-                Certificate certificate = (Certificate) entry;
-                certificates.add(certificate);
-            }
-        }
-        if (pk != null) {
-            // A keystore
-            Certificate certificate = certificates.get(0);
-            String alias = certificate instanceof X509Certificate ? ((X509Certificate) certificate).getSubjectX500Principal().getName() : "key";
-            keyStore.setKeyEntry(alias, pk, password, certificates.toArray(new Certificate[0]));
-        } else {
-            // A truststore
-            int i = 1;
-            for (Certificate certificate : certificates) {
-                String alias = certificate instanceof X509Certificate ? ((X509Certificate)certificate).getSubjectX500Principal().getName() : Integer.toString(i++);
-                keyStore.setCertificateEntry(alias, certificate);
-            }
-        }
-        return keyStore;
-    }
-
-    private static byte[] readAllBytes(InputStream inputStream) throws IOException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int readBytes = inputStream.read(buffer);
-
-        // inputStream.read() returns -1 when the end of the stream is reached
-        while(readBytes != -1){
-            outputStream.write(buffer, 0, readBytes);
-            readBytes = inputStream.read(buffer);
-        }
-        return outputStream.toByteArray();
     }
 
     //FileInputStream does not support marking by default and buffering unknown sized file doesn't seem right

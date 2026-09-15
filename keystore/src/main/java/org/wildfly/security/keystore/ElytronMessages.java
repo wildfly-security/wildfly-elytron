@@ -20,10 +20,12 @@ package org.wildfly.security.keystore;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -42,7 +44,8 @@ import org.jboss.logging.annotations.ValidIdRanges;
 @MessageLogger(projectCode = "ELY", length = 5)
 @ValidIdRanges({
     @ValidIdRange(min = 2001, max = 2035),
-    @ValidIdRange(min = 8027, max = 8027)
+    @ValidIdRange(min = 8027, max = 8027),
+    @ValidIdRange(min = 28000, max = 28999)
 })
 interface ElytronMessages extends BasicLogger {
 
@@ -141,4 +144,73 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 8027, value = "Unknown password type or algorithm")
     InvalidKeyException invalidKeyUnknownUnknownPasswordTypeOrAlgorithm();
+
+    @Message(id = 28000, value = "Unable to access the backing PEM KeyStore")
+    IllegalStateException unableToAccessPemKeyStore(@Cause Exception cause);
+
+    @Message(id = 28001, value = "PEM KeyStore does not support storing")
+    UnsupportedOperationException pemKeyStoreDoesNotSupportStoring();
+
+    @Message(id = 28002, value = "PEM KeyStore requires PemKeyStoreLoadParameter")
+    IOException pemKeyStoreRequiresLoadParameter();
+
+    @Message(id = 28003, value = "PEM certificate file does not contain an X.509 certificate")
+    CertificateException pemCertificateFileDoesNotContainCertificate();
+
+    @Message(id = 28004, value = "PEM private key file does not contain a private key")
+    IOException pemPrivateKeyFileDoesNotContainPrivateKey();
+
+    @Message(id = 28005, value = "PEM certificate file must not contain a private key: \"%s\"")
+    IOException pemCertificateFileContainsPrivateKey(Path path);
+
+    @Message(id = 28006, value = "PEM private key file must not contain an X.509 certificate: \"%s\"")
+    IOException pemPrivateKeyFileContainsCertificate(Path path);
+
+    @Message(id = 28007, value = "PEM %s file does not exist: \"%s\"")
+    IOException pemFileDoesNotExist(String role, Path path);
+
+    @Message(id = 28008, value = "PEM %s path is not a regular file: \"%s\"")
+    IOException pemPathIsNotRegularFile(String role, Path path);
+
+    @Message(id = 28009, value = "PEM %s file is not readable: \"%s\"")
+    IOException pemFileIsNotReadable(String role, Path path);
+
+    @Message(id = 28010, value = "Unable to load PEM %s file \"%s\"")
+    IOException unableToLoadPemFile(String role, Path path, @Cause Exception cause);
+
+    @Message(id = 28011, value = "PEM KeyStore only supports KeyStore.PasswordProtection")
+    IOException pemKeyStoreUnsupportedProtectionParameter();
+
+    @Message(id = 28012, value = "PEM KeyStore has not been loaded")
+    IllegalStateException pemKeyStoreNotLoaded();
+
+    @Message(id = 28013, value = "PEM KeyStore is read-only")
+    KeyStoreException pemKeyStoreIsReadOnly();
+
+    @Message(id = 28014, value = "PEM content contains more than one private key")
+    IOException pemContentContainsMultiplePrivateKeys();
+
+    @Message(id = 28015, value = "PEM content contains an unsupported public key entry")
+    IOException pemContentContainsUnsupportedPublicKey();
+
+    @Message(id = 28016, value = "Unable to parse PEM content")
+    IOException unableToParsePemContent(@Cause Exception cause);
+
+    @Message(id = 28017, value = "PEM content does not contain an X.509 certificate")
+    CertificateException pemContentDoesNotContainCertificate();
+
+    @Message(id = 28018, value = "Unable to populate the backing PEM KeyStore")
+    IOException unableToPopulatePemKeyStore(@Cause Exception cause);
+
+    @Message(id = 28019, value = "Unable to determine a compatible signature algorithm for private key algorithm %s")
+    CertificateException unableToDetermineCompatibleSignatureAlgorithm(String keyAlgorithm);
+
+    @Message(id = 28020, value = "Private key does not match certificate public key")
+    CertificateException privateKeyDoesNotMatchCertificate(@Cause Exception cause);
+
+    @Message(id = 28021, value = "Unable to initialize the backing PEM KeyStore")
+    IOException unableToInitializePemKeyStore(@Cause Exception cause);
+
+    @Message(id = 28022, value = "PEM content exceeds maximum size of %d bytes")
+    IOException pemContentExceedsMaximumSize(int maximumSize);
 }

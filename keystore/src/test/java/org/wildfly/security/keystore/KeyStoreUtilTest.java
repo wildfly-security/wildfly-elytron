@@ -215,6 +215,40 @@ public class KeyStoreUtilTest {
         Assert.assertEquals(ca.getSelfSignedCertificate(), keyStore.getCertificateChain(alias)[1]);
     }
 
+    @Test
+    public void testCombinedPEMPrivateKeyAndCertificateChain() throws Exception {
+        SelfSignedX509CertificateAndSigningKey ca = SelfSignedX509CertificateAndSigningKey.builder()
+                .setDn(new X500Principal("O=Root Certificate Authority, EMAILADDRESS=elytron@wildfly.org, C=UK, ST=Elytron, CN=Elytron CA"))
+                .setKeyAlgorithmName("RSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
+                .addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647")
+                .build();
+        KeyPair generatedKeys = keyGen.generateKeyPair();
+        X509Certificate subjectCertificate = new X509CertificateBuilder()
+                .setIssuerDn(ca.getSelfSignedCertificate().getIssuerX500Principal())
+                .setSubjectDn(new X500Principal("O=Elytron, OU=Elytron, C=UK, ST=Elytron, CN=Firefly"))
+                .setSignatureAlgorithmName("SHA256withRSA")
+                .setSigningKey(ca.getSigningKey())
+                .setPublicKey(generatedKeys.getPublic())
+                .build();
+
+        ByteStringBuilder target = new ByteStringBuilder();
+        Pem.generatePemContent(target, "PRIVATE KEY", ByteIterator.ofBytes(generatedKeys.getPrivate().getEncoded()));
+        Pem.generatePemX509Certificate(target, subjectCertificate);
+        Pem.generatePemX509Certificate(target, ca.getSelfSignedCertificate());
+
+        KeyStore keyStore = KeyStoreUtil.loadPemAsKeyStore(new ByteArrayInputStream(target.toArray()), new char[0]);
+        String alias = subjectCertificate.getSubjectX500Principal().getName();
+
+        Assert.assertNotNull(keyStore);
+        Assert.assertEquals(1, keyStore.size());
+        Assert.assertTrue(keyStore.isKeyEntry(alias));
+        Assert.assertArrayEquals(generatedKeys.getPrivate().getEncoded(), keyStore.getKey(alias, new char[0]).getEncoded());
+        Assert.assertEquals(2, keyStore.getCertificateChain(alias).length);
+        Assert.assertEquals(subjectCertificate, keyStore.getCertificateChain(alias)[0]);
+        Assert.assertEquals(ca.getSelfSignedCertificate(), keyStore.getCertificateChain(alias)[1]);
+    }
+
 
     private void generateKeyStoreWithKey(String filename, String type, String alias, char[] password, Certificate cert) throws KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException {
         File keyStoreFile = new File(workingDir, filename);

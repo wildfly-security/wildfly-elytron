@@ -40,6 +40,7 @@ public final class WildFlyElytronKeyStoreProvider extends WildFlyElytronBaseProv
     public WildFlyElytronKeyStoreProvider() {
         super("WildFlyElytronKeyStoreProvider", "1.0", "WildFly Elytron KeyStore Provider");
         putService(new Service(this, "KeyStore", "PasswordFile", "org.wildfly.security.keystore.PasswordKeyStoreSpi", emptyList, emptyMap));
+        putService(new Service(this, "KeyStore", "PEM", "org.wildfly.security.keystore.PemKeyStoreSpi", emptyList, emptyMap));
     }
 
     /**

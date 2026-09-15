@@ -43,6 +43,7 @@ import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.asn1.ASN1;
 import org.wildfly.security.asn1.DERDecoder;
+import org.wildfly.security.asn1.DEREncoder;
 import org.wildfly.security.x500.cert.PKCS10CertificateSigningRequest;
 
 /**
@@ -57,6 +58,7 @@ public final class Pem {
     private static final String CERTIFICATE_FORMAT = "CERTIFICATE";
     private static final String PRIVATE_KEY_FORMAT = "PRIVATE KEY";
     private static final String RSA_PRIVATE_KEY_FORMAT = "RSA PRIVATE KEY";
+    private static final String EC_PRIVATE_KEY_FORMAT = "EC PRIVATE KEY";
     private static final String CERTIFICATE_REQUEST_FORMAT = "CERTIFICATE REQUEST";
 
     /**
@@ -162,6 +164,10 @@ public final class Pem {
                             }
                             case RSA_PRIVATE_KEY_FORMAT: {
                                 final PrivateKey privateKey = parsePemRsaPrivateKey(type, byteIterator);
+                                return new PemEntry<>(privateKey);
+                            }
+                            case EC_PRIVATE_KEY_FORMAT: {
+                                final PrivateKey privateKey = parsePemEcPrivateKey(type, byteIterator);
                                 return new PemEntry<>(privateKey);
                             }
                             default: {
@@ -313,6 +319,55 @@ public final class Pem {
                     exp1, exp2, crtCoef);
 
             return KeyFactory.getInstance("RSA").generatePrivate(keySpec);
+        } catch (Exception cause) {
+            throw log.privateKeyParseError(cause);
+        }
+    }
+
+    private static PrivateKey parsePemEcPrivateKey(String type, ByteIterator byteIterator) throws IllegalArgumentException {
+        if (! type.equals(EC_PRIVATE_KEY_FORMAT)) {
+            throw log.invalidPemType(EC_PRIVATE_KEY_FORMAT, type);
+        }
+        try {
+            byte[] ecPrivateKey = byteIterator.drain();
+            DERDecoder derDecoder = new DERDecoder(ecPrivateKey);
+            derDecoder.startSequence();
+
+            if (! BigInteger.ONE.equals(derDecoder.decodeInteger())) throw log.asnUnexpectedTag();
+            derDecoder.decodeOctetString();
+
+            String curveOid = null;
+            boolean publicKeySeen = false;
+            while (derDecoder.hasNextElement()) {
+                if (derDecoder.isNextType(ASN1.CONTEXT_SPECIFIC_MASK, 0, true)) {
+                    if (curveOid != null) throw log.asnUnexpectedTag();
+                    derDecoder.startExplicit(0);
+                    curveOid = derDecoder.decodeObjectIdentifier();
+                    derDecoder.endExplicit();
+                } else if (derDecoder.isNextType(ASN1.CONTEXT_SPECIFIC_MASK, 1, true)) {
+                    if (publicKeySeen) throw log.asnUnexpectedTag();
+                    derDecoder.startExplicit(1);
+                    derDecoder.decodeBitString();
+                    derDecoder.endExplicit();
+                    publicKeySeen = true;
+                } else {
+                    throw log.asnUnexpectedTag();
+                }
+            }
+            derDecoder.endSequence();
+            if (curveOid == null) throw log.asnUnexpectedTag();
+
+            DEREncoder pkcs8 = new DEREncoder();
+            pkcs8.startSequence();
+            pkcs8.encodeInteger(0);
+            pkcs8.startSequence();
+            pkcs8.encodeObjectIdentifier(ASN1.OID_EC);
+            pkcs8.encodeObjectIdentifier(curveOid);
+            pkcs8.endSequence();
+            pkcs8.encodeOctetString(ecPrivateKey);
+            pkcs8.endSequence();
+
+            return KeyFactory.getInstance("EC").generatePrivate(new PKCS8EncodedKeySpec(pkcs8.getEncoded()));
         } catch (Exception cause) {
             throw log.privateKeyParseError(cause);
         }
