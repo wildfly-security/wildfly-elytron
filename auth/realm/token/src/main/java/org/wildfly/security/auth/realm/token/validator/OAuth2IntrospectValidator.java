@@ -25,6 +25,7 @@ import org.wildfly.security.auth.realm.token.TokenValidator;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.evidence.BearerTokenEvidence;
+import org.wildfly.security.evidence.Evidence;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
@@ -317,5 +318,10 @@ public class OAuth2IntrospectValidator implements TokenValidator {
         public OAuth2IntrospectValidator build() {
             return new OAuth2IntrospectValidator(this);
         }
+    }
+
+    @Override
+    public Attributes validate(Evidence evidence) throws RealmUnavailableException {
+        return this.validate(BearerTokenEvidence.class.cast(evidence));
     }
 }
