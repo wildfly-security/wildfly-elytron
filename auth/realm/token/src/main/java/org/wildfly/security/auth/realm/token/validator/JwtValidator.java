@@ -18,14 +18,11 @@
 
 package org.wildfly.security.auth.realm.token.validator;
 
-import org.wildfly.common.iteration.ByteIterator;
-import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.auth.realm.token.TokenValidator;
-import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.authz.Attributes;
-import org.wildfly.security.evidence.BearerTokenEvidence;
-import org.wildfly.security.pem.Pem;
-import org.wildfly.security.pem.PemEntry;
+
+import static java.util.Arrays.asList;
+import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security.auth.realm.token._private.ElytronMessages.log;
+import static org.wildfly.security.json.util.JsonUtil.toAttributes;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -34,7 +31,6 @@ import jakarta.json.JsonReader;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -52,14 +48,14 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.wildfly.security.jose.jwk.JsonWebKeySetUtil;
-import org.wildfly.security.jose.jwks.JwksCache;
-import org.wildfly.security.jose.jwks.JwksConfig;
-
-import static java.util.Arrays.asList;
-import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.auth.realm.token._private.ElytronMessages.log;
-import static org.wildfly.security.json.util.JsonUtil.toAttributes;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.auth.realm.token.TokenValidator;
+import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.evidence.BearerTokenEvidence;
+import org.wildfly.security.pem.Pem;
+import org.wildfly.security.pem.PemEntry;
 
 /**
  * <p>A {@link TokenValidator} capable of validating and parsing JWT. Most of the validations performed by this validator are
@@ -83,49 +79,19 @@ public class JwtValidator implements TokenValidator {
 
     private final Set<String> issuers;
     private final Set<String> audiences;
-    private final Set<String> allowedJkuValues;
-    private final JwksCache jwksCache;
-    private final Map<String, PublicKey> namedKeys;
-
-    private final PublicKey defaultPublicKey;
-    private final URL jkuFallbackUrl;
-    private final JwkManager jwkManager;
+    private final TokenKeyManager keyManager;
+    private final boolean retryOnVerificationFailure;
 
     JwtValidator(Builder configuration) {
         this.issuers = checkNotNullParam("issuers", configuration.issuers);
         this.audiences = checkNotNullParam("audience", configuration.audience);
-        this.allowedJkuValues = checkNotNullParam("allowedJkuValues", configuration.allowedJkuValues);
-        this.defaultPublicKey = configuration.publicKey;
-        this.namedKeys = configuration.namedKeys;
-        this.jkuFallbackUrl = configuration.jkuFallbackUrl;
-        if (configuration.sslContext != null) {
-            this.jwksCache = new JwksCache(JwksConfig.builder()
-                    .fetcher(new JdkJwksFetcher(
-                            configuration.sslContext,
-                            configuration.hostnameVerifier != null ? configuration.hostnameVerifier : HttpsURLConnection.getDefaultHostnameVerifier(),
-                            configuration.connectionTimeout,
-                            configuration.readTimeout))
-                    .keyFilter(JsonWebKeySetUtil.SUPPORTED_KEY_TYPE)
-                    .cacheTtlMs(configuration.updateTimeout)
-                    .minTimeBetweenRequestsMs(configuration.minTimeBetweenRequests)
-                    .preserveStaleOnFailure(false)
-                    .build());
-        }
-        else {
-            log.tokenRealmJwtNoSSLIgnoringJku();
-            this.jwksCache = null;
-        }
-        if (configuration.sslContext != null || configuration.publicKeyUrl != null) {
-            HostnameVerifier hv = configuration.hostnameVerifier != null
-                    ? configuration.hostnameVerifier
-                    : HttpsURLConnection.getDefaultHostnameVerifier();
-            this.jwkManager = new JwkManager(configuration.sslContext, hv,
-                    configuration.updateTimeout, configuration.connectionTimeout, configuration.readTimeout,
-                    configuration.minTimeBetweenRequests, configuration.publicKeyUrl);
-        } else {
-            this.jwkManager = null;
-        }
-        if (defaultPublicKey == null && jwksCache == null && namedKeys.isEmpty() && jkuFallbackUrl == null) {
+        this.retryOnVerificationFailure = configuration.retryOnVerificationFailure;
+        this.keyManager = new TokenKeyManager(configuration.sslContext, configuration.hostnameVerifier,
+                configuration.updateTimeout, configuration.connectionTimeout, configuration.readTimeout,
+                configuration.minTimeBetweenRequests, configuration.allowedJkuValues, configuration.namedKeys,
+                configuration.publicKey, configuration.jkuFallbackUrl, configuration.publicKeyUrl);
+
+        if (!keyManager.hasAnyKeySource()) {
             log.tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
         }
 
@@ -135,10 +101,6 @@ public class JwtValidator implements TokenValidator {
         if (audiences.isEmpty()) {
             log.tokenRealmJwtWarnNoAudienceIgnoringAudienceCheck();
         }
-        if (allowedJkuValues.isEmpty() && (jwkManager == null || !jwkManager.hasPublicKeyUrl())) {
-            log.allowedJkuValuesNotConfigured();
-        }
-
     }
 
     @Override
@@ -164,9 +126,11 @@ public class JwtValidator implements TokenValidator {
             return toAttributes(claims);
         }
 
-        // After a failed verification, attempt to re-fetch the configured remote public key
-        // (subject to the min-time-between-requests guard to avoid being used to DoS the key server)
-        if (jwkManager != null && jwkManager.hasPublicKeyUrl()) {
+        // After a failed verification, optionally attempt one forced-refresh retry against whichever
+        // URL-backed key source was in play (subject to that source's own rate limiter, so this cannot
+        // be used to flood the key endpoint).
+        if (retryOnVerificationFailure) {
+            log.retryingVerificationWithForcedKeyRefresh();
             if (verifySignature(encodedHeader, encodedClaims, encodedSignature, true)
                     && hasValidIssuer(claims)
                     && hasValidAudience(claims)
@@ -219,7 +183,7 @@ public class JwtValidator implements TokenValidator {
     }
 
     private boolean verifySignature(String encodedHeader, String encodedClaims, String encodedSignature, boolean forceKeyRefresh) throws RealmUnavailableException {
-        if (defaultPublicKey == null && jwksCache == null && namedKeys.isEmpty() && jkuFallbackUrl == null) {
+        if (!keyManager.hasAnyKeySource()) {
             return true;
         }
 
@@ -341,63 +305,7 @@ public class JwtValidator implements TokenValidator {
     private PublicKey resolvePublicKey(JsonObject headers, boolean forceKeyRefresh) {
         JsonString kid = headers.getJsonString("kid");
         JsonString jku = headers.getJsonString("jku");
-
-        if (kid == null) {
-            // No kid: try the configured remote URL first, then fall back to the inline default key
-            if (jwkManager != null && jwkManager.hasPublicKeyUrl()) {
-                PublicKey remoteKey = jwkManager.getRemotePublicKey(forceKeyRefresh);
-                if (remoteKey != null) {
-                    return remoteKey;
-                }
-            }
-            if (defaultPublicKey == null) {
-                log.debug("Default public key not configured. Cannot validate token without kid claim.");
-                return null;
-            }
-            return defaultPublicKey;
-        }
-        if (kid.getString().isEmpty()) {
-            log.debug("Empty kid claim. Cannot resolve key.");
-            return null;
-        }
-        if (jku != null) {
-            if (jwksCache == null) {
-                log.debugf("Cannot validate token with jku [%s]. SSL is not configured and jku claim is not supported.", jku);
-                return null;
-            }
-            if (! allowedJkuValues.contains(jku.getString())) {
-                log.debug("Cannot validate token, jku value is not allowed");
-                return null;
-            }
-            try {
-                return jwksCache.getPublicKey(kid.getString(), new URL(jku.getString()));
-            } catch (MalformedURLException e) {
-                log.debug("Invalid jku URL.");
-                return null;
-            }
-        } else {
-            PublicKey res = namedKeys.get(kid.getString());
-            if (res != null) {
-                return res;
-            }
-            if (jkuFallbackUrl != null) {
-                if (jwksCache == null) {
-                    log.debugf("Cannot use jku fallback URL [%s]. SSL is not configured.", jkuFallbackUrl);
-                    return null;
-                }
-                if (!allowedJkuValues.contains(jkuFallbackUrl.toString())) {
-                    log.debug("Cannot validate token, jku fallback URL is not allowed");
-                    return null;
-                }
-                return jwksCache.getPublicKey(kid.getString(), jkuFallbackUrl);
-            }
-            if (namedKeys.isEmpty()) {
-                log.debug("Cannot validate token with kid claim.");
-            } else {
-                log.debug("Unknown kid.");
-            }
-            return null;
-        }
+        return keyManager.resolve(kid != null ? kid.getString() : null, jku != null ? jku.getString() : null, forceKeyRefresh);
     }
 
     private static long currentTimeInSeconds() {
@@ -421,6 +329,7 @@ public class JwtValidator implements TokenValidator {
         private int readTimeout = CONNECTION_TIMEOUT;
         private int minTimeBetweenRequests = MIN_TIME_BETWEEN_REQUESTS;
         private URL jkuFallbackUrl;
+        private boolean retryOnVerificationFailure = false;
 
         private Builder() {
         }
@@ -617,22 +526,46 @@ public class JwtValidator implements TokenValidator {
         }
 
         /**
-         * <p>A remote URL from which to retrieve a PEM-encoded public key. This is an alternative to
-         * inlining a public key via {@link #publicKey(byte[])} for cases where JKU is not used.
+         * <p>Configures a remote URL from which to retrieve a single PEM-encoded public key, used to
+         * validate tokens that carry no <code>kid</code> header (an alternative to inlining a key via
+         * {@link #publicKey(byte[])}).
          *
-         * <p>The key is fetched on first use and cached. It is refreshed when the cache expires
-         * (controlled by {@link #setJkuTimeout(long)}) or after a failed signature verification,
-         * subject to the minimum-time-between-requests guard ({@link #setJkuMinTimeBetweenRequests(int)})
-         * to prevent being used to DoS the server hosting the key.
+         * <p>This URL is <em>not</em> required to appear in {@link #setAllowedJkuValues(String...)}.
          *
-         * <p>Both HTTP and HTTPS URLs are supported. For HTTPS, configure an {@link SSLContext}
-         * via {@link #useSslContext(SSLContext)}.
+         * @param publicKeyUrl the URL of the remote endpoint serving a PEM-encoded public key
+         * @return this instance
+         * @throws IllegalArgumentException if the given value is not a valid HTTPS URL
+         */
+        public Builder setPublicKeyUrl(String publicKeyUrl) {
+            checkNotNullParam("publicKeyUrl", publicKeyUrl);
+            try {
+                URI uri = new URI(publicKeyUrl);
+                if (!"https".equalsIgnoreCase(uri.getScheme())) {
+                    throw new IllegalArgumentException("public key URL must use HTTPS, got: " + uri.getScheme());
+                }
+                this.publicKeyUrl = uri.toURL();
+            } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid public key URL: " + publicKeyUrl, e);
+            }
+            return this;
+        }
+
+        /**
+         * <p>Controls whether, after a failed signature verification against a URL-backed key source
+         * (the in-token <code>jku</code>, {@link #setJkuFallbackUrl(String)}, or
+         * {@link #setPublicKeyUrl(String)}), the validator attempts one forced-refresh retry.
+         * 
+         * <p> The refresh bypass the source's cache freshness check, but still subject to its rate limiter
+         * ({@link #setJkuMinTimeBetweenRequests(int)}).
          *
-         * @param publicKeyUrl the URL of the remote public key endpoint serving a PEM-encoded public key
+         * <p>Defaults to {@code false}: a token with a deliberately invalid signature would otherwise
+         * force an extra remote lookup on every request.
+         *
+         * @param retryOnVerificationFailure whether to attempt the forced-refresh retry
          * @return this instance
          */
-        public Builder publicKeyUrl(URL publicKeyUrl) {
-            this.publicKeyUrl = publicKeyUrl;
+        public Builder setRetryOnVerificationFailure(boolean retryOnVerificationFailure) {
+            this.retryOnVerificationFailure = retryOnVerificationFailure;
             return this;
         }
 

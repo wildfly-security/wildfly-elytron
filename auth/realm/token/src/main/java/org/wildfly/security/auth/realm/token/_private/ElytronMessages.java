@@ -18,9 +18,8 @@
 
 package org.wildfly.security.auth.realm.token._private;
 
+import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
-
-import java.net.URL;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -91,12 +90,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1182, value = "Allowed jku values haven't been configured for the JWT validator. Token validation will fail if the token contains a 'jku' header parameter.")
     void allowedJkuValuesNotConfigured();
 
-    @LogMessage(level = WARN)
-    @Message(id = 1183, value = "Unable to retrieve public key from remote URL \"%1$s\".")
-    void unableToFetchRemotePublicKey(String url);
-
-    @LogMessage(level = WARN)
-    @Message(id = 1184, value = "Not sending new request to remote public key URL \"%s\". Last request time was %d.")
-    void avoidingFetchRemotePublicKey(URL url, long timestamp);
+    @LogMessage(level = TRACE)
+    @Message(id = 1183, value = "Signature verification failed; retrying with a forced key refresh.")
+    void retryingVerificationWithForcedKeyRefresh();
 }
 

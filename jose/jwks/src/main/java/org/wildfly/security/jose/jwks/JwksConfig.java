@@ -10,6 +10,9 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import java.util.function.Predicate;
 
 import org.wildfly.security.jose.jwk.JWK;
+import org.wildfly.security.jose.jwk.JsonWebKeySet;
+import org.wildfly.security.jose.jwk.JsonWebKeySetUtil;
+import org.wildfly.security.jose.util.JsonSerialization;
 
 /**
  * Immutable configuration for a {@link JwksCache} instance.
@@ -22,6 +25,7 @@ public final class JwksConfig {
 
     private final JwksFetcher fetcher;
     private final Predicate<JWK> keyFilter;
+    private final JwksKeySetParser keySetParser;
     private final long cacheTtlMs;
     private final long minTimeBetweenRequestsMs;
     private final boolean preserveStaleOnFailure;
@@ -29,9 +33,17 @@ public final class JwksConfig {
     private JwksConfig(Builder builder) {
         this.fetcher = builder.fetcher;
         this.keyFilter = builder.keyFilter;
+        this.keySetParser = builder.keySetParser != null ? builder.keySetParser : defaultKeySetParser(builder.keyFilter);
         this.cacheTtlMs = builder.cacheTtlMs;
         this.minTimeBetweenRequestsMs = builder.minTimeBetweenRequestsMs;
         this.preserveStaleOnFailure = builder.preserveStaleOnFailure;
+    }
+
+    private static JwksKeySetParser defaultKeySetParser(Predicate<JWK> keyFilter) {
+        return rawBytes -> {
+            JsonWebKeySet jwks = JsonSerialization.readValue(rawBytes, JsonWebKeySet.class);
+            return JsonWebKeySetUtil.getKeys(jwks, keyFilter);
+        };
     }
 
     public JwksFetcher getFetcher() {
@@ -40,6 +52,10 @@ public final class JwksConfig {
 
     public Predicate<JWK> getKeyFilter() {
         return keyFilter;
+    }
+
+    public JwksKeySetParser getKeySetParser() {
+        return keySetParser;
     }
 
     public long getCacheTtlMs() {
@@ -61,6 +77,7 @@ public final class JwksConfig {
     public static final class Builder {
         private JwksFetcher fetcher;
         private Predicate<JWK> keyFilter;
+        private JwksKeySetParser keySetParser;
         private long cacheTtlMs = 120_000;
         private long minTimeBetweenRequestsMs = 10_000;
         private boolean preserveStaleOnFailure = true;
@@ -75,6 +92,18 @@ public final class JwksConfig {
 
         public Builder keyFilter(Predicate<JWK> keyFilter) {
             this.keyFilter = keyFilter;
+            return this;
+        }
+
+        /**
+         * Overrides how a raw fetched response body is turned into the keys.
+         * If not called, {@link JwksCache} parses the response as a JWKS (JSON Web Key Set).
+         *
+         * @param keySetParser the parsing strategy to use
+         * @return this instance
+         */
+        public Builder keySetParser(JwksKeySetParser keySetParser) {
+            this.keySetParser = keySetParser;
             return this;
         }
 
@@ -95,7 +124,10 @@ public final class JwksConfig {
 
         public JwksConfig build() {
             checkNotNullParam("fetcher", fetcher);
-            checkNotNullParam("keyFilter", keyFilter);
+            if (keySetParser == null) {
+                // keyFilter is only meaningful for the default JWKS parsing strategy(non PEM)
+                checkNotNullParam("keyFilter", keyFilter);
+            }
             return new JwksConfig(this);
         }
     }

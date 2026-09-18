@@ -16,16 +16,12 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.wildfly.security.jose.jwk.JsonWebKeySet;
-import org.wildfly.security.jose.jwk.JsonWebKeySetUtil;
-import org.wildfly.security.jose.util.JsonSerialization;
-
 /**
- * Unified JWKS thread-safe cache component to allow concurrent fetches.
+ * Unified thread-safe cache component to allow concurrent fetches.
  *
- * <p>Fetches JWKS documents from remote endpoints via a pluggable {@link JwksFetcher},
- * parses them using Jackson ({@code jose/jwk} classes), filters keys via a configurable
- * predicate, and caches the result per URL with configurable TTL and rate limiting.
+ * <p>Fetches raw responses from remote endpoints via a pluggable {@link JwksFetcher}, parses them via a
+ * pluggable {@link JwksKeySetParser} (JWKS/JSON by default), and caches the result per URL with
+ * configurable TTL and rate limiting.
  *
  * @author <a href="mailto:rojeda@redhat.com">Raul Ojeda Robles</a>
  */
@@ -42,13 +38,29 @@ public class JwksCache {
      * Returns the {@link PublicKey} matching the given {@code kid} from the JWKS at {@code url},
      * fetching and caching as needed. Returns {@code null} if no matching key is found or if
      * {@code kid} is {@code null}. Callers wanting any available key regardless of kid should
-     * use {@link #getAnyKey(URL)} instead.
+     * use {@link #getAnyKey(URL)} instead. Equivalent to {@code getPublicKey(kid, url, false)}.
      *
      * @param kid the key ID to look up
      * @param url the JWKS endpoint URL
      * @return the matching public key, or null
      */
     public PublicKey getPublicKey(String kid, URL url) {
+        return getPublicKey(kid, url, false);
+    }
+
+    /**
+     * Returns the {@link PublicKey} matching the given {@code kid} from the JWKS at {@code url},
+     * fetching and caching as needed. Returns {@code null} if no matching key is found or if
+     * {@code kid} is {@code null}.
+     *
+     * @param kid the key ID to look up
+     * @param url the JWKS endpoint URL
+     * @param forceRefresh if {@code true}, bypasses the TTL/kid-presence freshness check and treats
+     *                      the cache as always needing a refetch (the rate limiter
+     *                      ({@code minTimeBetweenRequestsMs}) still applies).
+     * @return the matching public key, or null
+     */
+    public PublicKey getPublicKey(String kid, URL url, boolean forceRefresh) {
         if (kid == null) {
             return null;
         }
@@ -61,7 +73,7 @@ public class JwksCache {
         Map<String, PublicKey> keys = cacheEntry.keys;
         long now = System.currentTimeMillis();
 
-        if (!needsRefetch(keys, kid, lastFetchMs, now)) {
+        if (!forceRefresh && !needsRefetch(keys, kid, lastFetchMs, now)) {
             return keys.get(kid);
         }
 
@@ -75,7 +87,7 @@ public class JwksCache {
             lastFetchMs = cacheEntry.lastFetchTimeMs;
             now = System.currentTimeMillis();
 
-            if (!needsRefetch(keys, kid, lastFetchMs, now)) {
+            if (!forceRefresh && !needsRefetch(keys, kid, lastFetchMs, now)) {
                 return keys.get(kid);
             }
             if (isRateLimited(lastFetchMs, now)) {
@@ -90,12 +102,27 @@ public class JwksCache {
     /**
      * Returns any available {@link PublicKey} from the JWKS at {@code url}, or {@code null}
      * if no keys are cached after a fetch attempt. Because there is no kid to check,
-     * refetch is triggered only when the cache TTL expires.
+     * refetch is triggered only when the cache TTL expires. Equivalent to
+     * {@code getAnyKey(url, false)}.
      *
      * @param url the JWKS endpoint URL
      * @return any available public key, or null
      */
     public PublicKey getAnyKey(URL url) {
+        return getAnyKey(url, false);
+    }
+
+    /**
+     * Returns any available {@link PublicKey} from the JWKS at {@code url}, or {@code null}
+     * if no keys are cached after a fetch attempt.
+     *
+     * @param url the JWKS endpoint URL
+     * @param forceRefresh if {@code true}, bypasses the TTL freshness check and treats the cache as
+     *                      always needing a refetch — but the rate limiter still applies, exactly as
+     *                      in {@link #getPublicKey(String, URL, boolean)}
+     * @return any available public key, or null
+     */
+    public PublicKey getAnyKey(URL url, boolean forceRefresh) {
         checkNotNullParam("url", url);
 
         CacheEntry cacheEntry = getOrCreateEntry(url);
@@ -105,7 +132,7 @@ public class JwksCache {
         Map<String, PublicKey> keys = cacheEntry.keys;
         long now = System.currentTimeMillis();
 
-        if (!needsRefetch(keys, null, lastFetchMs, now)) {
+        if (!forceRefresh && !needsRefetch(keys, null, lastFetchMs, now)) {
             return firstValue(keys);
         }
 
@@ -119,7 +146,7 @@ public class JwksCache {
             lastFetchMs = cacheEntry.lastFetchTimeMs;
             now = System.currentTimeMillis();
 
-            if (!needsRefetch(keys, null, lastFetchMs, now)) {
+            if (!forceRefresh && !needsRefetch(keys, null, lastFetchMs, now)) {
                 return firstValue(keys);
             }
             if (isRateLimited(lastFetchMs, now)) {
@@ -174,8 +201,7 @@ public class JwksCache {
         try {
             log.jwksFetchStarting(url);
             byte[] rawBytes = config.getFetcher().fetch(url);
-            JsonWebKeySet jwks = JsonSerialization.readValue(rawBytes, JsonWebKeySet.class);
-            Map<String, PublicKey> newKeys = JsonWebKeySetUtil.getKeys(jwks, config.getKeyFilter());
+            Map<String, PublicKey> newKeys = config.getKeySetParser().parse(rawBytes);
 
             // ORDERING: Always prioritize an up-to-date map
             cacheEntry.keys = Collections.unmodifiableMap(newKeys);
