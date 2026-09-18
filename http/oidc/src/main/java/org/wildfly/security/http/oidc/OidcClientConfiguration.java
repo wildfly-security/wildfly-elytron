@@ -142,7 +142,7 @@ public class OidcClientConfiguration {
     protected String requestObjectSigningKeyPassword;
     protected String requestObjectSigningKeyAlias;
     protected String requestObjectSigningKeyStoreType;
-    protected JWKEncPublicKeyLocator encryptionPublicKeyLocator;
+    protected PublicKeyLocator encryptionPublicKeyLocator;
     private boolean logoutSessionRequired = true;
 
     private String postLogoutRedirectUri;
@@ -808,11 +808,25 @@ public class OidcClientConfiguration {
         this.pushedAuthorizationRequestEndpoint = pushedAuthorizationRequestEndpoint;
     }
 
+    /** @deprecated Use {@link #setEncryptionKeyLocator(PublicKeyLocator)} instead. */
+    @Deprecated
     public void setEncryptionPublicKeyLocator(JWKEncPublicKeyLocator publicKeySetExtractor) {
         this.encryptionPublicKeyLocator = publicKeySetExtractor;
     }
 
+    /** @deprecated Use {@link #getEncryptionKeyLocator()} instead. */
+    @Deprecated
     public JWKEncPublicKeyLocator getEncryptionPublicKeyLocator() {
+        return this.encryptionPublicKeyLocator instanceof JWKEncPublicKeyLocator
+                ? (JWKEncPublicKeyLocator) this.encryptionPublicKeyLocator
+                : null;
+    }
+
+    public void setEncryptionKeyLocator(PublicKeyLocator encryptionKeyLocator) {
+        this.encryptionPublicKeyLocator = encryptionKeyLocator;
+    }
+
+    public PublicKeyLocator getEncryptionKeyLocator() {
         return this.encryptionPublicKeyLocator;
     }
 
