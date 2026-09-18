@@ -37,6 +37,8 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -86,6 +88,7 @@ public class JwtValidator implements TokenValidator {
     private final Map<String, PublicKey> namedKeys;
 
     private final PublicKey defaultPublicKey;
+    private final URL jkuFallbackUrl;
 
     JwtValidator(Builder configuration) {
         this.issuers = checkNotNullParam("issuers", configuration.issuers);
@@ -93,6 +96,7 @@ public class JwtValidator implements TokenValidator {
         this.allowedJkuValues = checkNotNullParam("allowedJkuValues", configuration.allowedJkuValues);
         this.defaultPublicKey = configuration.publicKey;
         this.namedKeys = configuration.namedKeys;
+        this.jkuFallbackUrl = configuration.jkuFallbackUrl;
         if (configuration.sslContext != null) {
             this.jwksCache = new JwksCache(JwksConfig.builder()
                     .fetcher(new JdkJwksFetcher(
@@ -110,7 +114,7 @@ public class JwtValidator implements TokenValidator {
             log.tokenRealmJwtNoSSLIgnoringJku();
             this.jwksCache = null;
         }
-        if (defaultPublicKey == null && jwksCache == null && namedKeys.isEmpty()) {
+        if (defaultPublicKey == null && jwksCache == null && namedKeys.isEmpty() && jkuFallbackUrl == null) {
             log.tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
         }
 
@@ -193,7 +197,7 @@ public class JwtValidator implements TokenValidator {
     }
 
     private boolean verifySignature(String encodedHeader, String encodedClaims, String encodedSignature) throws RealmUnavailableException {
-        if (defaultPublicKey == null && jwksCache == null && namedKeys.isEmpty()) {
+        if (defaultPublicKey == null && jwksCache == null && namedKeys.isEmpty() && jkuFallbackUrl == null) {
             return true;
         }
 
@@ -323,6 +327,10 @@ public class JwtValidator implements TokenValidator {
             }
             return defaultPublicKey;
         }
+        if (kid.getString().isEmpty()) {
+            log.debug("Empty kid claim. Cannot resolve key.");
+            return null;
+        }
         if (jku != null) {
             if (jwksCache == null) {
                 log.debugf("Cannot validate token with jku [%s]. SSL is not configured and jku claim is not supported.", jku);
@@ -339,15 +347,27 @@ public class JwtValidator implements TokenValidator {
                 return null;
             }
         } else {
+            PublicKey res = namedKeys.get(kid.getString());
+            if (res != null) {
+                return res;
+            }
+            if (jkuFallbackUrl != null) {
+                if (jwksCache == null) {
+                    log.debugf("Cannot use jku fallback URL [%s]. SSL is not configured.", jkuFallbackUrl);
+                    return null;
+                }
+                if (!allowedJkuValues.contains(jkuFallbackUrl.toString())) {
+                    log.debug("Cannot validate token, jku fallback URL is not allowed");
+                    return null;
+                }
+                return jwksCache.getPublicKey(kid.getString(), jkuFallbackUrl);
+            }
             if (namedKeys.isEmpty()) {
                 log.debug("Cannot validate token with kid claim.");
-                return null;
-            }
-            PublicKey res = namedKeys.get(kid.getString());
-            if (res == null) {
+            } else {
                 log.debug("Unknown kid.");
             }
-            return res;
+            return null;
         }
     }
 
@@ -370,6 +390,7 @@ public class JwtValidator implements TokenValidator {
         private int connectionTimeout = CONNECTION_TIMEOUT;
         private int readTimeout = CONNECTION_TIMEOUT;
         private int minTimeBetweenRequests = MIN_TIME_BETWEEN_REQUESTS;
+        private URL jkuFallbackUrl;
 
         private Builder() {
         }
@@ -527,6 +548,41 @@ public class JwtValidator implements TokenValidator {
          */
         public Builder setAllowedJkuValues(String... allowedJkuValues) {
             this.allowedJkuValues.addAll(asList(allowedJkuValues));
+            return this;
+        }
+
+        /**
+         * <p>Configures a fallback JWK Set URL used to resolve the public key of a JWT
+         * that carries a <code>kid</code> header but no <code>jku</code> header.
+         *
+         * <p>Many OIDC providers (for example Auth0, Microsoft EntraID, Okta) issue
+         * tokens that include <code>kid</code> but never <code>jku</code>. With this
+         * option configured, the validator treats such tokens as if the JWT's
+         * <code>jku</code> header had been the configured URL, reusing the same JWK
+         * caching and rotation logic that applies to in-token <code>jku</code> values.
+         *
+         * <p>The configured URL must also be listed in {@link #setAllowedJkuValues(String...)};
+         * this preserves the guard that applies to the in-token <code>jku</code> path.
+         *
+         * <p>When both {@link #publicKeys(Map)} and this fallback are configured, the
+         * named keys take precedence: the fallback is consulted only when the token's
+         * <code>kid</code> is not present in the configured named keys map.
+         *
+         * @param jkuFallbackUrl the JWK Set URL used as fallback for <code>kid</code>-only tokens
+         * @return this instance
+         * @throws IllegalArgumentException if the given value is not a valid URL
+         */
+        public Builder setJkuFallbackUrl(String jkuFallbackUrl) {
+            checkNotNullParam("jkuFallbackUrl", jkuFallbackUrl);
+            try {
+                URI uri = new URI(jkuFallbackUrl);
+                if (!"https".equalsIgnoreCase(uri.getScheme())) {
+                    throw new IllegalArgumentException("jku fallback URL must use HTTPS, got: " + uri.getScheme());
+                }
+                this.jkuFallbackUrl = uri.toURL();
+            } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid jku fallback URL: " + jkuFallbackUrl, e);
+            }
             return this;
         }
 
