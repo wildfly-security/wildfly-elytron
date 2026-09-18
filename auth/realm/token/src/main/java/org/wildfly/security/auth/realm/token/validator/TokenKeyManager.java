@@ -37,7 +37,7 @@ class TokenKeyManager {
     private final URL publicKeyUrl;
     private final JwksCache jwksCache;
 
-    /** Backs {@link #publicKeyUrl}. A separate instance from {@link #jwksCache}: 
+    /** Backs {@link #publicKeyUrl}. A separate instance from {@link #jwksCache}:
      * different content format (single PEM key, not a JWKS document). */
     private final JwksCache publicKeyUrlCache;
 
