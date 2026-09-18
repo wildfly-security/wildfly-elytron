@@ -30,7 +30,7 @@ import org.wildfly.security.jose.jwks.JwksFetcher;
  */
 class JdkJwksFetcher implements JwksFetcher {
 
-    static final long DEFAULT_MAX_RESPONSE_SIZE_BYTES = 262_144; 
+    static final long DEFAULT_MAX_RESPONSE_SIZE_BYTES = 262_144;
 
     private final SSLContext sslContext;
     private final HostnameVerifier hostnameVerifier;

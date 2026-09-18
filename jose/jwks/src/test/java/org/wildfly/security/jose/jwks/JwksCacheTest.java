@@ -22,6 +22,8 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -721,6 +723,183 @@ public class JwksCacheTest {
         PublicKey key = cache.getPublicKey("kid-1", url1);
         assertNotNull(key);
         assertEquals(1, fetchCount.get());
+    }
+
+    // ------------------------------------------------------------------ //
+    //  forceRefresh                                                      //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    public void testForceRefreshBypassesValidTtl() throws Exception {
+        AtomicInteger fetchCount = new AtomicInteger();
+        byte[] response1 = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair1, "sig"));
+        byte[] response2 = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair2, "sig"));
+        AtomicReference<byte[]> response = new AtomicReference<>(response1);
+        JwksFetcher fetcher = url -> {
+            fetchCount.incrementAndGet();
+            return response.get();
+        };
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
+
+        assertNotNull(cache.getPublicKey("kid-1", url1));
+        assertEquals(1, fetchCount.get());
+
+        // TTL is still valid (5000ms), but forceRefresh=true should fetch anyway
+        response.set(response2);
+        assertNotNull(cache.getPublicKey("kid-1", url1, true));
+        assertEquals(2, fetchCount.get());
+    }
+
+    @Test
+    public void testForceRefreshStillRespectsRateLimit() throws Exception {
+        AtomicInteger fetchCount = new AtomicInteger();
+        byte[] response = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair1, "sig"));
+        JwksFetcher fetcher = url -> {
+            fetchCount.incrementAndGet();
+            return response;
+        };
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 10_000));
+
+        assertNotNull(cache.getPublicKey("kid-1", url1));
+        assertEquals(1, fetchCount.get());
+
+        PublicKey stale = cache.getPublicKey("kid-1", url1, true);
+        assertNotNull(stale);
+        assertEquals(1, fetchCount.get());
+    }
+
+    @Test
+    public void testForceRefreshOnColdCacheFetchesImmediately() throws Exception {
+        AtomicInteger fetchCount = new AtomicInteger();
+        byte[] response = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair1, "sig"));
+        JwksFetcher fetcher = url -> {
+            fetchCount.incrementAndGet();
+            return response;
+        };
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 10_000));
+
+        assertNotNull(cache.getPublicKey("kid-1", url1, true));
+        assertEquals(1, fetchCount.get());
+    }
+
+    @Test
+    public void testGetAnyKeyForceRefreshBypassesValidTtl() throws Exception {
+        AtomicInteger fetchCount = new AtomicInteger();
+        byte[] response1 = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair1, "sig"));
+        byte[] response2 = jwksBytes(rsaJwkJson("kid-2", rsaKeyPair2, "sig"));
+        AtomicReference<byte[]> response = new AtomicReference<>(response1);
+        JwksFetcher fetcher = url -> {
+            fetchCount.incrementAndGet();
+            return response.get();
+        };
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 0));
+
+        assertNotNull(cache.getAnyKey(url1));
+        assertEquals(1, fetchCount.get());
+
+        response.set(response2);
+        assertNotNull(cache.getAnyKey(url1, true));
+        assertEquals(2, fetchCount.get());
+    }
+
+    @Test
+    public void testGetAnyKeyForceRefreshStillRespectsRateLimit() throws Exception {
+        AtomicInteger fetchCount = new AtomicInteger();
+        byte[] response = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair1, "sig"));
+        JwksFetcher fetcher = url -> {
+            fetchCount.incrementAndGet();
+            return response;
+        };
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 10_000));
+
+        assertNotNull(cache.getAnyKey(url1));
+        assertEquals(1, fetchCount.get());
+
+        assertNotNull(cache.getAnyKey(url1, true));
+        assertEquals(1, fetchCount.get());
+    }
+
+    @Test
+    public void testTwoArgOverloadsAreEquivalentToForceRefreshFalse() throws Exception {
+        AtomicInteger fetchCount = new AtomicInteger();
+        byte[] response = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair1, "sig"));
+        JwksFetcher fetcher = url -> {
+            fetchCount.incrementAndGet();
+            return response;
+        };
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 10_000));
+
+        assertNotNull(cache.getPublicKey("kid-1", url1));
+        assertNotNull(cache.getPublicKey("kid-1", url1, false));
+        assertNotNull(cache.getAnyKey(url1));
+        assertNotNull(cache.getAnyKey(url1, false));
+        assertEquals(1, fetchCount.get());
+    }
+
+    // ------------------------------------------------------------------ //
+    //  Pluggable JwksKeySetParser                                        //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    public void testCustomKeySetParserIsUsed() throws Exception {
+        AtomicInteger fetchCount = new AtomicInteger();
+        JwksFetcher fetcher = url -> {
+            fetchCount.incrementAndGet();
+            return "irrelevant, the custom parser ignores this".getBytes(StandardCharsets.UTF_8);
+        };
+        JwksKeySetParser customParser = rawBytes -> {
+            Map<String, PublicKey> result = new LinkedHashMap<>();
+            result.put("only", rsaKeyPair1.getPublic());
+            return result;
+        };
+        JwksCache cache = new JwksCache(JwksConfig.builder()
+                .fetcher(fetcher)
+                .keySetParser(customParser)
+                .cacheTtlMs(5000)
+                .minTimeBetweenRequestsMs(0)
+                .build());
+
+        PublicKey key = cache.getAnyKey(url1);
+        assertNotNull(key);
+        assertEquals(rsaKeyPair1.getPublic(), key);
+        assertEquals(1, fetchCount.get());
+    }
+
+    @Test
+    public void testCustomKeySetParserExceptionTreatedAsFetchFailure() throws Exception {
+        AtomicInteger fetchCount = new AtomicInteger();
+        byte[] validResponse = jwksBytes(rsaJwkJson("kid-1", rsaKeyPair1, "sig"));
+        AtomicBoolean parserShouldFail = new AtomicBoolean(false);
+        JwksFetcher fetcher = url -> {
+            fetchCount.incrementAndGet();
+            return validResponse;
+        };
+        JwksKeySetParser flakyParser = rawBytes -> {
+            if (parserShouldFail.get()) {
+                throw new JwksException("simulated malformed content");
+            }
+            Map<String, PublicKey> result = new LinkedHashMap<>();
+            result.put("kid-1", rsaKeyPair1.getPublic());
+            return result;
+        };
+        JwksCache cache = new JwksCache(JwksConfig.builder()
+                .fetcher(fetcher)
+                .keySetParser(flakyParser)
+                .cacheTtlMs(100)
+                .minTimeBetweenRequestsMs(0)
+                .preserveStaleOnFailure(true)
+                .build());
+
+        PublicKey first = cache.getPublicKey("kid-1", url1);
+        assertNotNull(first);
+        assertEquals(1, fetchCount.get());
+
+        Thread.sleep(150);
+        parserShouldFail.set(true);
+
+        PublicKey afterParseFailure = cache.getPublicKey("kid-1", url1);
+        assertNotNull(afterParseFailure);
+        assertEquals(2, fetchCount.get());
     }
 
     // ------------------------------------------------------------------ //

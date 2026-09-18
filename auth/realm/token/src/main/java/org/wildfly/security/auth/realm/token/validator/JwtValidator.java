@@ -554,7 +554,7 @@ public class JwtValidator implements TokenValidator {
          * <p>Controls whether, after a failed signature verification against a URL-backed key source
          * (the in-token <code>jku</code>, {@link #setJkuFallbackUrl(String)}, or
          * {@link #setPublicKeyUrl(String)}), the validator attempts one forced-refresh retry.
-         * 
+         *
          * <p> The refresh bypass the source's cache freshness check, but still subject to its rate limiter
          * ({@link #setJkuMinTimeBetweenRequests(int)}).
          *
