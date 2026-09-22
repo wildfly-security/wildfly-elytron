@@ -174,6 +174,28 @@ public class JWKEncPublicKeyLocatorTest {
     }
 
     // ------------------------------------------------------------------ //
+    //  Malformed jwksUrl                                                 //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    public void testMalformedJwksUrlReturnsNullFromGetPublicKey() throws Exception {
+        OidcClientConfiguration config = createConfig(300, 0);
+        config.jwksUrl = "not a url";
+
+        PublicKey result = locator.getPublicKey("kid-enc", config);
+        assertNull(result);
+    }
+
+    @Test
+    public void testMalformedJwksUrlDoesNotThrowFromReset() throws Exception {
+        OidcClientConfiguration config = createConfig(300, 0);
+        config.jwksUrl = "not a url";
+
+        // must not throw
+        locator.reset(config);
+    }
+
+    // ------------------------------------------------------------------ //
     //  Test infrastructure                                                //
     // ------------------------------------------------------------------ //
 

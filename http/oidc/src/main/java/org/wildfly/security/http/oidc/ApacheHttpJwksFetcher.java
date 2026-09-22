@@ -5,11 +5,14 @@
 
 package org.wildfly.security.http.oidc;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -30,14 +33,20 @@ class ApacheHttpJwksFetcher implements JwksFetcher {
 
     private final HttpClient httpClient;
     private final Map<String, String> defaultHeaders;
+    private final long maxResponseSizeBytes;
 
     ApacheHttpJwksFetcher(HttpClient httpClient) {
         this(httpClient, Collections.emptyMap());
     }
 
     ApacheHttpJwksFetcher(HttpClient httpClient, Map<String, String> defaultHeaders) {
+        this(httpClient, defaultHeaders, DEFAULT_MAX_RESPONSE_SIZE_BYTES);
+    }
+
+    ApacheHttpJwksFetcher(HttpClient httpClient, Map<String, String> defaultHeaders, long maxResponseSizeBytes) {
         this.httpClient = httpClient;
         this.defaultHeaders = defaultHeaders;
+        this.maxResponseSizeBytes = maxResponseSizeBytes;
     }
 
     @Override
@@ -51,14 +60,32 @@ class ApacheHttpJwksFetcher implements JwksFetcher {
                 EntityUtils.consumeQuietly(response.getEntity());
                 throw new JwksException("JWKS endpoint returned HTTP " + status + " for " + url);
             }
-            if (response.getEntity() == null) {
+            HttpEntity entity = response.getEntity();
+            if (entity == null) {
                 throw new JwksException("Empty response body from JWKS endpoint " + url);
             }
-            return EntityUtils.toByteArray(response.getEntity());
+            return readBounded(entity, url, maxResponseSizeBytes);
         } catch (IOException e) {
             throw new JwksException("Failed to fetch JWKS from " + url, e);
         } finally {
             request.releaseConnection();
         }
+    }
+
+    private static byte[] readBounded(HttpEntity entity, URL url, long maxResponseSizeBytes) throws IOException, JwksException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] chunk = new byte[4096];
+        long total = 0;
+        try (InputStream in = entity.getContent()) {
+            int bytesRead;
+            while ((bytesRead = in.read(chunk)) != -1) {
+                total += bytesRead;
+                if (total > maxResponseSizeBytes) {
+                    throw new JwksException("Response from " + url + " exceeded the maximum allowed size of " + maxResponseSizeBytes + " bytes");
+                }
+                buffer.write(chunk, 0, bytesRead);
+            }
+        }
+        return buffer.toByteArray();
     }
 }

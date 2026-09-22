@@ -416,6 +416,24 @@ public class JwksCacheTest {
         assertEquals(2, fetchCount.get());
     }
 
+    @Test
+    public void testMalformedIndividualKeyTreatedAsFetchFailureNotUncaughtException() throws Exception {
+        AtomicInteger fetchCount = new AtomicInteger();
+        // structurally valid JSON, but the one key in the document is missing "n".
+        byte[] response = jwksBytes(rsaJwkJsonMissingModulus("kid-1", rsaKeyPair1, "sig"));
+        JwksFetcher fetcher = url -> {
+            fetchCount.incrementAndGet();
+            return response;
+        };
+        JwksCache cache = new JwksCache(sigConfig(fetcher, 5000, 200));
+
+        // must return null (fetch treated as failed), not throw
+        assertNull(cache.getPublicKey("kid-1", url1));
+        assertEquals(1, fetchCount.get());
+        assertNull(cache.getPublicKey("kid-1", url1));
+        assertEquals(1, fetchCount.get());
+    }
+
     // ------------------------------------------------------------------ //
     //  reset()                                                            //
     // ------------------------------------------------------------------ //
@@ -937,6 +955,17 @@ public class JwksCacheTest {
                 "\"kty\":\"RSA\"," +
                 "\"use\":\"" + use + "\"," +
                 "\"n\":\"" + base64urlUInt(pub.getModulus()) + "\"," +
+                "\"e\":\"" + base64urlUInt(pub.getPublicExponent()) + "\"" +
+                "}";
+    }
+
+    // structurally valid JSON, but missing the required "n" (modulus) claim.
+    private static String rsaJwkJsonMissingModulus(String kid, KeyPair keyPair, String use) {
+        RSAPublicKey pub = (RSAPublicKey) keyPair.getPublic();
+        return "{" +
+                "\"kty\":\"RSA\"," +
+                "\"kid\":\"" + kid + "\"," +
+                "\"use\":\"" + use + "\"," +
                 "\"e\":\"" + base64urlUInt(pub.getPublicExponent()) + "\"" +
                 "}";
     }

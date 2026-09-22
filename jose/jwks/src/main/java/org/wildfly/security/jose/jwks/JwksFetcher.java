@@ -16,6 +16,11 @@ import java.net.URL;
 public interface JwksFetcher {
 
     /**
+     * Default cap on the size of a fetched response body.
+     */
+    long DEFAULT_MAX_RESPONSE_SIZE_BYTES = 262_144; // 256 KB
+
+    /**
      * Fetch the JWKS document from the given URL.
      *
      * @param url the JWKS endpoint URL

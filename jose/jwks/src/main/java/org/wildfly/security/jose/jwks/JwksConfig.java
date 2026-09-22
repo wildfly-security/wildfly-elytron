@@ -41,8 +41,12 @@ public final class JwksConfig {
 
     private static JwksKeySetParser defaultKeySetParser(Predicate<JWK> keyFilter) {
         return rawBytes -> {
-            JsonWebKeySet jwks = JsonSerialization.readValue(rawBytes, JsonWebKeySet.class);
-            return JsonWebKeySetUtil.getKeys(jwks, keyFilter);
+            try {
+                JsonWebKeySet jwks = JsonSerialization.readValue(rawBytes, JsonWebKeySet.class);
+                return JsonWebKeySetUtil.getKeys(jwks, keyFilter);
+            } catch (RuntimeException e) {
+                throw new JwksException("Malformed JWKS content", e);
+            }
         };
     }
 

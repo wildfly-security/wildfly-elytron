@@ -18,6 +18,7 @@
 
 package org.wildfly.security.http.oidc;
 
+import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.wildfly.security.jose.jwk.JsonWebKeySetUtil.FOR_ENCRYPTION;
 
 import java.net.MalformedURLException;
@@ -86,7 +87,8 @@ class JWKEncPublicKeyLocator implements PublicKeyLocator {
         try {
             return new URL(jwksUrlString);
         } catch (MalformedURLException e) {
-            throw new RuntimeException("Invalid JWKS URL: " + jwksUrlString, e);
+            log.invalidJwksUrl(jwksUrlString);
+            return null;
         }
     }
 }
