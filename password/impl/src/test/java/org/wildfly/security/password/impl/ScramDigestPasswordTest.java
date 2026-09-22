@@ -130,6 +130,10 @@ public class ScramDigestPasswordTest {
 
         normalized = ScramDigestPasswordImpl.getNormalizedPasswordBytes("a\u0041\u030Ab".toCharArray());
         Assert.assertArrayEquals("a\u00C5b".getBytes(StandardCharsets.UTF_8), normalized);
+
+        // NFC normalization preserves fullwidth characters instead of folding them to their ASCII equivalents as NFKC does.
+        normalized = ScramDigestPasswordImpl.getNormalizedPasswordBytes("\uFF21\uFF22\uFF11".toCharArray());
+        Assert.assertArrayEquals("\uFF21\uFF22\uFF11".getBytes(StandardCharsets.UTF_8), normalized);
     }
 
     @Test
