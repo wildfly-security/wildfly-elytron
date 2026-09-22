@@ -85,7 +85,7 @@
         <sonatype.server.id>central</sonatype.server.id>
         <autoPublish>false</autoPublish>
 
-        <version.com.fasterxml.jackson>2.17.3</version.com.fasterxml.jackson>
+        <version.com.fasterxml.jackson>2.18.10</version.com.fasterxml.jackson>
         <version.com.fasterxml.jackson.databind>${version.com.fasterxml.jackson}</version.com.fasterxml.jackson.databind>
         <version.commons-cli>1.6.0</version.commons-cli>
         <version.jakarta.enterprise>4.0.1</version.jakarta.enterprise>
