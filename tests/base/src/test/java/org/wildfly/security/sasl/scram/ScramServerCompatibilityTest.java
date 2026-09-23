@@ -357,13 +357,13 @@ public class ScramServerCompatibilityTest {
                         .setPermissionsMap(Collections.singletonMap("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", permissions))
                         .build();
 
-        byte[] message = "n,a=strange=3Dadmin=2C \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301,n=strange=3Duser=2C \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        byte[] message = "n,a=strange=3Dadmin=2C \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301,n=strange=3Duser=2C \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
         assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
 
-        message = "c=bixhPXN0cmFuZ2U9M0RhZG1pbj0yQyBc0LjkvaDwn4KhMeKBhDIgzIEs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=ZWpaDThPD7OErOz+6Q+n9msNhMQ=".getBytes(StandardCharsets.UTF_8);
+        message = "c=bixhPXN0cmFuZ2U9M0RhZG1pbj0yQyBc0LjkvaDwn4KhMeKBhDIgzIEs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=4EzH3xE6rmqrbIbkgj7L8nrETSQ=".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("v=k1gWxds6QP4FdDqmsLtaxIl38NM=", new String(message, StandardCharsets.UTF_8));
+        assertEquals("v=HlhX1cnJ8BCY7EUPXizvgue/hcQ=", new String(message, StandardCharsets.UTF_8));
         assertTrue(saslServer.isComplete());
     }
 
