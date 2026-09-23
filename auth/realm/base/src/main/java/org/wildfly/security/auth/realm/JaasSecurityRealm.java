@@ -168,8 +168,14 @@ public class JaasSecurityRealm implements SecurityRealm {
             return principal;
         }
 
+        @Override
         public Subject getSubject() {
             return subject;
+        }
+
+        @Override
+        public void setSubject(Subject subject) {
+            this.subject = subject;
         }
 
         @Override

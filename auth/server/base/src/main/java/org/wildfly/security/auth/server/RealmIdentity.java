@@ -24,6 +24,8 @@ import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.function.Function;
 
+import javax.security.auth.Subject;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
@@ -54,6 +56,12 @@ public interface RealmIdentity {
      * @return the principal for this realm identity (may not be {@code null})
      */
     Principal getRealmIdentityPrincipal();
+
+    default Subject getSubject() {
+        return null;
+    }
+
+    default void setSubject(Subject subject) {}
 
     /**
      * @deprecated Transition method; remove before GA.

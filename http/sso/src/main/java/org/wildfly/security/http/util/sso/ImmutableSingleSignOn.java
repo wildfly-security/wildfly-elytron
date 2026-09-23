@@ -19,6 +19,7 @@ package org.wildfly.security.http.util.sso;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.Set;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
 
@@ -57,6 +58,12 @@ public interface ImmutableSingleSignOn {
      * @return a security identity, or null if this entry was created by another node.
      */
     SecurityIdentity getIdentity();
+
+    /**
+     * Returns the roles of the principal associated with this single sign-on entry.
+     * @return principal roles
+     */
+    Set<String> getRoles();
 
     /**
      * Returns the participants associated with this single sign-on entry.
