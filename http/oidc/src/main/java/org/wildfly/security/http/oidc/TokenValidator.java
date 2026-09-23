@@ -117,9 +117,8 @@ public class TokenValidator {
                 throw log.invalidTokenClaims();
             }
         } catch (InvalidJwtException e) {
-            String msg = e.getErrorDetails().get(0).getErrorMessage();
-            log.tracef(msg, e);
-            throw new OidcException(msg, e);
+            log.tracef(e, "Problem parsing logout token");
+            throw log.invalidLogoutToken(e);
         }
 
         return jwtClaims;
