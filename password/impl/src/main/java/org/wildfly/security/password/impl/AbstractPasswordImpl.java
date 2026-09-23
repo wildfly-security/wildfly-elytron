@@ -57,7 +57,9 @@ abstract class AbstractPasswordImpl implements Password {
     }
 
     static byte[] getNormalizedPasswordBytes(final char[] characters, Charset charset) {
-        return Normalizer.normalize(new String(characters), Normalizer.Form.NFKC).getBytes(charset);
+        // Use Unicode Normalization Form C (NFC), which performs canonical composition without the compatibility folding
+        // applied by Normalization Form KC (NFKC), preserving distinctions such as fullwidth password characters.
+        return Normalizer.normalize(new String(characters), Normalizer.Form.NFC).getBytes(charset);
     }
 
     @Override
