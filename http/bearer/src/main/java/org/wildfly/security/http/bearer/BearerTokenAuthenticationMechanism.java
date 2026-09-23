@@ -65,7 +65,18 @@ import org.wildfly.security.mechanism.AuthenticationMechanismException;
  */
 final class BearerTokenAuthenticationMechanism implements HttpServerAuthenticationMechanism {
 
-    private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer *([^ ]+) *$", Pattern.CASE_INSENSITIVE);
+    // Matches the RFC-6750 Section 2.1 b64token grammar:
+    //   b64token = 1*( ALPHA / DIGIT / "-" / "." / "_" / "~" / "+" / "/" ) *"=" *1"#"
+    //
+    // [A-Za-z0-9\-._~+/]+  one or more base token characters
+    // ={0,2}                zero, one, or two trailing '=' Base64 padding (not in the base class so '=' cannot appear mid-token)
+    // #?                    optional trailing '#'
+    private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer *([A-Za-z0-9\\-._~+/]+={0,2}#?) *$", Pattern.CASE_INSENSITIVE);
+
+    static String extractBearerToken(String authorizationHeader) {
+        Matcher matcher = BEARER_TOKEN_PATTERN.matcher(authorizationHeader);
+        return matcher.matches() ? matcher.group(1) : null;
+    }
 
     private final CallbackHandler callbackHandler;
 
@@ -83,10 +94,10 @@ final class BearerTokenAuthenticationMechanism implements HttpServerAuthenticati
         List<String> authorizationValues = request.getRequestHeaderValues(HttpConstants.AUTHORIZATION);
 
         if (authorizationValues != null) {
-            Matcher matcher;
             for (String current : authorizationValues) {
-                if ((matcher = BEARER_TOKEN_PATTERN.matcher(current)).matches()) {
-                    BearerTokenEvidence tokenEvidence = new BearerTokenEvidence(matcher.group(1));
+                String bearerToken = extractBearerToken(current);
+                if (bearerToken != null) {
+                    BearerTokenEvidence tokenEvidence = new BearerTokenEvidence(bearerToken);
                     EvidenceVerifyCallback verifyCallback = new EvidenceVerifyCallback(tokenEvidence);
 
                     handleCallback(verifyCallback);
