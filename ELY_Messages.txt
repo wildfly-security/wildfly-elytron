@@ -127,7 +127,7 @@
 25000 - 25999    wildfly-elytron-jose-jws
 26000 - 26999    wildfly-elytron-jose-util
 27000 - 27999    wildfly-elytron-dynamic-ssl
-28000 - 28999
+28000 - 28999    wildfly-elytron-asn1
 29000 - 29999
 30000 - 30999
 # Reserved For master / Elytron 2

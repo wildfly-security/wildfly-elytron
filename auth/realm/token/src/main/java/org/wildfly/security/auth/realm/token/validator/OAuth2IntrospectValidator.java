@@ -41,6 +41,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -177,37 +178,35 @@ public class OAuth2IntrospectValidator implements TokenValidator {
 
         boolean isHttps = url.getProtocol().equalsIgnoreCase("https");
 
-        try {
-            log.debugf("Opening connection to token introspection endpoint [%s]", url);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        log.debugf("Opening connection to token introspection endpoint [%s]", url);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-            if (isHttps) {
-                HttpsURLConnection https = (HttpsURLConnection) connection;
+        if (isHttps) {
+            HttpsURLConnection https = (HttpsURLConnection) connection;
 
-                https.setSSLSocketFactory(sslContext.getSocketFactory());
+            https.setSSLSocketFactory(sslContext.getSocketFactory());
 
-                if (hostnameVerifier != null) {
-                    https.setHostnameVerifier(hostnameVerifier);
-                }
+            if (hostnameVerifier != null) {
+                https.setHostnameVerifier(hostnameVerifier);
             }
-            connection.setConnectTimeout(connectionTimeout);
-            connection.setReadTimeout(readTimeout);
-
-            return connection;
-        } catch (IOException cause) {
-            throw cause;
         }
+        connection.setConnectTimeout(connectionTimeout);
+        connection.setReadTimeout(readTimeout);
+
+        return connection;
     }
 
-    private byte[] buildParameters(Map<String, String> parameters) throws UnsupportedEncodingException {
+    static byte[] buildParameters(Map<String, String> parameters) throws UnsupportedEncodingException {
         ByteStringBuilder params = new ByteStringBuilder();
 
-        parameters.entrySet().stream().forEach(entry -> {
+        for (Map.Entry<String, String> entry : parameters.entrySet()) {
             if (params.length() > 0) {
                 params.append('&');
             }
-            params.append(entry.getKey()).append('=').append(entry.getValue());
-        });
+            params.append(URLEncoder.encode(entry.getKey(), "UTF-8"))
+                    .append('=')
+                    .append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+        }
 
         return params.toArray();
     }
