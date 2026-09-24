@@ -6,6 +6,7 @@ package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.Oidc.LOGOUT_EVENTS_CLAIM_MEMBER_NAME;
 
+import org.jose4j.jwt.consumer.InvalidJwtException;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
@@ -60,6 +61,12 @@ public class TypBackChannelLogoutClaimValidationTest extends TypClaimValidationB
             .build();
     }
 
+    private static void assertInvalidLogoutToken(OidcException exception, String expectedValidationMessage) {
+        assertTrue(exception.getMessage().contains("Invalid logout token"));
+        assertTrue(exception.getCause() instanceof InvalidJwtException);
+        assertTrue(exception.getCause().getMessage().contains(expectedValidationMessage));
+    }
+
     @Test
     public void allClaimsValidationTest() throws Exception {
         try {
@@ -75,8 +82,9 @@ public class TypBackChannelLogoutClaimValidationTest extends TypClaimValidationB
             // override default value
             claimsBuilder.add("aud", "");
             testBackChannelLogoutClaim(claimsBuilder, MYACCOUNT);
+            fail("Expected an invalid logout token exception");
         } catch (OidcException e) {
-            assertTrue(e.getMessage().contains("No matching value found"));
+            assertInvalidLogoutToken(e, "No matching value found");
         }
     }
 
@@ -85,8 +93,9 @@ public class TypBackChannelLogoutClaimValidationTest extends TypClaimValidationB
         try {
             claimsBuilder.remove("iat");
             testBackChannelLogoutClaim(claimsBuilder, MYACCOUNT);
+            fail("Expected an invalid logout token exception");
         } catch (OidcException e) {
-            assertTrue(e.getMessage().contains("Required logout claim, iat, is missing"));
+            assertInvalidLogoutToken(e, "Required logout claim, iat, is missing");
         }
     }
 
@@ -96,8 +105,9 @@ public class TypBackChannelLogoutClaimValidationTest extends TypClaimValidationB
             // override default value
             claimsBuilder.add("iat", "bad-value");
             testBackChannelLogoutClaim(claimsBuilder, MYACCOUNT);
+            fail("Expected an invalid logout token exception");
         } catch (OidcException e) {
-            assertTrue(e.getMessage().contains("The value of the 'iat' claim is not the expected type"));
+            assertInvalidLogoutToken(e, "The value of the 'iat' claim is not the expected type");
         }
     }
 
@@ -107,8 +117,9 @@ public class TypBackChannelLogoutClaimValidationTest extends TypClaimValidationB
             // override default value
             claimsBuilder.add("iat", (System.currentTimeMillis()));
             testBackChannelLogoutClaim(claimsBuilder, MYACCOUNT);
+            fail("Expected an invalid logout token exception");
         } catch (OidcException e) {
-            assertTrue(e.getMessage().contains("claim value cannot be before"));
+            assertInvalidLogoutToken(e, "claim value cannot be before");
         }
     }
 
@@ -117,8 +128,9 @@ public class TypBackChannelLogoutClaimValidationTest extends TypClaimValidationB
         try {
             claimsBuilder.remove("events");
             testBackChannelLogoutClaim(claimsBuilder, MYACCOUNT);
+            fail("Expected an invalid logout token exception");
         } catch (OidcException e) {
-            assertTrue(e.getMessage().contains("Required logout claim, events, is missing"));
+            assertInvalidLogoutToken(e, "Required logout claim, events, is missing");
         }
     }
 
@@ -132,8 +144,9 @@ public class TypBackChannelLogoutClaimValidationTest extends TypClaimValidationB
             // override default value
             claimsBuilder.add("events", eventPayload);
             testBackChannelLogoutClaim(claimsBuilder, MYACCOUNT);
+            fail("Expected an invalid logout token exception");
         } catch (OidcException e) {
-            assertTrue(e.getMessage().contains("Events claim does not contain the required member name"));
+            assertInvalidLogoutToken(e, "Events claim does not contain the required member name");
         }
     }
 
@@ -147,4 +160,3 @@ public class TypBackChannelLogoutClaimValidationTest extends TypClaimValidationB
         }
     }
 }
-
