@@ -40,7 +40,7 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 @MessageLogger(projectCode = "ELY", length = 5)
 @ValidIdRanges({
     @ValidIdRange(min = 1104, max = 1180),
-    @ValidIdRange(min = 1181, max = 1185)
+    @ValidIdRange(min = 1181, max = 1190)
 })
 public interface ElytronMessages extends BasicLogger {
 
@@ -93,5 +93,17 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage(level = TRACE)
     @Message(id = 1183, value = "Signature verification failed; retrying with a forced key refresh.")
     void retryingVerificationWithForcedKeyRefresh();
+
+    @Message(id = 1184, value = "Error creating encodeDER. [%s]")
+    IllegalArgumentException errorCreatingEncodeDER(String msg);
+
+    @Message(id = 1185, value = "Signature class does not support signature algorithm [%s]")
+    IllegalArgumentException unknownSignatureAlgorithm(String algorithm);
+
+    @Message(id = 1186, value = "Invalid publicKey used in validation. [%s]")
+    IllegalArgumentException invalidPublicKeyUsedInValidation(String msg);
+
+    @Message(id = 1187, value = "Unable to validate signature. [%s]")
+    IllegalArgumentException unableToValidateSignature(String msg);
 }
 
