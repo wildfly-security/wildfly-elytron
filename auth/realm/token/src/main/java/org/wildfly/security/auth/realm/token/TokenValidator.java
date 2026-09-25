@@ -43,4 +43,18 @@ public interface TokenValidator {
     Attributes validate(BearerTokenEvidence evidence) throws RealmUnavailableException;
 
     Attributes validate(Evidence evidence) throws RealmUnavailableException;
+
+    /**
+     * <p>Whether this validator can attempt verification of evidence of the given type. Used by
+     * {@link TokenSecurityRealm} to report an accurate
+     * {@link org.wildfly.security.auth.SupportLevel} without attempting verification, so that a
+     * realm does not advertise support for an evidence type its configured validator cannot
+     * actually verify.
+     *
+     * @param evidenceType the evidence type to check
+     * @return {@code true} if this validator supports the given evidence type
+     */
+    default boolean supportsEvidence(Class<? extends Evidence> evidenceType) {
+        return BearerTokenEvidence.class.equals(evidenceType);
+    }
 }

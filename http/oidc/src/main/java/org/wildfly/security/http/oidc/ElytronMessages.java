@@ -211,10 +211,6 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 23049, value = "Invalid 'auth-server-url' or 'provider-url': '%s'")
     void invalidAuthServerUrlOrProviderUrl(String url);
 
-    @LogMessage(level = WARN)
-    @Message(id = 23089, value = "Invalid JWKS URL: '%s'")
-    void invalidJwksUrl(String url);
-
     @Message(id = 23050, value = "Invalid bearer token")
     OidcException invalidBearerToken(@Cause Throwable cause);
 
@@ -336,5 +332,9 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 23088, value = "Required logout claim, %s, is missing")
     String requiredLogoutClaimIsMissing(String e);
+
+    @LogMessage(level = WARN)
+    @Message(id = 23090, value = "Invalid JWKS URL: '%s'")
+    void invalidJwksUrl(String url);
 }
 

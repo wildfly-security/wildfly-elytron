@@ -58,6 +58,7 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.evidence.CommonTokenEvidence;
+import org.wildfly.security.evidence.EllipticCurveTokenEvidence;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.pem.PemEntry;
@@ -121,14 +122,11 @@ public class JwtValidator implements TokenValidator {
      */
     public Attributes validate(Evidence evidence) throws RealmUnavailableException {
         checkNotNullParam("evidence", evidence);
-        String jwt = null;
-        if (evidence instanceof CommonTokenEvidence) {
-            jwt = ((CommonTokenEvidence) evidence).getToken();
-        }
-
-        if (jwt == null) {
+        if (!(evidence instanceof CommonTokenEvidence)) {
             return null;
         }
+        CommonTokenEvidence tokenEvidence = (CommonTokenEvidence) evidence;
+        String jwt = tokenEvidence.getToken();
 
         String[] parts = jwt.split("\\.", -1);
 
@@ -137,7 +135,6 @@ public class JwtValidator implements TokenValidator {
         }
 
         JsonObject claims = extractClaims(parts[1]);
-        CommonTokenEvidence tokenEvidence = (CommonTokenEvidence) evidence;
 
         if (verifySignature(parts, tokenEvidence, false)
                 && hasValidIssuer(claims)
@@ -160,6 +157,11 @@ public class JwtValidator implements TokenValidator {
         }
 
         return null;
+    }
+
+    @Override
+    public boolean supportsEvidence(Class<? extends Evidence> evidenceType) {
+        return BearerTokenEvidence.class.equals(evidenceType) || EllipticCurveTokenEvidence.class.equals(evidenceType);
     }
 
     private boolean verifyTimeConstraints(JsonObject claims) {
@@ -317,19 +319,40 @@ public class JwtValidator implements TokenValidator {
 
         // Total length = (Type + Len + rContent) + (Type + Len + sContent)
         int totalLength = (2 + rDer.length) + (2 + sDer.length);
-        baos.write(totalLength);
+        writeDerLength(baos, totalLength);
 
         // Write r as an Integer (0x02)
         baos.write(0x02);
-        baos.write(rDer.length);
+        writeDerLength(baos, rDer.length);
         baos.write(rDer);
 
         // Write s as an Integer (0x02)
         baos.write(0x02);
-        baos.write(sDer.length);
+        writeDerLength(baos, sDer.length);
         baos.write(sDer);
 
         return baos.toByteArray();
+    }
+
+    /**
+     * Writes a DER/BER length octet (or octets) per X.690: short form (a single byte,
+     * high bit clear) for lengths 0-127, long form (a lead byte announcing how many
+     * big-endian length bytes follow) for lengths >= 128. P-521/ES512 signature
+     * components make the enclosing SEQUENCE's content length exceed 127, which the
+     * short-form-only encoding previously used here could not represent.
+     */
+    private void writeDerLength(ByteArrayOutputStream baos, int length) {
+        if (length < 0x80) {
+            baos.write(length);
+            return;
+        }
+        byte[] lengthBytes = BigInteger.valueOf(length).toByteArray();
+        if (lengthBytes.length > 1 && lengthBytes[0] == 0) {
+            // strip the BigInteger sign-guard byte; DER length octets are unsigned
+            lengthBytes = Arrays.copyOfRange(lengthBytes, 1, lengthBytes.length);
+        }
+        baos.write(0x80 | lengthBytes.length);
+        baos.write(lengthBytes, 0, lengthBytes.length);
     }
 
     private boolean hasValidAudience(JsonObject claims) throws RealmUnavailableException {

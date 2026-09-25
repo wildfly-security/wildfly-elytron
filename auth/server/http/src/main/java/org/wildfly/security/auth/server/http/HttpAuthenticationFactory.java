@@ -131,7 +131,7 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
             case HttpConstants.DIGEST_SHA512_256_NAME:
             case HttpConstants.ECDSA_SHA256:
             case HttpConstants.ECDSA_SHA384:
-            case HttpConstants.ECDSA_SHA521:
+            case HttpConstants.ECDSA_SHA512:
             case HttpConstants.EXTERNAL_NAME:
             case HttpConstants.FORM_NAME:
             case HttpConstants.SPNEGO_NAME:

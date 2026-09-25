@@ -190,7 +190,7 @@ public class HttpConstants {
     public static final String EC_TOKEN = "EC_TOKEN";
     public static final String ECDSA_SHA256 = "ecdsa-sha256";
     public static final String ECDSA_SHA384 = "ecdsa-sha384";
-    public static final String ECDSA_SHA521 = "ecdsa-sha521";
+    public static final String ECDSA_SHA512 = "ecdsa-sha512";
 
     /*
      * Response Codes
