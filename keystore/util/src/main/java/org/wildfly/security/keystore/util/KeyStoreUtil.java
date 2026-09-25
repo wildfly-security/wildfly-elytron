@@ -16,9 +16,9 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.keystore;
+package org.wildfly.security.keystore.util;
 
-import static org.wildfly.security.keystore.ElytronMessages.log;
+import static org.wildfly.security.keystore.util.ElytronMessages.log;
 import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
 
 import java.io.ByteArrayOutputStream;
@@ -46,12 +46,7 @@ import org.wildfly.security.pem.PemEntry;
  * Utility functions for manipulating KeyStores.
  *
  * @author <a href="mailto:mmazanek@redhat.com">Martin Mazanek</a>
- * @deprecated Use {@code org.wildfly.security.keystore.util.KeyStoreUtil} from
- *             the
- *             {@code wildfly-elytron-keystore-util} module instead.
- *             This class is deprecated and will be removed in a future release.
  */
-@Deprecated
 public class KeyStoreUtil {
 
     private static final String BCFKS = "BCFKS";
@@ -72,21 +67,29 @@ public class KeyStoreUtil {
     /**
      * Tries to parse a keystore based on known recognizable patterns.
      * <p>
-     * This method can parse JKS, JCEKS, PKCS12, BKS, BCFKS and UBER key stores as well as PEM files. At first the
-     * method looks for recognizable patterns of JKS, JCEKS, PKCS12 and BKS key store types and tries to parse them if
-     * found. If the pattern recognition fails, brute force is used to load the key store.
+     * This method can parse JKS, JCEKS, PKCS12, BKS, BCFKS and UBER key stores as
+     * well as PEM files. At first the
+     * method looks for recognizable patterns of JKS, JCEKS, PKCS12 and BKS key
+     * store types and tries to parse them if
+     * found. If the pattern recognition fails, brute force is used to load the key
+     * store.
      * <p>
      * The provider supplier is used for loading the key stores.
      *
-     * @param providers    provider supplier for loading the keystore (must not be {@code null})
+     * @param providers    provider supplier for loading the keystore (must not be
+     *                     {@code null})
      * @param providerName if specified only providers with this name will be used
-     * @param is           the key store file input stream (must not be {@code null})
-     * @param filename     the filename for prioritizing brute force checks using the file extension
-     * @param password     password of the key store. Should be the empty string for PEM files.
+     * @param is           the key store file input stream (must not be
+     *                     {@code null})
+     * @param filename     the filename for prioritizing brute force checks using
+     *                     the file extension
+     * @param password     password of the key store. Should be the empty string for
+     *                     PEM files.
      * @return loaded key store if recognized
      * @throws IOException
      */
-    public static KeyStore loadKeyStore(final Supplier<Provider[]> providers, final String providerName, FileInputStream is, String filename, char[] password) throws IOException, KeyStoreException {
+    public static KeyStore loadKeyStore(final Supplier<Provider[]> providers, final String providerName,
+            FileInputStream is, String filename, char[] password) throws IOException, KeyStoreException {
 
         DataInputStream dis = new ResettableDataFileInputStream(is);
 
@@ -131,7 +134,8 @@ public class KeyStoreUtil {
         return result;
     }
 
-    private static KeyStore tryLoadKeystore(final Supplier<Provider[]> providers, final String providerName, InputStream is, char[] password, String... types) {
+    private static KeyStore tryLoadKeystore(final Supplier<Provider[]> providers, final String providerName,
+            InputStream is, char[] password, String... types) {
         for (String type : types) {
             try {
                 log.debug("Searching provider for: " + type);
@@ -166,7 +170,7 @@ public class KeyStoreUtil {
         // Reading all of the file should not be an issue
         byte[] pem = readAllBytes(is);
         is.read(pem);
-        for (Iterator<PemEntry<?>> it = Pem.parsePemContent(CodePointIterator.ofUtf8Bytes(pem)); it.hasNext(); ) {
+        for (Iterator<PemEntry<?>> it = Pem.parsePemContent(CodePointIterator.ofUtf8Bytes(pem)); it.hasNext();) {
             Object entry = it.next().getEntry();
             if (entry instanceof PrivateKey) {
                 // Private key
@@ -180,13 +184,17 @@ public class KeyStoreUtil {
         if (pk != null) {
             // A keystore
             Certificate certificate = certificates.get(0);
-            String alias = certificate instanceof X509Certificate ? ((X509Certificate) certificate).getSubjectX500Principal().getName() : "key";
+            String alias = certificate instanceof X509Certificate
+                    ? ((X509Certificate) certificate).getSubjectX500Principal().getName()
+                    : "key";
             keyStore.setKeyEntry(alias, pk, password, certificates.toArray(new Certificate[0]));
         } else {
             // A truststore
             int i = 1;
             for (Certificate certificate : certificates) {
-                String alias = certificate instanceof X509Certificate ? ((X509Certificate)certificate).getSubjectX500Principal().getName() : Integer.toString(i++);
+                String alias = certificate instanceof X509Certificate
+                        ? ((X509Certificate) certificate).getSubjectX500Principal().getName()
+                        : Integer.toString(i++);
                 keyStore.setCertificateEntry(alias, certificate);
             }
         }
@@ -199,14 +207,15 @@ public class KeyStoreUtil {
         int readBytes = inputStream.read(buffer);
 
         // inputStream.read() returns -1 when the end of the stream is reached
-        while(readBytes != -1){
+        while (readBytes != -1) {
             outputStream.write(buffer, 0, readBytes);
             readBytes = inputStream.read(buffer);
         }
         return outputStream.toByteArray();
     }
 
-    //FileInputStream does not support marking by default and buffering unknown sized file doesn't seem right
+    // FileInputStream does not support marking by default and buffering unknown
+    // sized file doesn't seem right
     private static class ResettableDataFileInputStream extends DataInputStream {
 
         private FileChannel fc;
