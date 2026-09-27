@@ -80,6 +80,26 @@ public class BearerTokenAuthenticationMechanismTest {
     }
 
     /**
+     * Test that cookie tokens must conform to the bearer token grammar.
+     */
+    @Test
+    public void testInvalidCookieTokenIsIgnored() throws Exception {
+        mechanism = new BearerTokenAuthenticationMechanism(callbackHandler, true, "AUTH_TOKEN");
+
+        new Expectations() {{
+            request.getRequestHeaderValues(HttpConstants.AUTHORIZATION);
+            result = null;
+
+            request.getCookies();
+            result = Collections.singletonList(new SimpleHttpServerCookie("AUTH_TOKEN", "token&injected=evil"));
+
+            request.noAuthenticationInProgress(withNotNull());
+        }};
+
+        mechanism.evaluateRequest(request);
+    }
+
+    /**
      * Test that cookie fallback is not used when disabled.
      */
     @Test

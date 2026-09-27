@@ -38,9 +38,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.NoSuchAlgorithmException;
@@ -200,15 +202,17 @@ public class OAuth2CredentialSource implements CredentialSource {
         return connection;
     }
 
-    private byte[] buildParameters(Map<String, String> parameters) {
+    static byte[] buildParameters(Map<String, String> parameters) throws UnsupportedEncodingException {
         ByteStringBuilder params = new ByteStringBuilder();
 
-        parameters.entrySet().stream().forEach(entry -> {
+        for (Map.Entry<String, String> entry : parameters.entrySet()) {
             if (params.length() > 0) {
                 params.append('&');
             }
-            params.append(entry.getKey()).append('=').append(entry.getValue());
-        });
+            params.append(URLEncoder.encode(entry.getKey(), "UTF-8"))
+                    .append('=')
+                    .append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+        }
 
         return params.toArray();
     }
