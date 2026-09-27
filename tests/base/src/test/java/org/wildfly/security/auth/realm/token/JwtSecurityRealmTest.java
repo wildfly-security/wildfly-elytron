@@ -96,6 +96,8 @@ public class JwtSecurityRealmTest {
 
     private static final MockWebServer server = new MockWebServer();
     private static final MockWebServer nonTlsServer = new MockWebServer();
+    private static int serverPort;
+    private static int nonTlsServerPort;
 
     private static final String CA_JKS_LOCATION = "./target/test-classes/jwt/ca/jks/";
     private static char[] PASSWORD = "password".toCharArray();
@@ -175,8 +177,10 @@ public class JwtSecurityRealmTest {
         server.useHttps(sslContext.getSocketFactory(), false);
         server.setDispatcher(createTokenDispatcher(jwksResponse));
         nonTlsServer.setDispatcher(createTokenDispatcher(jwksResponse));
-        server.start(50831);
-        nonTlsServer.start(50832);
+        server.start();
+        serverPort = server.getPort();
+        nonTlsServer.start();
+        nonTlsServerPort = nonTlsServer.getPort();
     }
 
     @AfterClass
@@ -197,9 +201,9 @@ public class JwtSecurityRealmTest {
         jwk3.setKid("3");
         server.setDispatcher(dispatcher);
 
-        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
-        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
-        BearerTokenEvidence evidence3 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "1", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:" + serverPort)));
+        BearerTokenEvidence evidence3 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -209,7 +213,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .setJkuTimeout(0) //refresh jwks every time
                         .setJkuMinTimeBetweenRequests(0)
                         .useSslContext(sslContext)
@@ -231,7 +235,7 @@ public class JwtSecurityRealmTest {
         // set the jku url only with key 1
         server.setDispatcher(createTokenDispatcher(jwksToJson(jwk1).toString()));
 
-        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -241,7 +245,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .setJkuTimeout(60000L) // 60s of cache
                         .setJkuMinTimeBetweenRequests(0) // no time betweeen requests
                         .useSslContext(sslContext)
@@ -253,7 +257,7 @@ public class JwtSecurityRealmTest {
 
         // add a new key 2 to the url using normal response
         server.setDispatcher(createTokenDispatcher(jwksResponse));
-        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:" + serverPort)));
 
         // key 1 and 2 should exist now because time between requests is 0
         assertIdentityExist(securityRealm, evidence1);
@@ -265,7 +269,7 @@ public class JwtSecurityRealmTest {
         // set the jku url only with key 1
         server.setDispatcher(createTokenDispatcher(jwksToJson(jwk1).toString()));
 
-        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -275,7 +279,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .setJkuTimeout(60000L) // 60s of cache
                         .setJkuMinTimeBetweenRequests(10000) // 10s between calls
                         .useSslContext(sslContext)
@@ -287,7 +291,7 @@ public class JwtSecurityRealmTest {
 
         // add a new key 2 to the url using normal response
         server.setDispatcher(createTokenDispatcher(jwksResponse));
-        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:" + serverPort)));
 
         // Same result because the minimum time between request avoids the call
         assertIdentityExist(securityRealm, evidence1);
@@ -300,9 +304,9 @@ public class JwtSecurityRealmTest {
         BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "2", null));
         BearerTokenEvidence evidence3 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "1", null));
 
-        BearerTokenEvidence evidence4 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
-        BearerTokenEvidence evidence5 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "2", new URI("https://localhost:50831")));
-        BearerTokenEvidence evidence6 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "1", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence4 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:" + serverPort)));
+        BearerTokenEvidence evidence5 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "2", new URI("https://localhost:" + serverPort)));
+        BearerTokenEvidence evidence6 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         BearerTokenEvidence evidence7 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "3", null));
         BearerTokenEvidence evidence8 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1));
@@ -319,7 +323,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .publicKeys(namedKeys)
                         .publicKey(keyPair3.getPublic())
                         .useSslContext(sslContext)
@@ -340,8 +344,8 @@ public class JwtSecurityRealmTest {
 
     @Test
     public void testUnsecuredJkuEndpoint() throws Exception {
-        checkIdentityDoesNotExist("1", 50832);
-        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50832")));
+        checkIdentityDoesNotExist("1", nonTlsServerPort);
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + nonTlsServerPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -351,7 +355,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50832")
+                        .setAllowedJkuValues("https://localhost:" + nonTlsServerPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -389,7 +393,7 @@ public class JwtSecurityRealmTest {
     public void testStoppedJkuEndpoint() throws Exception {
         server.setDispatcher(createOneTimeDispatcher(jwksResponse)); //Server will provide the keys only once
 
-        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -399,7 +403,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .setJkuTimeout(0) //Keys will be downloaded on every request
                         .setJkuMinTimeBetweenRequests(0)
                         .useSslContext(sslContext)
@@ -425,7 +429,7 @@ public class JwtSecurityRealmTest {
         };
         server.setDispatcher(alwaysFail);
 
-        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -435,7 +439,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .setJkuTimeout(0)
                         .setJkuMinTimeBetweenRequests(0)
                         .useSslContext(sslContext)
@@ -449,8 +453,8 @@ public class JwtSecurityRealmTest {
 
     @Test
     public void testJkuMultipleKeys() throws Exception {
-        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
-        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:" + serverPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -460,7 +464,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -492,8 +496,8 @@ public class JwtSecurityRealmTest {
 
     @Test
     public void testInvalidKid() throws Exception {
-        checkIdentityDoesNotExist("badkid", 50831);
-        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "badkid", new URI("https://localhost:50831")));
+        checkIdentityDoesNotExist("badkid", serverPort);
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "badkid", new URI("https://localhost:" + serverPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -503,7 +507,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -733,7 +737,7 @@ public class JwtSecurityRealmTest {
     @Test
     public void testTokenWithJkuValueAllowed() throws Exception {
         BearerTokenEvidence evidence = new BearerTokenEvidence(
-                createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+                createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         SSLContext sslContext = getSSLContext();
 
@@ -742,7 +746,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50832", "https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + nonTlsServerPort, "https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -763,7 +767,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50832", "https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + nonTlsServerPort, "https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -775,7 +779,7 @@ public class JwtSecurityRealmTest {
     @Test
     public void testAllowedJkuValuesNotConfigured() throws Exception {
         BearerTokenEvidence evidence = new BearerTokenEvidence(
-                createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+                createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         SSLContext sslContext = getSSLContext();
 
@@ -808,7 +812,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50832", "https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + nonTlsServerPort, "https://localhost:" + serverPort)
                         .publicKeys(namedKeys)
                         .build())
                 .build();
@@ -830,8 +834,8 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
-                        .setJkuFallbackUrl("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -851,8 +855,8 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50832")
-                        .setJkuFallbackUrl("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + nonTlsServerPort)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -875,9 +879,9 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .publicKeys(namedKeys)
-                        .setJkuFallbackUrl("https://localhost:50831")
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -900,9 +904,9 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .publicKeys(namedKeys)
-                        .setJkuFallbackUrl("https://localhost:50831")
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -925,8 +929,8 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
-                        .setJkuFallbackUrl("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
                         .build())
                 .build();
 
@@ -935,7 +939,7 @@ public class JwtSecurityRealmTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testSetJkuFallbackUrlRejectsNonHttpsScheme() {
-        JwtValidator.builder().setJkuFallbackUrl("http://localhost:50832");
+        JwtValidator.builder().setJkuFallbackUrl("http://localhost:" + nonTlsServerPort);
     }
 
     @Test
@@ -950,8 +954,8 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
-                        .setJkuFallbackUrl("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -981,8 +985,8 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
-                        .setJkuFallbackUrl("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -1005,7 +1009,7 @@ public class JwtSecurityRealmTest {
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
                         // setAllowedJkuValues intentionally not called
-                        .setJkuFallbackUrl("https://localhost:50831")
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -1029,7 +1033,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -1055,7 +1059,7 @@ public class JwtSecurityRealmTest {
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
                         .publicKey(wrongKeyPem.toArray())
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -1069,7 +1073,7 @@ public class JwtSecurityRealmTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testSetPublicKeyUrlRejectsNonHttpsScheme() {
-        JwtValidator.builder().setPublicKeyUrl("http://localhost:50832");
+        JwtValidator.builder().setPublicKeyUrl("http://localhost:" + nonTlsServerPort);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -1086,7 +1090,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .build())
                 .build();
 
@@ -1110,7 +1114,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -1139,7 +1143,7 @@ public class JwtSecurityRealmTest {
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
                         .publicKey(publicKeyPem.toArray())
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -1161,7 +1165,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -1191,7 +1195,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -1215,7 +1219,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .setJkuTimeout(60000L)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
@@ -1239,7 +1243,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .setJkuTimeout(0) // always expired: refetch on every lookup
                         .setJkuMinTimeBetweenRequests(0)
                         .useSslContext(sslContext)
@@ -1275,7 +1279,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .setJkuTimeout(0) // always expired
                         .setJkuMinTimeBetweenRequests(60000) // long rate-limit window
                         .useSslContext(sslContext)
@@ -1318,7 +1322,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -1342,7 +1346,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .setJkuTimeout(60000L)
                         .setJkuMinTimeBetweenRequests(0)
                         // setRetryOnVerificationFailure intentionally not called (defaults to false)
@@ -1372,7 +1376,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .setJkuTimeout(60000L) // long TTL: a normal lookup would not refetch on its own
                         .setJkuMinTimeBetweenRequests(0)
                         .setRetryOnVerificationFailure(true)
@@ -1404,7 +1408,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .setJkuTimeout(60000L)
                         .setJkuMinTimeBetweenRequests(0)
                         .setRetryOnVerificationFailure(true)
@@ -1413,7 +1417,7 @@ public class JwtSecurityRealmTest {
                 .build();
 
         assertIdentityExist(securityRealm, new BearerTokenEvidence(
-                createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831"))));
+                createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort))));
 
         // rotate: same kid "1" now maps to keyPair2 at the endpoint (kept stable on purpose, to isolate
         // the retry mechanism from the already-covered "unknown kid triggers refetch" behavior)
@@ -1421,7 +1425,7 @@ public class JwtSecurityRealmTest {
         jwk2.setKid("2");
 
         assertIdentityExist(securityRealm, new BearerTokenEvidence(
-                createJwt(keyPair2, 60, -1, "1", new URI("https://localhost:50831"))));
+                createJwt(keyPair2, 60, -1, "1", new URI("https://localhost:" + serverPort))));
 
         server.setDispatcher(createTokenDispatcher(jwksResponse));
     }
@@ -1436,8 +1440,8 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
-                        .setJkuFallbackUrl("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
                         .setJkuTimeout(60000L)
                         .setJkuMinTimeBetweenRequests(0)
                         .setRetryOnVerificationFailure(true)
@@ -1465,7 +1469,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .setJkuTimeout(60000L)
                         .setJkuMinTimeBetweenRequests(500)
                         .setRetryOnVerificationFailure(true)
@@ -1528,7 +1532,7 @@ public class JwtSecurityRealmTest {
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
                         // setAllowedJkuValues intentionally not called
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -1555,7 +1559,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
@@ -1598,7 +1602,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setPublicKeyUrl("https://localhost:50831")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a, b) -> true).build())
                 .build();
