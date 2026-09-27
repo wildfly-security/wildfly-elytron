@@ -92,7 +92,7 @@ public final class TokenSecurityRealm implements SecurityRealm {
 
     @Override
     public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
-        if (isBearerTokenEvidence(evidenceType) || isEllipticCurveEvidence(evidenceType)) {
+        if (strategy.supportsEvidence(evidenceType)) {
             return SupportLevel.POSSIBLY_SUPPORTED;
         }
         return SupportLevel.UNSUPPORTED;
@@ -196,7 +196,7 @@ public final class TokenSecurityRealm implements SecurityRealm {
 
         @Override
         public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
-            if (isBearerTokenEvidence(evidenceType) || isEllipticCurveEvidence(evidenceType)) {
+            if (strategy.supportsEvidence(evidenceType)) {
                 return SupportLevel.SUPPORTED;
             }
 

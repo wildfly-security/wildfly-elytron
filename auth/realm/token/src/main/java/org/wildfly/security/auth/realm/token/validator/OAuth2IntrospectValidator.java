@@ -322,6 +322,10 @@ public class OAuth2IntrospectValidator implements TokenValidator {
 
     @Override
     public Attributes validate(Evidence evidence) throws RealmUnavailableException {
+        if (!(evidence instanceof BearerTokenEvidence)) {
+            log.debugf("OAuth2IntrospectValidator does not support evidence of type [%s]", evidence == null ? null : evidence.getClass());
+            return null;
+        }
         return this.validate(BearerTokenEvidence.class.cast(evidence));
     }
 }

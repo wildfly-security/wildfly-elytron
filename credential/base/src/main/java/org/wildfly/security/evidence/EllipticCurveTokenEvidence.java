@@ -46,7 +46,7 @@ public class EllipticCurveTokenEvidence extends CommonTokenEvidence {
             case "ECDSA-SHA384":
                 return "SHA384withECDSA";
             case "ES512":
-            case "ECDSA-SHA12":
+            case "ECDSA-SHA512":
                 return "SHA512withECDSA";
             default:
                 return null;
