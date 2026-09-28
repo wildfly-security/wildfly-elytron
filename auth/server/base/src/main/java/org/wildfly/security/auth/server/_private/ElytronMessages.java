@@ -147,4 +147,21 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 16002, value = "Can not handle SecurityEvent with SecurityIdentity from other SecurityDomain")
     IllegalArgumentException securityEventIdentityWrongDomain();
+
+    @Message(id = 16003, value = "The path manager service does not appear to be started. Any changes may be lost as a result of this.")
+    IllegalStateException pathManagerServiceNotStarted();
+
+    @Message(id = 16004, value = "Provided path '%s' to Role Mapper Mapped configuration file does not exist.")
+    IllegalArgumentException propertiesRoleMapperFileNotExist(final String path);
+
+    @Message(id = 16005, value = "Path '%s' is a directory and cannot be used as a Role Mapper file.")
+    IllegalArgumentException propertiesRoleMapperPathIsDirectory(final String path);
+
+    @Message(id = 16006, value = "Can not read the provided properties file.")
+    IllegalStateException cantReadPropertiesFile(@Cause Throwable cause);
+
+    @Message(id = 16007, value = "Can not close the provided properties file.")
+    IllegalStateException cantClosePropertiesFile(@Cause Throwable cause);
+
+
 }
