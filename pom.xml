@@ -581,6 +581,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-keystore-util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-mechanism</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1792,6 +1798,7 @@
         <module>jose/util</module>
         <module>json-util</module>
         <module>keystore</module>
+        <module>keystore/util</module>
         <module>manager/base</module>
         <module>manager/action</module>
         <module>mechanism/base</module>
