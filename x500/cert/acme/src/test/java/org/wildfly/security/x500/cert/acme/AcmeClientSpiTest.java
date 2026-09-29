@@ -275,7 +275,10 @@ public class AcmeClientSpiTest {
     @Test
     public void testExternalAccountBindingRejectsUndersizedKeys() throws Exception {
         try {
-            populateBasicBuilder().setExternalAccountBinding("key-identifier", new byte[15]);
+            populateBasicBuilder()
+                    .setKey(aliasToCertificateMap.get(ACCOUNT_1_V2), aliasToPrivateKeyMap.get(ACCOUNT_1_V2))
+                    .setExternalAccountBinding("key-identifier", new byte[15])
+                    .build();
             fail("Expected IllegalArgumentException not thrown");
         } catch (IllegalArgumentException expected) {
         }
@@ -286,6 +289,26 @@ public class AcmeClientSpiTest {
                 .build();
         try {
             account.getExternalAccountBindingKey();
+            fail("Expected IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
+    public void testExternalAccountBindingCallOrderIndependent() throws Exception {
+        // Setting algorithm AFTER binding should still validate correctly at build() time
+        populateBasicBuilder()
+                .setKey(aliasToCertificateMap.get(ACCOUNT_1_V2), aliasToPrivateKeyMap.get(ACCOUNT_1_V2))
+                .setExternalAccountBinding("key-identifier", new byte[AcmeAccount.ExternalAccountBindingAlgorithm.HS384.getMinimumKeySize()])
+                .setExternalAccountBindingAlgorithm(AcmeAccount.ExternalAccountBindingAlgorithm.HS384)
+                .build(); // must not throw
+
+        try {
+            populateBasicBuilder()
+                    .setKey(aliasToCertificateMap.get(ACCOUNT_1_V2), aliasToPrivateKeyMap.get(ACCOUNT_1_V2))
+                    .setExternalAccountBinding("key-identifier", new byte[AcmeAccount.ExternalAccountBindingAlgorithm.HS256.getMinimumKeySize()])
+                    .setExternalAccountBindingAlgorithm(AcmeAccount.ExternalAccountBindingAlgorithm.HS512)
+                    .build();
             fail("Expected IllegalArgumentException not thrown");
         } catch (IllegalArgumentException expected) {
         }

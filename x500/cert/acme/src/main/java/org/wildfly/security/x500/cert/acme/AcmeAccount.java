@@ -431,6 +431,7 @@ public final class AcmeAccount {
         private String externalAccountBindingKeyIdentifier;
         private Supplier<byte[]> externalAccountBindingKeySupplier;
         private ExternalAccountBindingAlgorithm externalAccountBindingAlgorithm = DEFAULT_EXTERNAL_ACCOUNT_BINDING_ALGORITHM;
+        private int externalAccountBindingKeyLength = -1;
 
         /**
          * Construct a new uninitialized instance.
@@ -546,8 +547,8 @@ public final class AcmeAccount {
         public Builder setExternalAccountBinding(final String keyIdentifier, final byte[] hmacKey) {
             Assert.checkNotEmptyParam("keyIdentifier", keyIdentifier);
             Assert.checkNotEmptyParam("hmacKey", hmacKey);
-            Assert.checkMinimumParameter("hmacKey.length", externalAccountBindingAlgorithm.getMinimumKeySize(), hmacKey.length);
             final byte[] copiedHmacKey = hmacKey.clone();
+            this.externalAccountBindingKeyLength = copiedHmacKey.length;
             return setExternalAccountBinding(keyIdentifier, () -> copiedHmacKey.clone());
         }
 
@@ -599,6 +600,9 @@ public final class AcmeAccount {
         public AcmeAccount build() throws IllegalArgumentException {
             if (serverUrl == null) {
                 throw log.noAcmeServerUrlGiven();
+            }
+            if (externalAccountBindingKeyLength >= 0) {
+                Assert.checkMinimumParameter("hmacKey.length", externalAccountBindingAlgorithm.getMinimumKeySize(), externalAccountBindingKeyLength);
             }
             if (certificate != null && privateKey != null) {
                 keySize = KeyUtil.getKeySize(privateKey);
