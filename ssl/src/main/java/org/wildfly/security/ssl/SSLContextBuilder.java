@@ -77,13 +77,14 @@ public final class SSLContextBuilder {
     private String providerName;
     private boolean wrap = true;
     private MechanismConfigurationSelector mechanismConfigurationSelector;
-    private int responseTimeout;
-    private int cacheSize;
-    private int cacheLifetime;
+    private int responseTimeout = 5000;
+    private int cacheSize = 256;
+    private int cacheLifetime = 3600;
     private String responderURI;
     private boolean responderOverride;
     private boolean ignoreExtensions;
     private boolean acceptOCSPStapling;
+    private boolean provideOCSPStapling;
 
     /**
      * Set the security domain to use to authenticate clients.
@@ -394,6 +395,19 @@ public final class SSLContextBuilder {
     }
 
     /**
+     * Indicates whether the server will provide OCSP stapled responses to clients. When enabled the
+     * OCSP stapling tuning parameters (response timeout, cache size, cache lifetime, responder URI,
+     * responder override and ignore extensions) are applied.
+     *
+     * @param provideOCSPStapling will enable or disable server side OCSP stapling.
+     * @return this builder
+     */
+    public SSLContextBuilder setProvideOCSPStapling(final boolean provideOCSPStapling) {
+        this.provideOCSPStapling = provideOCSPStapling;
+        return this;
+    }
+
+    /**
      * Build a security factory for the new context.  The factory will cache the constructed instance.
      *
      * @return the security factory
@@ -419,6 +433,7 @@ public final class SSLContextBuilder {
         final boolean responderOverride = this.responderOverride;
         final boolean ignoreExtensions = this.ignoreExtensions;
         final boolean acceptOCSPStapling = this.acceptOCSPStapling;
+        final boolean provideOCSPStapling = this.provideOCSPStapling;
         final MechanismConfigurationSelector mechanismConfigurationSelector = this.mechanismConfigurationSelector != null ?
                 this.mechanismConfigurationSelector :
                 MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY);
@@ -430,7 +445,12 @@ public final class SSLContextBuilder {
             // Enable client side support for accepting OCSP stapling
             System.setProperty("jdk.tls.client.enableStatusRequestExtension", Boolean.TRUE.toString());
 
-        } else if (!clientMode && checkOCSPStaplingEnabled()) {    //server-ssl-context
+        } else if (!clientMode && provideOCSPStapling) {    //server-ssl-context
+            // Validate before mutating any global state so an invalid config never partially applies
+            if (responderOverride && (responderURI == null || responderURI.isEmpty())) {
+                throw ElytronMessages.log.responderURIRequired();
+            }
+
             // Enable server side support for OCSP stapling
             System.setProperty("jdk.tls.server.enableStatusRequestExtension", Boolean.TRUE.toString());
 
@@ -440,9 +460,6 @@ public final class SSLContextBuilder {
             System.setProperty("jdk.tls.stapling.cacheLifetime", String.valueOf(cacheLifetime));
             if (responderURI != null)
                 System.setProperty("jdk.tls.stapling.responderURI", responderURI);
-            if (responderOverride && responderURI.isEmpty()) {
-                throw ElytronMessages.log.responderURIRequired();
-            }
             System.setProperty("jdk.tls.stapling.responderOverride", String.valueOf(responderOverride));
             System.setProperty("jdk.tls.stapling.ignoreExtensions", String.valueOf(ignoreExtensions));
         }
@@ -471,14 +488,14 @@ public final class SSLContextBuilder {
                                 "    wantClientAuth = %s%n" +
                                 "    needClientAuth = %s%n" +
                                 "    useCipherSuitesOrder = %s%n" +
-                                "    wrap = %s%n + " +
-                                "    acceptOCSPStapling = %s%n + " +
-                                "    responseTimeout = %s%n + " +
-                                "    cacheSize = %s%n + " +
-                                "    cacheLifetime = %s%n + " +
-                                "    responderURI = %s%n + " +
-                                "    responderOverride = %s%n + " +
-                                "    ignoreExtensions = %s%n:",
+                                "    wrap = %s%n" +
+                                "    acceptOCSPStapling = %s%n" +
+                                "    responseTimeout = %s%n" +
+                                "    cacheSize = %s%n" +
+                                "    cacheLifetime = %s%n" +
+                                "    responderURI = %s%n" +
+                                "    responderOverride = %s%n" +
+                                "    ignoreExtensions = %s%n",
                         securityDomain, canAuthPeers, cipherSuiteSelector, protocolSelector, x509TrustManager,
                         x509KeyManager, providerSupplier, clientMode, authenticationOptional, sessionCacheSize,
                         sessionTimeout, wantClientAuth, needClientAuth, useCipherSuitesOrder, wrap, acceptOCSPStapling,
@@ -506,9 +523,5 @@ public final class SSLContextBuilder {
             final ConfiguredSSLContextSpi contextSpi = new ConfiguredSSLContextSpi(sslContext, sslConfigurator, wrap);
             return new DelegatingSSLContext(contextSpi);
         });
-    }
-
-    private boolean checkOCSPStaplingEnabled() {
-        return (this.responseTimeout > 0) && (this.cacheSize != 0) && (this.cacheLifetime != 0);
     }
 }

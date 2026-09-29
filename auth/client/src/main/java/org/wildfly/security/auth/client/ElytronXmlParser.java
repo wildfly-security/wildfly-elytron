@@ -620,7 +620,7 @@ public final class ElytronXmlParser {
                 }
                 case "responder-certificate": {
                     if (gotResponderCertAlias) throw reader.unexpectedAttribute(i);
-                    builder.setOcspRescponderCertAlias(reader.getAttributeValueResolved(i));
+                    builder.setOcspResponderCertAlias(reader.getAttributeValueResolved(i));
                     gotResponderCertAlias = true;
                     break;
                 }
@@ -721,7 +721,7 @@ public final class ElytronXmlParser {
             this.ocspResponder = ocspResponder;
         }
 
-        public void setOcspRescponderCertAlias(String alias) {
+        public void setOcspResponderCertAlias(String alias) {
             this.responderCertAlias = alias;
         }
 
@@ -766,12 +766,16 @@ public final class ElytronXmlParser {
                 return revocationBuilder.build();
             } else if (ocspStapling) {
                 X509RevocationTrustManager.Builder revocationBuilder = X509RevocationTrustManager.builder();
+                revocationBuilder.setResponderURI(ocspResponder);
                 revocationBuilder.setTrustManagerFactory(trustManagerFactory);
                 revocationBuilder.setTrustStore(trustStore);
-                revocationBuilder.setCheckRevocation(true);
+                revocationBuilder.setOnlyEndEntity(onlyLeafCert);
                 revocationBuilder.setSoftFail(softFail);
-                KeyStore responderStore = responderStoreSupplier != null ? responderStoreSupplier.get() : trustStore;
-                revocationBuilder.setOcspResponderCert((X509Certificate) responderStore.getCertificate(responderCertAlias));
+                revocationBuilder.setMaxCertPath(maxCertPath);
+                if (responderCertAlias != null) {
+                    KeyStore responderStore = responderStoreSupplier != null ? responderStoreSupplier.get() : trustStore;
+                    revocationBuilder.setOcspResponderCert((X509Certificate) responderStore.getCertificate(responderCertAlias));
+                }
                 return revocationBuilder.build();
             } else {
                 trustManagerFactory.init(trustStore);
@@ -894,7 +898,7 @@ public final class ElytronXmlParser {
                 }
                 case "responder-certificate": {
                     if (gotResponderCertAlias) throw reader.unexpectedAttribute(i);
-                    builder.setOcspRescponderCertAlias(reader.getAttributeValueResolved(i));
+                    builder.setOcspResponderCertAlias(reader.getAttributeValueResolved(i));
                     gotResponderCertAlias = true;
                     break;
                 }
