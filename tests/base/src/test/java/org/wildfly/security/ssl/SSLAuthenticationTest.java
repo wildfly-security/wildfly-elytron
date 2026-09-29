@@ -861,6 +861,7 @@ public class SSLAuthenticationTest {
                 .setKeyManager(ocspStaplingGood.createKeyManager())
                 .setTrustManager(ca.createTrustManager())
                 .setNeedClientAuth(true)
+                .setProvideOCSPStapling(true)
                 .setResponseTimeout(5000)
                 .setCacheSize(256)
                 .setCacheLifetime(3600)
@@ -879,6 +880,7 @@ public class SSLAuthenticationTest {
                 .setKeyManager(ocspStaplingRevoked.createKeyManager())
                 .setTrustManager(ca.createTrustManager())
                 .setNeedClientAuth(true)
+                .setProvideOCSPStapling(true)
                 .setResponseTimeout(5000)
                 .setCacheSize(256)
                 .setCacheLifetime(3600)
@@ -897,6 +899,7 @@ public class SSLAuthenticationTest {
                 .setKeyManager(ocspStaplingUnknown.createKeyManager())
                 .setTrustManager(ca.createTrustManager())
                 .setNeedClientAuth(true)
+                .setProvideOCSPStapling(true)
                 .setResponseTimeout(5000)
                 .setCacheSize(256)
                 .setCacheLifetime(3600)
@@ -915,6 +918,7 @@ public class SSLAuthenticationTest {
                 .setKeyManager(ocspStaplingUnknown.createKeyManager())
                 .setTrustManager(ca.createTrustManager())
                 .setNeedClientAuth(true)
+                .setProvideOCSPStapling(true)
                 .setResponseTimeout(5000)
                 .setCacheSize(256)
                 .setCacheLifetime(3600)
@@ -931,6 +935,7 @@ public class SSLAuthenticationTest {
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
                 .setKeyManager(ocspStaplingGood.createKeyManager())
+                .setProvideOCSPStapling(true)
                 .setResponseTimeout(5000)
                 .setCacheSize(256)
                 .setCacheLifetime(3600)
@@ -938,6 +943,134 @@ public class SSLAuthenticationTest {
 
         performConnectionTest(serverContext, "protocol://test-one-way-ocsp-stapling-good.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedServerGood",
                 null, true);
+    }
+
+    /**
+     * Verifies the client obtains revocation status solely from the server's stapled OCSP
+     * response. The client's configured OCSP responder points at a closed port, so a live
+     * lookup cannot succeed, and soft-fail is disabled so an undetermined status would fail
+     * the handshake.
+     */
+    @Test
+    public void testOcspStaplingGoodProvenViaStaple() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity ocspStaplingGood = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_GOOD);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingGood.createKeyManager())
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        performStapleOnlyConnectionTest(serverContext, ca, false,
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedServerGood", true);
+    }
+
+    /**
+     * Mirrors {@link #testOcspStaplingGoodProvenViaStaple()}: soft-fail is enabled here, so
+     * an undetermined status would let the handshake through regardless.
+     */
+    @Test
+    public void testOcspStaplingRevokedProvenViaStaple() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity ocspStaplingRevoked = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_REVOKED);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingRevoked.createKeyManager())
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        performStapleOnlyConnectionTest(serverContext, ca, true, null, false);
+    }
+
+    /**
+     * Proves the explicit server-side enable flag gates the stapling block: with provideOCSPStapling
+     * off, the otherwise-invalid responder-override-without-URI combination is never evaluated, so
+     * build() must not throw (the negative counterpart to {@link #testServerResponderOverrideRequiresUri()}).
+     * A handshake-based check isn't used here since the JDK's stapling switches are process-wide and
+     * can leak "enabled" state from earlier tests in this class (test-isolation gap, tracked separately).
+     */
+    @Test
+    public void testServerStaplingConfigIgnoredWhenFlagOff() throws Exception {
+        new SSLContextBuilder()
+                .setClientMode(false)
+                .setResponderOverride(true)
+                .build();
+    }
+
+    /**
+     * Builds a client that can only learn the server certificate's revocation status from a
+     * stapled OCSP response: its OCSP responder override points at a closed port, so no live
+     * lookup is possible. {@code softFail} controls whether an undetermined status is
+     * tolerated. Process-wide JDK stapling properties changed while building the context are
+     * restored in a finally block.
+     */
+    private void performStapleOnlyConnectionTest(SSLContext serverContext, DefinedCAIdentity ca, boolean softFail,
+            String expectedServerPrincipal, boolean expectValid) throws Throwable {
+        String previousOcspEnable = Security.getProperty("ocsp.enable");
+        String previousStatusRequest = System.getProperty("jdk.tls.client.enableStatusRequestExtension");
+
+        int deadOcspPort;
+        try (ServerSocket reserved = new ServerSocket(0)) {
+            deadOcspPort = reserved.getLocalPort();
+        }
+        // The port is now closed: a live OCSP request to it is refused, leaving the status undetermined
+        // unless the stapled response is consumed by the client's trust manager.
+        SSLContext clientContext = new SSLContextBuilder()
+                .setClientMode(true)
+                .setTrustManager(X509RevocationTrustManager.builder()
+                        .setTrustManagerFactory(getTrustManagerFactory())
+                        .setTrustStore(ca.loadKeyStore())
+                        .setOcspResponderCert(ocspResponderCertificate)
+                        .setResponderURI(new URI("http://localhost:" + deadOcspPort + "/ocsp"))
+                        .setSoftFail(softFail)
+                        .build())
+                .setAcceptOCSPStapling(true)
+                .build().create();
+
+        try {
+            testCommunication(serverContext, clientContext, expectedServerPrincipal, null, true);
+            if (!expectValid) fail("Expected SSLHandshakeException not thrown");
+        } catch (SSLHandshakeException|SocketException expected) {
+            if (expectValid) {
+                throw new IllegalStateException("Unexpected SSLHandshakeException", expected);
+            }
+        } catch (SSLException expected) {
+            if (expectValid) {
+                throw new IllegalStateException("Unexpected SSLException", expected);
+            } else if (!(expected.getCause() instanceof SocketException)) {
+                throw expected;
+            }
+        } finally {
+            Security.setProperty("ocsp.enable", previousOcspEnable != null ? previousOcspEnable : "false");
+            if (previousStatusRequest != null) {
+                System.setProperty("jdk.tls.client.enableStatusRequestExtension", previousStatusRequest);
+            } else {
+                System.clearProperty("jdk.tls.client.enableStatusRequestExtension");
+            }
+        }
+    }
+
+    /**
+     * A server-side stapling configuration that turns on responder-override without supplying a
+     * responder URI must be rejected up front (ELY-434). Before the fix this threw a
+     * NullPointerException instead of the intended {@link IllegalArgumentException}.
+     */
+    @Test(expected = IllegalArgumentException.class)
+    public void testServerResponderOverrideRequiresUri() throws Exception {
+        new SSLContextBuilder()
+                .setClientMode(false)
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .setResponderOverride(true)
+                .build();
     }
 
     @Test

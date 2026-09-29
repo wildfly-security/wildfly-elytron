@@ -110,6 +110,10 @@ public class ElytronXmlParserTest {
                 .setPublicKey(signedTestClientPublicKey)
                 .build();
         clientKeyStore.setKeyEntry("testclientsignedbyca", signedTestClientSigningKey, PASSWORD, new X509Certificate[]{signedTestClientCertificate, testAuthorityCertificate});
+
+        // Trusted certificate entry so the keystore can also serve as a trust-store with a trust anchor
+        // (required to build a revocation/OCSP-stapling trust manager, see checkSSLContextWithOCSPStapling).
+        clientKeyStore.setCertificateEntry("ca", testAuthorityCertificate);
     }
 
     @Test
@@ -182,6 +186,16 @@ public class ElytronXmlParserTest {
         SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
         Assert.assertNotNull(authContext);
         Assert.assertNotNull(authContext.create().getSslRules());
+
+        // Actually build the SSL contexts so the accept-ocsp-stapling trust-manager path is exercised
+        // (a non-null getSslRules() alone never invokes the SSLContext supplier).
+
+        // accept-ocsp-stapling without a responder certificate - the default use case (ELY-434 B1).
+        // Before the null-guard was added this threw a NullPointerException while building the context.
+        checkSSLContext(authContext, "http://stapling-no-responder");
+
+        // accept-ocsp-stapling with an explicit responder certificate.
+        checkSSLContext(authContext, "http://stapling-responder");
     }
 
     private void checkSSLContext(SecurityFactory<AuthenticationContext> authContext, String uri) throws Exception {
