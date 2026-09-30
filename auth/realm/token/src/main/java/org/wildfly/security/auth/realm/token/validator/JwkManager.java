@@ -18,6 +18,9 @@
 package org.wildfly.security.auth.realm.token.validator;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.pem.Pem;
+import org.wildfly.security.pem.PemEntry;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -26,6 +29,7 @@ import jakarta.json.JsonReader;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -39,6 +43,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -63,7 +68,16 @@ class JwkManager {
     private final int connectionTimeout;
     private final int readTimeout;
 
+    // State for the configured remote public key URL (non-JKU path)
+    private final URL publicKeyUrl;
+    private volatile PublicKey cachedPublicKey;
+    private volatile long cachedPublicKeyTimestamp = 0;
+
     JwkManager(SSLContext sslContext, HostnameVerifier hostnameVerifier, long updateTimeout, int connectionTimeout, int readTimeout, int minTimeBetweenRequests, Set<String> allowedJkuValues) {
+        this(sslContext, hostnameVerifier, updateTimeout, connectionTimeout, readTimeout, minTimeBetweenRequests, allowedJkuValues, null);
+    }
+
+    JwkManager(SSLContext sslContext, HostnameVerifier hostnameVerifier, long updateTimeout, int connectionTimeout, int readTimeout, int minTimeBetweenRequests, Set<String> allowedJkuValues, URL publicKeyUrl) {
         this.sslContext = sslContext;
         this.hostnameVerifier = hostnameVerifier;
         this.updateTimeout = updateTimeout;
@@ -71,6 +85,81 @@ class JwkManager {
         this.readTimeout = readTimeout;
         this.minTimeBetweenRequests = minTimeBetweenRequests;
         this.allowedJkuValues = allowedJkuValues;
+        this.publicKeyUrl = publicKeyUrl;
+    }
+
+    boolean hasPublicKeyUrl() {
+        return publicKeyUrl != null;
+    }
+
+    /**
+     * Returns the public key from the configured remote URL, fetching it if the cache has expired.
+     * If {@code forceRefresh} is true, bypasses the TTL check and re-fetches — but the
+     * min-time-between-requests guard still applies to prevent DoS of the key server.
+     */
+    synchronized PublicKey getRemotePublicKey(boolean forceRefresh) {
+        long currentTime = System.currentTimeMillis();
+        boolean cacheValid = cachedPublicKey != null && (cachedPublicKeyTimestamp + updateTimeout > currentTime);
+
+        if (!forceRefresh && cacheValid) {
+            return cachedPublicKey;
+        }
+
+        // Respect the minimum time between requests even on a forced refresh
+        if (cachedPublicKeyTimestamp + minTimeBetweenRequests > currentTime) {
+            log.avoidingFetchRemotePublicKey(publicKeyUrl, cachedPublicKeyTimestamp);
+            return cachedPublicKey;
+        }
+
+        PublicKey fetched = fetchPublicKeyFromUrl(publicKeyUrl, sslContext, hostnameVerifier, connectionTimeout, readTimeout);
+        if (fetched != null) {
+            cachedPublicKey = fetched;
+            cachedPublicKeyTimestamp = currentTime;
+        } else {
+            log.unableToFetchRemotePublicKey(publicKeyUrl.toString());
+        }
+        return cachedPublicKey;
+    }
+
+    private static PublicKey fetchPublicKeyFromUrl(URL url, SSLContext sslContext, HostnameVerifier hostnameVerifier, int connectionTimeout, int readTimeout) {
+        InputStream inputStream = null;
+        try {
+            URLConnection connection = url.openConnection();
+            connection.setConnectTimeout(connectionTimeout);
+            connection.setReadTimeout(readTimeout);
+            if (connection instanceof HttpsURLConnection && sslContext != null) {
+                HttpsURLConnection httpsConn = (HttpsURLConnection) connection;
+                httpsConn.setSSLSocketFactory(sslContext.getSocketFactory());
+                if (hostnameVerifier != null) {
+                    httpsConn.setHostnameVerifier(hostnameVerifier);
+                }
+            }
+            connection.connect();
+            inputStream = connection.getInputStream();
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] chunk = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(chunk)) != -1) {
+                buffer.write(chunk, 0, bytesRead);
+            }
+            Iterator<PemEntry<?>> pemEntries = Pem.parsePemContent(CodePointIterator.ofUtf8Bytes(buffer.toByteArray()));
+            if (!pemEntries.hasNext()) {
+                log.warn("Remote public key URL returned no PEM content: " + url);
+                return null;
+            }
+            PublicKey publicKey = pemEntries.next().tryCast(PublicKey.class);
+            if (publicKey == null) {
+                log.warn("Remote public key URL did not return a valid public key: " + url);
+            }
+            return publicKey;
+        } catch (IOException e) {
+            log.warn("Unable to connect to remote public key URL: " + url);
+            return null;
+        } finally {
+            if (inputStream != null) {
+                try { inputStream.close(); } catch (IOException ignored) {}
+            }
+        }
     }
 
     /**
