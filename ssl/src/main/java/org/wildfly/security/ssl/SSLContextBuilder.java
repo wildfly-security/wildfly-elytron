@@ -324,6 +324,7 @@ public final class SSLContextBuilder {
      * @return this builder
      */
     public SSLContextBuilder setResponseTimeout(final int responseTimeout) {
+        Assert.checkMinimumParameter("responseTimeout", 0, responseTimeout);
         this.responseTimeout = responseTimeout;
         return this;
     }
@@ -335,6 +336,7 @@ public final class SSLContextBuilder {
      * @return this builder
      */
     public SSLContextBuilder setCacheSize(final int cacheSize) {
+        Assert.checkMinimumParameter("cacheSize", 0, cacheSize);
         this.cacheSize = cacheSize;
         return this;
     }
@@ -346,6 +348,7 @@ public final class SSLContextBuilder {
      * @return this builder
      */
     public SSLContextBuilder setCacheLifetime(final int cacheLifetime) {
+        Assert.checkMinimumParameter("cacheLifetime", 0, cacheLifetime);
         this.cacheLifetime = cacheLifetime;
         return this;
     }

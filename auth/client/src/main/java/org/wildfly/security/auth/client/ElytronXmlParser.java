@@ -560,6 +560,12 @@ public final class ElytronXmlParser {
                 final boolean initTrustManager = finalTrustStoreSupplier != null || isSet(foundBits, 7);
                 final boolean finalAcceptOcspStapling = acceptOcspStapling;
 
+                // Accepting OCSP stapling only has an effect when a revocation-aware trust manager is
+                // installed (without a trust-store or trust-manager the flag would silently be ignored).
+                if (finalAcceptOcspStapling && !initTrustManager) {
+                    throw xmlLog.xmlAcceptOcspStaplingRequiresTrustManager(location);
+                }
+
                 sslContextsMap.putIfAbsent(name, () -> {
                     final SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
                     sslContextBuilder.setClientMode(true);
@@ -597,7 +603,8 @@ public final class ElytronXmlParser {
     private static boolean parseOcspStaplingType(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder, Version xmlVersion, Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         boolean acceptOcspStapling = false;
-        boolean softFail = false;
+        boolean gotAcceptOcsp = false;
+        boolean gotSoftFail = false;
         boolean gotResponderCertAlias = false;
         boolean gotResponderKeystore = false;
 
@@ -605,17 +612,18 @@ public final class ElytronXmlParser {
             checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
                 case "accept-ocsp": {
-                    if (acceptOcspStapling) throw reader.unexpectedAttribute(i);
+                    if (gotAcceptOcsp) throw reader.unexpectedAttribute(i);
                     if (!xmlVersion.isAtLeast(Version.VERSION_1_8_PREVIEW)) throw reader.unexpectedAttribute(i);
+                    gotAcceptOcsp = true;
                     acceptOcspStapling = reader.getBooleanAttributeValueResolved(i);
                     builder.setOcspStapling(acceptOcspStapling);
                     break;
                 }
                 case "soft-fail": {
-                    if (softFail) throw reader.unexpectedAttribute(i);
+                    if (gotSoftFail) throw reader.unexpectedAttribute(i);
                     if (!xmlVersion.isAtLeast(Version.VERSION_1_8_PREVIEW)) throw reader.unexpectedAttribute(i);
-                    softFail = reader.getBooleanAttributeValueResolved(i);
-                    builder.setSoftFail(softFail);
+                    gotSoftFail = true;
+                    builder.setStaplingSoftFail(reader.getBooleanAttributeValueResolved(i));
                     break;
                 }
                 case "responder-certificate": {
@@ -626,12 +634,21 @@ public final class ElytronXmlParser {
                 }
                 case "responder-keystore": {
                     if (gotResponderKeystore) throw reader.unexpectedAttribute(i);
-                    builder.setOcspResponderCertKeystoreSupplier(keyStoresMap.get(reader.getAttributeValueResolved(i)));
+                    final ExceptionSupplier<KeyStore, ConfigXMLParseException> responderKeyStore = keyStoresMap.get(reader.getAttributeValueResolved(i));
+                    if (responderKeyStore == null) {
+                        throw xmlLog.xmlUnknownKeyStoreSpecified(reader.getLocation());
+                    }
+                    builder.setOcspResponderCertKeystoreSupplier(responderKeyStore);
                     gotResponderKeystore = true;
                     break;
                 }
                 default: throw reader.unexpectedAttribute(i);
             }
+        }
+        // A responder-keystore only serves to locate the responder-certificate; specifying it without
+        // the certificate alias would silently have no effect.
+        if (gotResponderKeystore && ! gotResponderCertAlias) {
+            throw xmlLog.xmlResponderKeystoreWithoutResponderCertificate(reader.getLocation());
         }
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
@@ -658,6 +675,7 @@ public final class ElytronXmlParser {
         boolean preferCrls = false;
         boolean onlyLeafCert = false;
         boolean softFail = false;
+        boolean staplingSoftFail = false;
         URI ocspResponder = null;
         boolean maxCertPathSet = false;
         String responderCertAlias = null;
@@ -717,6 +735,10 @@ public final class ElytronXmlParser {
             this.softFail = softFail;
         }
 
+        public void setStaplingSoftFail(boolean staplingSoftFail) {
+            this.staplingSoftFail = staplingSoftFail;
+        }
+
         public void setOcspResponder(URI ocspResponder) {
             this.ocspResponder = ocspResponder;
         }
@@ -770,11 +792,15 @@ public final class ElytronXmlParser {
                 revocationBuilder.setTrustManagerFactory(trustManagerFactory);
                 revocationBuilder.setTrustStore(trustStore);
                 revocationBuilder.setOnlyEndEntity(onlyLeafCert);
-                revocationBuilder.setSoftFail(softFail);
+                revocationBuilder.setSoftFail(staplingSoftFail);
                 revocationBuilder.setMaxCertPath(maxCertPath);
                 if (responderCertAlias != null) {
                     KeyStore responderStore = responderStoreSupplier != null ? responderStoreSupplier.get() : trustStore;
-                    revocationBuilder.setOcspResponderCert((X509Certificate) responderStore.getCertificate(responderCertAlias));
+                    X509Certificate responderCert = (X509Certificate) responderStore.getCertificate(responderCertAlias);
+                    if (responderCert == null) {
+                        throw xmlLog.keyStoreEntryMissing(xmlLocation, responderCertAlias);
+                    }
+                    revocationBuilder.setOcspResponderCert(responderCert);
                 }
                 return revocationBuilder.build();
             } else {

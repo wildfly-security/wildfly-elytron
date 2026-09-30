@@ -143,22 +143,38 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
 
     @Override
     public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
-        trustManager.checkClientTrusted(chain, authType);
+        if (trustManager instanceof X509ExtendedTrustManager) {
+            ((X509ExtendedTrustManager) trustManager).checkClientTrusted(chain, authType, socket);
+        } else {
+            trustManager.checkClientTrusted(chain, authType);
+        }
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
-        trustManager.checkServerTrusted(chain, authType);
+        if (trustManager instanceof X509ExtendedTrustManager) {
+            ((X509ExtendedTrustManager) trustManager).checkServerTrusted(chain, authType, socket);
+        } else {
+            trustManager.checkServerTrusted(chain, authType);
+        }
     }
 
     @Override
     public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine sslEngine) throws CertificateException {
-        trustManager.checkClientTrusted(chain, authType);
+        if (trustManager instanceof X509ExtendedTrustManager) {
+            ((X509ExtendedTrustManager) trustManager).checkClientTrusted(chain, authType, sslEngine);
+        } else {
+            trustManager.checkClientTrusted(chain, authType);
+        }
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine sslEngine) throws CertificateException {
-        trustManager.checkServerTrusted(chain, authType);
+        if (trustManager instanceof X509ExtendedTrustManager) {
+            ((X509ExtendedTrustManager) trustManager).checkServerTrusted(chain, authType, sslEngine);
+        } else {
+            trustManager.checkServerTrusted(chain, authType);
+        }
     }
 
     @Override

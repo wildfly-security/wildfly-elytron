@@ -218,4 +218,10 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 14008, value = "WildFlyElytronClientDefaultSSLContextProvider could not obtain client default SSLContext")
     NoSuchAlgorithmException couldNotObtainClientDefaultSSLContext();
+
+    @Message(id = 14009, value = "An \"accept-ocsp-stapling\" SSL context requires a \"trust-store\" or \"trust-manager\" to be configured")
+    ConfigXMLParseException xmlAcceptOcspStaplingRequiresTrustManager(@Param Location location);
+
+    @Message(id = 14010, value = "A \"responder-keystore\" was specified without a \"responder-certificate\"")
+    ConfigXMLParseException xmlResponderKeystoreWithoutResponderCertificate(@Param Location location);
 }

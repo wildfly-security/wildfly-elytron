@@ -87,7 +87,7 @@
             <xsd:element name="certificate-revocation-list" type="certificate-revocation-list-type" minOccurs="0" />
             <xsd:element name="certificate-revocation-lists" type="certificate-revocation-lists-type" minOccurs="0" />
             <xsd:element name="ocsp" type="ocsp-type" minOccurs="0"/>
-            <xsd:element name="accept-ocsp-stapling" type="accept-ocsp-stapling-type" minOccurs="0" default="false">
+            <xsd:element name="accept-ocsp-stapling" type="accept-ocsp-stapling-type" minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
                         Indicated whether the client will accept OCSP stapled responses from the server.
@@ -119,7 +119,7 @@
         <xsd:attribute name="accept-ocsp" type="xsd:boolean" use="optional" default="false">
             <xsd:annotation>
                 <xsd:documentation>
-                    Indicates whether the client accepts ocsp stapled requests from the server.
+                    Indicates whether the client accepts ocsp stapled responses from the server.
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>

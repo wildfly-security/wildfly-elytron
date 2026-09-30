@@ -32,12 +32,6 @@
             </key-store>
         </key-stores>
         <ssl-contexts>
-            <ssl-context name="client-ssl-context-clear">
-                <key-store-ssl-certificate key-store-name="client-keystore" alias="testclient1">
-                    <key-store-clear-password password="password"/>
-                </key-store-ssl-certificate>
-                <accept-ocsp-stapling accept-ocsp="true" soft-fail="true"/>
-            </ssl-context>
             <!-- accept-ocsp-stapling with a trust-store but NO responder-certificate: the default
                  use case. Building this context exercises the trust-manager stapling path (ELY-434 B1). -->
             <ssl-context name="client-ssl-context-stapling-no-responder">
@@ -56,9 +50,6 @@
             </rule>
         </authentication-rules>
         <ssl-context-rules>
-            <rule use-ssl-context="client-ssl-context-clear">
-                <match-host name="clear"/>
-            </rule>
             <rule use-ssl-context="client-ssl-context-stapling-no-responder">
                 <match-host name="stapling-no-responder"/>
             </rule>

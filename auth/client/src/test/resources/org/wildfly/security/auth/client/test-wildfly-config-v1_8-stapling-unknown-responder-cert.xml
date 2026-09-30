@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright The WildFly Authors
+  ~ SPDX-License-Identifier: Apache-2.0
+-->
+<!-- Negative case (ELY-434): a responder-certificate alias that is not present in the responder
+     key-store must be rejected when the context is built, instead of silently using no responder
+     certificate. This one parses successfully; the error surfaces when the SSLContext is created. -->
+<configuration>
+    <authentication-client xmlns="urn:elytron:client:preview:1.8">
+        <key-stores>
+            <key-store name="client-keystore" type="JKS">
+                <file name="./target/keystore/client.keystore"/>
+                <key-store-clear-password password="password"/>
+            </key-store>
+        </key-stores>
+        <ssl-contexts>
+            <ssl-context name="stapling-unknown-responder-cert">
+                <trust-store key-store-name="client-keystore"/>
+                <accept-ocsp-stapling accept-ocsp="true" responder-keystore="client-keystore" responder-certificate="no-such-alias"/>
+            </ssl-context>
+        </ssl-contexts>
+        <ssl-context-rules>
+            <rule use-ssl-context="stapling-unknown-responder-cert">
+                <match-host name="stapling-unknown-responder-cert"/>
+            </rule>
+        </ssl-context-rules>
+    </authentication-client>
+</configuration>
