@@ -41,21 +41,6 @@ import static org.wildfly.security.x500.cert.acme.Acme.SIGNATURE;
 import static org.wildfly.security.x500.cert.acme.Acme.TERMS_OF_SERVICE_AGREED;
 import static org.wildfly.security.x500.cert.acme.Acme.URL;
 
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import org.apache.commons.io.IOUtils;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockserver.integration.ClientAndServer;
-import org.mockserver.matchers.Times;
-import org.mockserver.model.HttpRequest;
-import org.mockserver.model.HttpResponse;
-import org.wildfly.common.iteration.ByteIterator;
-import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.x500.cert.X509CertificateChainAndSigningKey;
-
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -77,13 +62,26 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import mockit.Mock;
 import mockit.MockUp;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-
+import org.apache.commons.io.IOUtils;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockserver.integration.ClientAndServer;
+import org.mockserver.matchers.Times;
+import org.mockserver.model.HttpRequest;
+import org.mockserver.model.HttpResponse;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.x500.cert.X509CertificateChainAndSigningKey;
 
 /**
  * Tests for the Automatic Certificate Management Environment (ACME) client SPI. These tests simulate a mock Let's Encrypt
