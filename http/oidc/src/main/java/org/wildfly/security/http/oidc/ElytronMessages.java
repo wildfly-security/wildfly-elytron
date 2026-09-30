@@ -335,5 +335,9 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 23089, value = "Invalid logout token")
     OidcException invalidLogoutToken(@Cause Throwable cause);
+
+    @LogMessage(level = WARN)
+    @Message(id = 23090, value = "Invalid JWKS URL: '%s'")
+    void invalidJwksUrl(String url);
 }
 

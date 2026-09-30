@@ -18,19 +18,25 @@
 
 package org.wildfly.security.auth.realm.token;
 
-import com.nimbusds.jose.Payload;
-import com.nimbusds.jose.PlainHeader;
-import com.nimbusds.jose.PlainObject;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.realm.token.test.util.JwtTestUtil.createClaims;
+import static org.wildfly.security.realm.token.test.util.JwtTestUtil.createJwt;
+import static org.wildfly.security.realm.token.test.util.JwtTestUtil.createRsaJwk;
+import static org.wildfly.security.realm.token.test.util.JwtTestUtil.createTokenDispatcher;
+import static org.wildfly.security.realm.token.test.util.JwtTestUtil.jwksToJson;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -39,6 +45,9 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -61,6 +70,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -73,16 +83,9 @@ import org.wildfly.security.pem.Pem;
 import org.wildfly.security.realm.token.test.util.RsaJwk;
 import org.wildfly.security.ssl.SSLContextBuilder;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.wildfly.security.realm.token.test.util.JwtTestUtil.createClaims;
-import static org.wildfly.security.realm.token.test.util.JwtTestUtil.createJwt;
-import static org.wildfly.security.realm.token.test.util.JwtTestUtil.createRsaJwk;
-import static org.wildfly.security.realm.token.test.util.JwtTestUtil.createTokenDispatcher;
-import static org.wildfly.security.realm.token.test.util.JwtTestUtil.jwksToJson;
+import com.nimbusds.jose.Payload;
+import com.nimbusds.jose.PlainHeader;
+import com.nimbusds.jose.PlainObject;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -93,6 +96,8 @@ public class JwtSecurityRealmTest {
 
     private static final MockWebServer server = new MockWebServer();
     private static final MockWebServer nonTlsServer = new MockWebServer();
+    private static int serverPort;
+    private static int nonTlsServerPort;
 
     private static final String CA_JKS_LOCATION = "./target/test-classes/jwt/ca/jks/";
     private static char[] PASSWORD = "password".toCharArray();
@@ -172,8 +177,10 @@ public class JwtSecurityRealmTest {
         server.useHttps(sslContext.getSocketFactory(), false);
         server.setDispatcher(createTokenDispatcher(jwksResponse));
         nonTlsServer.setDispatcher(createTokenDispatcher(jwksResponse));
-        server.start(50831);
-        nonTlsServer.start(50832);
+        server.start();
+        serverPort = server.getPort();
+        nonTlsServer.start();
+        nonTlsServerPort = nonTlsServer.getPort();
     }
 
     @AfterClass
@@ -194,9 +201,9 @@ public class JwtSecurityRealmTest {
         jwk3.setKid("3");
         server.setDispatcher(dispatcher);
 
-        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
-        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
-        BearerTokenEvidence evidence3 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "1", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:" + serverPort)));
+        BearerTokenEvidence evidence3 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -206,7 +213,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .setJkuTimeout(0) //refresh jwks every time
                         .setJkuMinTimeBetweenRequests(0)
                         .useSslContext(sslContext)
@@ -228,7 +235,7 @@ public class JwtSecurityRealmTest {
         // set the jku url only with key 1
         server.setDispatcher(createTokenDispatcher(jwksToJson(jwk1).toString()));
 
-        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -238,7 +245,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .setJkuTimeout(60000L) // 60s of cache
                         .setJkuMinTimeBetweenRequests(0) // no time betweeen requests
                         .useSslContext(sslContext)
@@ -250,7 +257,7 @@ public class JwtSecurityRealmTest {
 
         // add a new key 2 to the url using normal response
         server.setDispatcher(createTokenDispatcher(jwksResponse));
-        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:" + serverPort)));
 
         // key 1 and 2 should exist now because time between requests is 0
         assertIdentityExist(securityRealm, evidence1);
@@ -262,7 +269,7 @@ public class JwtSecurityRealmTest {
         // set the jku url only with key 1
         server.setDispatcher(createTokenDispatcher(jwksToJson(jwk1).toString()));
 
-        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -272,7 +279,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .setJkuTimeout(60000L) // 60s of cache
                         .setJkuMinTimeBetweenRequests(10000) // 10s between calls
                         .useSslContext(sslContext)
@@ -284,7 +291,7 @@ public class JwtSecurityRealmTest {
 
         // add a new key 2 to the url using normal response
         server.setDispatcher(createTokenDispatcher(jwksResponse));
-        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:" + serverPort)));
 
         // Same result because the minimum time between request avoids the call
         assertIdentityExist(securityRealm, evidence1);
@@ -297,9 +304,9 @@ public class JwtSecurityRealmTest {
         BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "2", null));
         BearerTokenEvidence evidence3 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "1", null));
 
-        BearerTokenEvidence evidence4 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
-        BearerTokenEvidence evidence5 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "2", new URI("https://localhost:50831")));
-        BearerTokenEvidence evidence6 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "1", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence4 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:" + serverPort)));
+        BearerTokenEvidence evidence5 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "2", new URI("https://localhost:" + serverPort)));
+        BearerTokenEvidence evidence6 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         BearerTokenEvidence evidence7 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "3", null));
         BearerTokenEvidence evidence8 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1));
@@ -316,7 +323,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .publicKeys(namedKeys)
                         .publicKey(keyPair3.getPublic())
                         .useSslContext(sslContext)
@@ -337,8 +344,8 @@ public class JwtSecurityRealmTest {
 
     @Test
     public void testUnsecuredJkuEndpoint() throws Exception {
-        checkIdentityDoesNotExist("1", 50832);
-        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50832")));
+        checkIdentityDoesNotExist("1", nonTlsServerPort);
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + nonTlsServerPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -348,7 +355,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50832")
+                        .setAllowedJkuValues("https://localhost:" + nonTlsServerPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -386,7 +393,7 @@ public class JwtSecurityRealmTest {
     public void testStoppedJkuEndpoint() throws Exception {
         server.setDispatcher(createOneTimeDispatcher(jwksResponse)); //Server will provide the keys only once
 
-        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -396,7 +403,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .setJkuTimeout(0) //Keys will be downloaded on every request
                         .setJkuMinTimeBetweenRequests(0)
                         .useSslContext(sslContext)
@@ -405,17 +412,24 @@ public class JwtSecurityRealmTest {
 
         assertIdentityExist(securityRealm, evidence);
 
-        //Now the keys need to be re-cached
-
+        int requestsBefore = server.getRequestCount();
         assertIdentityNotExist(securityRealm, evidence);
+        assertTrue(server.getRequestCount() > requestsBefore);
 
         server.setDispatcher(createTokenDispatcher(jwksResponse));
     }
 
     @Test
-    public void testJkuMultipleKeys() throws Exception {
-        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
-        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
+    public void testJkuEndpointFailureWithNoCachedKeys() throws Exception {
+        Dispatcher alwaysFail = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest recordedRequest) {
+                return new MockResponse().setResponseCode(HttpsURLConnection.HTTP_NOT_FOUND);
+            }
+        };
+        server.setDispatcher(alwaysFail);
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -425,7 +439,32 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .setJkuTimeout(0)
+                        .setJkuMinTimeBetweenRequests(0)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testJkuMultipleKeys() throws Exception {
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:" + serverPort)));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -457,8 +496,8 @@ public class JwtSecurityRealmTest {
 
     @Test
     public void testInvalidKid() throws Exception {
-        checkIdentityDoesNotExist("badkid", 50831);
-        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "badkid", new URI("https://localhost:50831")));
+        checkIdentityDoesNotExist("badkid", serverPort);
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "badkid", new URI("https://localhost:" + serverPort)));
 
         X509TrustManager tm = getTrustManager();
         SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
@@ -468,7 +507,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -698,7 +737,7 @@ public class JwtSecurityRealmTest {
     @Test
     public void testTokenWithJkuValueAllowed() throws Exception {
         BearerTokenEvidence evidence = new BearerTokenEvidence(
-                createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+                createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         SSLContext sslContext = getSSLContext();
 
@@ -707,7 +746,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50832", "https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + nonTlsServerPort, "https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -728,7 +767,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50832", "https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + nonTlsServerPort, "https://localhost:" + serverPort)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -740,7 +779,7 @@ public class JwtSecurityRealmTest {
     @Test
     public void testAllowedJkuValuesNotConfigured() throws Exception {
         BearerTokenEvidence evidence = new BearerTokenEvidence(
-                createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+                createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort)));
 
         SSLContext sslContext = getSSLContext();
 
@@ -773,7 +812,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .setAllowedJkuValues("https://localhost:50832", "https://localhost:50831")
+                        .setAllowedJkuValues("https://localhost:" + nonTlsServerPort, "https://localhost:" + serverPort)
                         .publicKeys(namedKeys)
                         .build())
                 .build();
@@ -781,6 +820,831 @@ public class JwtSecurityRealmTest {
         // token validation should succeed
         assertIdentityExist(securityRealm, evidence1);
         assertIdentityExist(securityRealm, evidence2);
+    }
+
+    @Test
+    public void testJkuFallbackResolvesKidWithoutJkuHeader() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", null));
+
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, evidence);
+    }
+
+    @Test
+    public void testJkuFallbackRejectedWhenNotInAllowedJkuValues() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", null));
+
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:" + nonTlsServerPort)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+    }
+
+    @Test
+    public void testNamedKeysTakePrecedenceOverJkuFallback() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", null));
+
+        Map<String, PublicKey> namedKeys = new LinkedHashMap<>();
+        namedKeys.put("1", keyPair3.getPublic());
+
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .publicKeys(namedKeys)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+    }
+
+    @Test
+    public void testJkuFallbackUsedWhenKidMissingFromNamedKeys() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", null));
+
+        Map<String, PublicKey> namedKeys = new LinkedHashMap<>();
+        namedKeys.put("2", keyPair2.getPublic());
+
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .publicKeys(namedKeys)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, evidence);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetJkuFallbackUrlRejectsInvalidUrl() {
+        JwtValidator.builder().setJkuFallbackUrl("not a url :)");
+    }
+
+    @Test
+    public void testJkuFallbackWithoutSslIsRejected() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", null));
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
+                        .build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetJkuFallbackUrlRejectsNonHttpsScheme() {
+        JwtValidator.builder().setJkuFallbackUrl("http://localhost:" + nonTlsServerPort);
+    }
+
+    @Test
+    public void testJkuFallbackWithEmptyKidDoesNotFetch() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "", null));
+
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        int requestsBefore = server.getRequestCount();
+        assertIdentityNotExist(securityRealm, evidence);
+        assertEquals(requestsBefore, server.getRequestCount());
+    }
+
+    @Test
+    public void testJkuFallbackEndpointFailureWithNoCachedKeys() throws Exception {
+        Dispatcher alwaysFail = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest recordedRequest) {
+                return new MockResponse().setResponseCode(HttpsURLConnection.HTTP_NOT_FOUND);
+            }
+        };
+        server.setDispatcher(alwaysFail);
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", null));
+
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testJkuFallbackRejectedWhenAllowedJkuValuesUnconfigured() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", null));
+
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        // setAllowedJkuValues intentionally not called
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+    }
+
+    // ------------------------------------------------------------------ //
+    //  publicKeyUrl: happy path & config validation                      //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    public void testPublicKeyUrlResolvesKeyWhenKidAbsent() throws Exception {
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair1.getPublic())));
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1));
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, evidence);
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testPublicKeyUrlPrecedesDefaultPublicKeyWhenBothConfigured() throws Exception {
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair1.getPublic())));
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1));
+        SSLContext sslContext = getSSLContext();
+
+        ByteStringBuilder wrongKeyPem = new ByteStringBuilder();
+        Pem.generatePemPublicKey(wrongKeyPem, keyPair3.getPublic());
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .publicKey(wrongKeyPem.toArray())
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        // if the inline (wrong) default key were used instead of publicKeyUrl, this would fail
+        assertIdentityExist(securityRealm, evidence);
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetPublicKeyUrlRejectsNonHttpsScheme() {
+        JwtValidator.builder().setPublicKeyUrl("http://localhost:" + nonTlsServerPort);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetPublicKeyUrlRejectsInvalidUrl() {
+        JwtValidator.builder().setPublicKeyUrl("not a url :)");
+    }
+
+    @Test
+    public void testPublicKeyUrlWithoutSslContextIsInert() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1));
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+    }
+
+    // ------------------------------------------------------------------ //
+    //  publicKeyUrl: PEM edge cases                                      //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    public void testPublicKeyUrlMalformedPemFailsGracefully() throws Exception {
+        server.setDispatcher(createTokenDispatcher(
+                "-----BEGIN PUBLIC KEY-----\nnot-valid-base64-or-der!!!\n-----END PUBLIC KEY-----"));
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1));
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        // must be a normal failed-auth result, never a RealmUnavailableException propagating out
+        RealmIdentity identity = securityRealm.getRealmIdentity(evidence);
+        assertNotNull(identity);
+        assertFalse(identity.exists());
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testPublicKeyUrlEmptyResponseFallsBackToDefaultKey() throws Exception {
+        server.setDispatcher(createTokenDispatcher(""));
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1));
+        SSLContext sslContext = getSSLContext();
+
+        ByteStringBuilder publicKeyPem = new ByteStringBuilder();
+        Pem.generatePemPublicKey(publicKeyPem, keyPair1.getPublic());
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .publicKey(publicKeyPem.toArray())
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, evidence);
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testPublicKeyUrlEmptyResponseNoFallbackFailsNormally() throws Exception {
+        server.setDispatcher(createTokenDispatcher(""));
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1));
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testPublicKeyUrlWrongPemTypeTreatedAsUnusable() throws Exception {
+        SelfSignedX509CertificateAndSigningKey selfSigned = SelfSignedX509CertificateAndSigningKey.builder()
+                .setDn(new X500Principal("CN=wrong-pem-type-test"))
+                .setKeyAlgorithmName("RSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
+                .build();
+        ByteStringBuilder certPem = new ByteStringBuilder();
+        Pem.generatePemContent(certPem, "CERTIFICATE", ByteIterator.ofBytes(selfSigned.getSelfSignedCertificate().getEncoded()));
+
+        server.setDispatcher(createTokenDispatcher(new String(certPem.toArray(), StandardCharsets.US_ASCII)));
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1));
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    // ------------------------------------------------------------------ //
+    //  publicKeyUrl: caching                                             //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    public void testPublicKeyUrlCachedAcrossRequests() throws Exception {
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair1.getPublic())));
+
+        SSLContext sslContext = getSSLContext();
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .setJkuTimeout(60000L)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        int requestsBefore = server.getRequestCount();
+        assertIdentityExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair1, 60, -1)));
+        assertIdentityExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair1, 60, -1)));
+        assertEquals(requestsBefore + 1, server.getRequestCount());
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testPublicKeyUrlRefetchesAfterTtlExpiry() throws Exception {
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair1.getPublic())));
+
+        SSLContext sslContext = getSSLContext();
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .setJkuTimeout(0) // always expired: refetch on every lookup
+                        .setJkuMinTimeBetweenRequests(0)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair1, 60, -1)));
+
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair2.getPublic())));
+        assertIdentityExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair2, 60, -1)));
+        assertIdentityNotExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair1, 60, -1)));
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    // ------------------------------------------------------------------ //
+    //  publicKeyUrl: rate limiting / retry-storm fix                    //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    public void testPublicKeyUrlFetchFailureIsRateLimited() throws Exception {
+        Dispatcher alwaysFail = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest recordedRequest) {
+                return new MockResponse().setResponseCode(HttpsURLConnection.HTTP_NOT_FOUND);
+            }
+        };
+        server.setDispatcher(alwaysFail);
+
+        SSLContext sslContext = getSSLContext();
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .setJkuTimeout(0) // always expired
+                        .setJkuMinTimeBetweenRequests(60000) // long rate-limit window
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1));
+
+        int requestsBefore = server.getRequestCount();
+        assertIdentityNotExist(securityRealm, evidence);
+        int requestsAfterFirst = server.getRequestCount();
+        assertEquals(requestsBefore + 1, requestsAfterFirst);
+
+        // Regression test for the retry-storm bug: the original JwkManager-based cache only advanced
+        // its rate-limit timestamp on a *successful* fetch, so once it started failing every request
+        // re-attempted the fetch with no further throttling. Routing through JwksCache (which advances
+        // the timestamp on both success and failure) must suppress these repeated attempts.
+        assertIdentityNotExist(securityRealm, evidence);
+        assertIdentityNotExist(securityRealm, evidence);
+        assertEquals(requestsAfterFirst, server.getRequestCount());
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testPublicKeyUrlEndpointFailureWithNoCachedKey() throws Exception {
+        Dispatcher alwaysFail = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest recordedRequest) {
+                return new MockResponse().setResponseCode(HttpsURLConnection.HTTP_NOT_FOUND);
+            }
+        };
+        server.setDispatcher(alwaysFail);
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1));
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    // ------------------------------------------------------------------ //
+    //  retryOnVerificationFailure: generalized across all URL sources    //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    public void testRetryOnVerificationFailureDisabledByDefault() throws Exception {
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair1.getPublic())));
+
+        SSLContext sslContext = getSSLContext();
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .setJkuTimeout(60000L)
+                        .setJkuMinTimeBetweenRequests(0)
+                        // setRetryOnVerificationFailure intentionally not called (defaults to false)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair1, 60, -1)));
+
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair2.getPublic())));
+
+        int requestsBefore = server.getRequestCount();
+        assertIdentityNotExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair2, 60, -1)));
+        assertEquals("retry disabled by default: no additional fetch should be attempted",
+                requestsBefore, server.getRequestCount());
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testRetryOnVerificationFailureResolvesRotatedPublicKeyUrl() throws Exception {
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair1.getPublic())));
+
+        SSLContext sslContext = getSSLContext();
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .setJkuTimeout(60000L) // long TTL: a normal lookup would not refetch on its own
+                        .setJkuMinTimeBetweenRequests(0)
+                        .setRetryOnVerificationFailure(true)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        // warm the cache with keyPair1's key
+        assertIdentityExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair1, 60, -1)));
+
+        // rotate at the endpoint without waiting for TTL
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair2.getPublic())));
+
+        // a token signed by the new key fails against the stale cache, but the forced-refresh retry recovers
+        assertIdentityExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair2, 60, -1)));
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testRetryOnVerificationFailureResolvesRotatedJkuKey() throws Exception {
+        server.setDispatcher(createTokenDispatcher(jwksToJson(jwk1).toString()));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .setJkuTimeout(60000L)
+                        .setJkuMinTimeBetweenRequests(0)
+                        .setRetryOnVerificationFailure(true)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:" + serverPort))));
+
+        // rotate: same kid "1" now maps to keyPair2 at the endpoint (kept stable on purpose, to isolate
+        // the retry mechanism from the already-covered "unknown kid triggers refetch" behavior)
+        server.setDispatcher(createTokenDispatcher(jwksToJson(jwk2.setKid("1")).toString()));
+        jwk2.setKid("2");
+
+        assertIdentityExist(securityRealm, new BearerTokenEvidence(
+                createJwt(keyPair2, 60, -1, "1", new URI("https://localhost:" + serverPort))));
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testRetryOnVerificationFailureResolvesRotatedJkuFallbackKey() throws Exception {
+        server.setDispatcher(createTokenDispatcher(jwksToJson(jwk1).toString()));
+
+        SSLContext sslContext = getSSLContext();
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:" + serverPort)
+                        .setJkuFallbackUrl("https://localhost:" + serverPort)
+                        .setJkuTimeout(60000L)
+                        .setJkuMinTimeBetweenRequests(0)
+                        .setRetryOnVerificationFailure(true)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", null)));
+
+        server.setDispatcher(createTokenDispatcher(jwksToJson(jwk2.setKid("1")).toString()));
+        jwk2.setKid("2");
+
+        assertIdentityExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "1", null)));
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testRetryOnVerificationFailureStillRateLimited() throws Exception {
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair1.getPublic())));
+
+        SSLContext sslContext = getSSLContext();
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .setJkuTimeout(60000L)
+                        .setJkuMinTimeBetweenRequests(500)
+                        .setRetryOnVerificationFailure(true)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair1, 60, -1)));
+
+        Thread.sleep(600); // clear the rate-limit window opened by the fetch above
+
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair2.getPublic())));
+        assertIdentityExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair2, 60, -1)));
+        int requestsAfterFirstRetry = server.getRequestCount();
+
+        // immediately after: still within the rate-limit window opened by that retry's fetch, so a
+        // second forced-refresh attempt must be suppressed even though verification fails again
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair3.getPublic())));
+        assertIdentityNotExist(securityRealm, new BearerTokenEvidence(createJwt(keyPair3, 60, -1)));
+        assertEquals("rate limiter must still suppress the forced retry",
+                requestsAfterFirstRetry, server.getRequestCount());
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testRetryOnVerificationFailureNoOpWhenNoUrlBasedKeySource() throws Exception {
+        Map<String, PublicKey> namedKeys = new LinkedHashMap<>();
+        namedKeys.put("1", keyPair2.getPublic()); // deliberately the wrong key for kid "1"
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", null));
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .publicKeys(namedKeys)
+                        .setRetryOnVerificationFailure(true)
+                        .build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+    }
+
+    // ------------------------------------------------------------------ //
+    //  publicKeyUrl: allowedJkuValues independence                      //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    public void testPublicKeyUrlWorksWithoutAllowedJkuValuesConfigured() throws Exception {
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair1.getPublic())));
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1));
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        // setAllowedJkuValues intentionally not called
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, evidence);
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    // ------------------------------------------------------------------ //
+    //  publicKeyUrl: bypass-guard fix                                    //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    public void testPublicKeyUrlAloneDoesNotTriggerSkipSignatureCheckBypass() throws Exception {
+        server.setDispatcher(createTokenDispatcher(pemPublicKey(keyPair1.getPublic())));
+
+        // signed with a DIFFERENT key than what publicKeyUrl serves
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair2, 60, -1));
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        // if the "nothing configured, skip verification" bypass wrongly fired here (because it didn't
+        // account for publicKeyUrl), this would incorrectly succeed despite the signature mismatch
+        assertIdentityNotExist(securityRealm, evidence);
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    // ------------------------------------------------------------------ //
+    //  publicKeyUrl: concurrency                                         //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    public void testConcurrentFirstFetchForPublicKeyUrl() throws Exception {
+        AtomicInteger fetchCount = new AtomicInteger();
+        CountDownLatch insideFetch = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        String pem = pemPublicKey(keyPair1.getPublic());
+
+        server.setDispatcher(new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest recordedRequest) {
+                fetchCount.incrementAndGet();
+                insideFetch.countDown();
+                try {
+                    release.await(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                return new MockResponse().setBody(pem);
+            }
+        });
+
+        SSLContext sslContext = getSSLContext();
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setPublicKeyUrl("https://localhost:" + serverPort)
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1));
+
+        int threadCount = 4;
+        Thread[] threads = new Thread[threadCount];
+        boolean[] results = new boolean[threadCount];
+        for (int i = 0; i < threadCount; i++) {
+            final int idx = i;
+            threads[i] = new Thread(() -> {
+                try {
+                    RealmIdentity identity = securityRealm.getRealmIdentity(evidence);
+                    results[idx] = identity.exists();
+                } catch (Exception e) {
+                    results[idx] = false;
+                }
+            });
+            threads[i].start();
+        }
+
+        assertTrue("Timed out waiting for fetch to start", insideFetch.await(5, TimeUnit.SECONDS));
+        Thread.sleep(50);
+        release.countDown();
+
+        for (Thread t : threads) {
+            t.join(5000);
+        }
+
+        assertEquals(1, fetchCount.get());
+        for (boolean result : results) {
+            assertTrue(result);
+        }
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    private static String pemPublicKey(PublicKey publicKey) {
+        ByteStringBuilder builder = new ByteStringBuilder();
+        Pem.generatePemPublicKey(builder, publicKey);
+        return new String(builder.toArray(), StandardCharsets.US_ASCII);
     }
 
     private void assertIdentityNotExist(SecurityRealm realm, Evidence evidence) throws RealmUnavailableException {

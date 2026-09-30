@@ -21,6 +21,7 @@ package org.wildfly.security.auth.realm.token;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.evidence.BearerTokenEvidence;
+import org.wildfly.security.evidence.Evidence;
 
 /**
  * <p>A {@link TokenValidator} is responsible to validate a {@link BearerTokenEvidence} and support validation and transformation
@@ -40,4 +41,20 @@ public interface TokenValidator {
      * @throws RealmUnavailableException if any error occurs when validating the evidence
      */
     Attributes validate(BearerTokenEvidence evidence) throws RealmUnavailableException;
+
+    Attributes validate(Evidence evidence) throws RealmUnavailableException;
+
+    /**
+     * <p>Whether this validator can attempt verification of evidence of the given type. Used by
+     * {@link TokenSecurityRealm} to report an accurate
+     * {@link org.wildfly.security.auth.SupportLevel} without attempting verification, so that a
+     * realm does not advertise support for an evidence type its configured validator cannot
+     * actually verify.
+     *
+     * @param evidenceType the evidence type to check
+     * @return {@code true} if this validator supports the given evidence type
+     */
+    default boolean supportsEvidence(Class<? extends Evidence> evidenceType) {
+        return BearerTokenEvidence.class.equals(evidenceType);
+    }
 }

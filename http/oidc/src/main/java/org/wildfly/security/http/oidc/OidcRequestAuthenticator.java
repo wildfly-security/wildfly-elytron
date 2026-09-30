@@ -656,7 +656,7 @@ public class OidcRequestAuthenticator {
             jsonEncryption.setAlgorithmConstraints(new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.PERMIT, deployment.getRequestObjectEncryptionAlgValue(), deployment.getRequestObjectEncryptionEncValue()));
             jsonEncryption.setAlgorithmHeaderValue(deployment.getRequestObjectEncryptionAlgValue());
             jsonEncryption.setEncryptionMethodHeaderParameter(deployment.getRequestObjectEncryptionEncValue());
-            PublicKey encPublicKey = deployment.getEncryptionPublicKeyLocator().getPublicKey(null, deployment);
+            PublicKey encPublicKey = deployment.getEncryptionKeyLocator().getPublicKey(null, deployment);
             jsonEncryption.setKey(encPublicKey);
             return jsonEncryption;
         }
