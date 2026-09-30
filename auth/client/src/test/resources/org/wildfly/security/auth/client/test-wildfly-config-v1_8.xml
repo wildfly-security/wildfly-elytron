@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright The WildFly Authors
+  ~ SPDX-License-Identifier: Apache-2.0
+-->
+<configuration>
+    <authentication-client xmlns="urn:elytron:client:preview:1.8">
+        <authentication-configurations>
+            <configuration name="clear-cred">
+                <credentials>
+                    <clear-password password="password"/>
+                </credentials>
+            </configuration>
+            <configuration name="masked-cred">
+                <credentials>
+                    <masked-password iteration-count="12" salt="12345678" masked-password="j37uUs8kG9t2QSWjoxxtDg=="/>
+                </credentials>
+            </configuration>
+        </authentication-configurations>
+        <key-stores>
+            <key-store name="client-keystore" type="JKS">
+                <file name="./target/keystore/client.keystore"/>
+                <key-store-clear-password password="password"/>
+            </key-store>
+            <key-store name="masked-keystore" type="JKS">
+                <file name="./target/keystore/client.keystore"/>
+                <key-store-masked-password algorithm="masked-HMAC-SHA1-AES-128" key-material="testingKeyMaterial" iteration-count="12" salt="12345678" masked-password="9EQZkSe7w+VHasVXbNxuJA==" initialization-vector="QXRFBhXc7Z8dkQaFn1yRzQ=="/>
+            </key-store>
+            <key-store name="empty-type-keystore">
+                <file name="./target/keystore/client.keystore"/>
+                <key-store-clear-password password="password"/>
+            </key-store>
+        </key-stores>
+        <ssl-contexts>
+            <!-- accept-ocsp-stapling with a trust-store but NO responder-certificate: the default
+                 use case. Building this context exercises the trust-manager stapling path (ELY-434 B1). -->
+            <ssl-context name="client-ssl-context-stapling-no-responder">
+                <trust-store key-store-name="client-keystore"/>
+                <accept-ocsp-stapling accept-ocsp="true"/>
+            </ssl-context>
+            <!-- accept-ocsp-stapling with an explicit responder certificate. -->
+            <ssl-context name="client-ssl-context-stapling-responder">
+                <trust-store key-store-name="client-keystore"/>
+                <accept-ocsp-stapling accept-ocsp="true" soft-fail="true" responder-keystore="client-keystore" responder-certificate="testauthority"/>
+            </ssl-context>
+        </ssl-contexts>
+        <authentication-rules>
+            <rule use-configuration="clear-cred">
+                <match-host name="clear"/>
+            </rule>
+        </authentication-rules>
+        <ssl-context-rules>
+            <rule use-ssl-context="client-ssl-context-stapling-no-responder">
+                <match-host name="stapling-no-responder"/>
+            </rule>
+            <rule use-ssl-context="client-ssl-context-stapling-responder">
+                <match-host name="stapling-responder"/>
+            </rule>
+        </ssl-context-rules>
+    </authentication-client>
+</configuration>

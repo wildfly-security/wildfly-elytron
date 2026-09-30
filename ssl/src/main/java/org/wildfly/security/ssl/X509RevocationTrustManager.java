@@ -73,6 +73,9 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
         try {
             PKIXBuilderParameters params = new PKIXBuilderParameters(builder.trustStore, new X509CertSelector());
 
+            // The same PKIX/revocation configuration is applied whether or not OCSP stapling is
+            // accepted: accepting a stapled response is additive on top of the normal revocation
+            // checking, not a replacement for it.
             if (builder.crlStreams != null && ! builder.crlStreams.isEmpty()) {
                 CertStoreParameters csp = new CollectionCertStoreParameters(getCRLs(builder.crlStreams));
                 CertStore store = CertStore.getInstance("Collection", csp);
@@ -101,7 +104,9 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
             }
 
             rc.setOptions(options);
-            rc.setOcspResponder(builder.responderUri);
+            if (builder.responderUri != null) {
+                rc.setOcspResponder(builder.responderUri);
+            }
             params.setRevocationEnabled(true);
             params.addCertPathChecker(rc);
 
@@ -110,7 +115,6 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
             params.setMaxPathLength(builder.maxCertPath);
 
             builder.trustManagerFactory.init(new CertPathTrustManagerParameters(params));
-
             X509TrustManager[] trustManagers = Stream.of(builder.trustManagerFactory.getTrustManagers()).map(trustManager -> trustManager instanceof X509TrustManager ? (X509TrustManager) trustManager : null).filter(Objects::nonNull).toArray(X509TrustManager[]::new);
 
             if (trustManagers.length == 0) {
@@ -139,22 +143,38 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
 
     @Override
     public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
-        trustManager.checkClientTrusted(chain, authType);
+        if (trustManager instanceof X509ExtendedTrustManager) {
+            ((X509ExtendedTrustManager) trustManager).checkClientTrusted(chain, authType, socket);
+        } else {
+            trustManager.checkClientTrusted(chain, authType);
+        }
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
-        trustManager.checkServerTrusted(chain, authType);
+        if (trustManager instanceof X509ExtendedTrustManager) {
+            ((X509ExtendedTrustManager) trustManager).checkServerTrusted(chain, authType, socket);
+        } else {
+            trustManager.checkServerTrusted(chain, authType);
+        }
     }
 
     @Override
     public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine sslEngine) throws CertificateException {
-        trustManager.checkClientTrusted(chain, authType);
+        if (trustManager instanceof X509ExtendedTrustManager) {
+            ((X509ExtendedTrustManager) trustManager).checkClientTrusted(chain, authType, sslEngine);
+        } else {
+            trustManager.checkClientTrusted(chain, authType);
+        }
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine sslEngine) throws CertificateException {
-        trustManager.checkServerTrusted(chain, authType);
+        if (trustManager instanceof X509ExtendedTrustManager) {
+            ((X509ExtendedTrustManager) trustManager).checkServerTrusted(chain, authType, sslEngine);
+        } else {
+            trustManager.checkServerTrusted(chain, authType);
+        }
     }
 
     @Override
