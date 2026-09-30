@@ -63,6 +63,30 @@ public class BearerTokenAuthenticationMechanismTest {
      */
     @Test
     public void testTokenExtractionFromCookie() throws Exception {
+        assertCookieTokenAuthenticates("test_token");
+    }
+
+    @Test
+    public void testCookieTokenWithB64SpecialCharactersAuthenticates() throws Exception {
+        assertCookieTokenAuthenticates("abcABC012-._~+/xyz");
+    }
+
+    @Test
+    public void testCookieTokenWithSinglePaddingAuthenticates() throws Exception {
+        assertCookieTokenAuthenticates("eyJhbGciOiJSUzI1NiJ9=");
+    }
+
+    @Test
+    public void testCookieTokenWithDoublePaddingAuthenticates() throws Exception {
+        assertCookieTokenAuthenticates("eyJhbGciOiJSUzI1NiJ9==");
+    }
+
+    @Test
+    public void testCookieTokenWithTrailingHashAuthenticates() throws Exception {
+        assertCookieTokenAuthenticates("abcdef123#");
+    }
+
+    private void assertCookieTokenAuthenticates(String token) throws Exception {
         mechanism = new BearerTokenAuthenticationMechanism(callbackHandler, true, "AUTH_TOKEN");
 
         new Expectations() {{
@@ -70,7 +94,7 @@ public class BearerTokenAuthenticationMechanismTest {
             result = null; // No Authorization header
 
             request.getCookies();
-            result = Collections.singletonList(new SimpleHttpServerCookie("AUTH_TOKEN", "test_token"));
+            result = Collections.singletonList(new SimpleHttpServerCookie("AUTH_TOKEN", token));
 
             // Expect successful authentication
             request.authenticationComplete();
@@ -84,6 +108,30 @@ public class BearerTokenAuthenticationMechanismTest {
      */
     @Test
     public void testInvalidCookieTokenIsIgnored() throws Exception {
+        assertInvalidCookieTokenIsIgnored("token&injected=evil");
+    }
+
+    @Test
+    public void testCookieTokenWithEmbeddedPaddingIsIgnored() throws Exception {
+        assertInvalidCookieTokenIsIgnored("abc=def");
+    }
+
+    @Test
+    public void testCookieTokenWithAmpersandIsIgnored() throws Exception {
+        assertInvalidCookieTokenIsIgnored("abc&def");
+    }
+
+    @Test
+    public void testCookieTokenWithPercentIsIgnored() throws Exception {
+        assertInvalidCookieTokenIsIgnored("abc%20def");
+    }
+
+    @Test
+    public void testCookieTokenWithQuestionMarkIsIgnored() throws Exception {
+        assertInvalidCookieTokenIsIgnored("abc?def");
+    }
+
+    private void assertInvalidCookieTokenIsIgnored(String invalidToken) throws Exception {
         mechanism = new BearerTokenAuthenticationMechanism(callbackHandler, true, "AUTH_TOKEN");
 
         new Expectations() {{
@@ -91,7 +139,7 @@ public class BearerTokenAuthenticationMechanismTest {
             result = null;
 
             request.getCookies();
-            result = Collections.singletonList(new SimpleHttpServerCookie("AUTH_TOKEN", "token&injected=evil"));
+            result = Collections.singletonList(new SimpleHttpServerCookie("AUTH_TOKEN", invalidToken));
 
             request.noAuthenticationInProgress(withNotNull());
         }};
