@@ -238,6 +238,28 @@ public class AggregateRealmEvidenceTest {
         Assert.assertEquals("Expected team", "Two", identityAttributes.get("team", 0));
     }
 
+    @Test
+    public void testSingleAuthorizationFailsWithPrincipalTransformer() throws Exception {
+        Attributes authenticationAttributes = new MapAttributes();
+        authenticationAttributes.add("team", 0, "One");
+        authenticationAttributes.add("office", 0, "A");
+
+        Attributes authorizationAttributes = new MapAttributes();
+        authorizationAttributes.add("team", 0, "Two");
+
+        Function<Principal, Principal> principalTransformer = new CaseRewriter().asPrincipalRewriter();
+        X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(populateCertificateChain());
+        evidence.setDecodedPrincipal(IDENTITY_PRINCIPAL);
+
+        SecurityRealm testRealm = createSecurityRealm(false, authenticationAttributes, principalTransformer, authorizationAttributes);
+        RealmIdentity identity = testRealm.getRealmIdentity(evidence);
+
+        Assert.assertTrue("Identity exists", identity.exists());
+
+        Attributes identityAttributes = identity.getAuthorizationIdentity().getAttributes();
+        Assert.assertEquals("Expected attribute count.", 0, identityAttributes.size());
+    }
+
     private SecurityRealm createSecurityRealm(boolean applyPrincipalTransformer,Attributes authentication, Function<Principal, Principal> principalTransformer, Attributes... authorization)  throws Exception {
         SecurityRealm authenticationRealm = toSecurityRealm(authentication, "authentication", IDENTITY_PRINCIPAL);
         SecurityRealm[] authorizationRealms = new SecurityRealm[authorization.length];
