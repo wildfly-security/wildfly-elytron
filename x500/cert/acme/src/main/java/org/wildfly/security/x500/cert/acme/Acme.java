@@ -54,6 +54,7 @@ public final class Acme {
     public static final String DETAIL = "detail";
     public static final String DNS = "dns";
     public static final String EXPONENT = "e";
+    public static final String EXTERNAL_ACCOUNT_BINDING = "externalAccountBinding";
     public static final String EXTERNAL_ACCOUNT_REQUIRED = "externalAccountRequired";
     public static final String FINALIZE = "finalize";
     public static final String IDENTIFIER = "identifier";
