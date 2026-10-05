@@ -194,4 +194,40 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 13019, value = "The brute force tracking session cache for security realm '%s' is at capacity, tracking sessions are being evicted.")
     void bruteForceSessionEvicted(String realmName);
 
+    @LogMessage(level = Logger.Level.TRACE)
+    @Message(id = 13020, value = "DistributedSecurityRealm: obtaining realm identity from evidence of type [%s]")
+    void traceDistributedRealmEvidenceLookup(String evidenceType);
+
+    @LogMessage(level = Logger.Level.TRACE)
+    @Message(id = 13021, value = "DistributedSecurityRealm: obtaining realm identity for principal [%s]")
+    void traceDistributedRealmPrincipalLookup(String principal);
+
+    @LogMessage(level = Logger.Level.TRACE)
+    @Message(id = 13022, value = "DistributedSecurityRealm: realm [%d] does not support evidence verification, skipping")
+    void traceDistributedRealmSkippingRealmNoEvidenceSupport(int realmIndex);
+
+    @LogMessage(level = Logger.Level.TRACE)
+    @Message(id = 13023, value = "DistributedSecurityRealm: realm [%d] identity does not support evidence verification, skipping")
+    void traceDistributedRealmSkippingIdentityNoEvidenceSupport(int realmIndex);
+
+    @LogMessage(level = Logger.Level.TRACE)
+    @Message(id = 13024, value = "DistributedSecurityRealm: evidence verification succeeded in realm [%d]")
+    void traceDistributedRealmEvidenceVerificationSucceeded(int realmIndex);
+
+    @LogMessage(level = Logger.Level.TRACE)
+    @Message(id = 13025, value = "DistributedSecurityRealm: evidence verification failed in realm [%d], trying next realm")
+    void traceDistributedRealmEvidenceVerificationFailed(int realmIndex);
+
+    @LogMessage(level = Logger.Level.TRACE)
+    @Message(id = 13026, value = "DistributedSecurityRealm: identity for principal [%s] not found in realm [%d], trying next realm")
+    void traceDistributedRealmIdentityNotFound(String principal, int realmIndex);
+
+    @LogMessage(level = Logger.Level.TRACE)
+    @Message(id = 13027, value = "DistributedSecurityRealm: identity for principal [%s] found in realm [%d]")
+    void traceDistributedRealmIdentityFound(String principal, int realmIndex);
+
+    @LogMessage(level = Logger.Level.TRACE)
+    @Message(id = 13028, value = "DistributedSecurityRealm: all realms exhausted, no identity found")
+    void traceDistributedRealmAllRealmsExhausted();
+
 }

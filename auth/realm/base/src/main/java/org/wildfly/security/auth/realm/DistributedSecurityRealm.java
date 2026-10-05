@@ -61,11 +61,13 @@ public class DistributedSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity getRealmIdentity(final Evidence evidence) throws RealmUnavailableException {
+        ElytronMessages.log.traceDistributedRealmEvidenceLookup(evidence.getClass().getSimpleName());
         return new EvidenceDistributedIdentity(evidence);
     }
 
     @Override
     public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
+        ElytronMessages.log.traceDistributedRealmPrincipalLookup(principal.getName());
         return new PrincipalDistributedIdentity(principal);
     }
 
@@ -106,6 +108,7 @@ public class DistributedSecurityRealm implements SecurityRealm {
         private boolean nextIdentity() throws RealmUnavailableException {
             currentIdentity.dispose();
             if (nextRealm >= securityRealms.length) {
+                ElytronMessages.log.traceDistributedRealmAllRealmsExhausted();
                 currentIdentity = RealmIdentity.NON_EXISTENT;
                 return false;
             }
@@ -113,9 +116,11 @@ public class DistributedSecurityRealm implements SecurityRealm {
                 currentIdentity = securityRealms[nextRealm].getRealmIdentity(evidence);
                 nextRealm++;
                 if (currentIdentity.getEvidenceVerifySupport(evidence.getClass(), evidenceAlgorithm).isNotSupported()) {
+                    ElytronMessages.log.traceDistributedRealmSkippingIdentityNoEvidenceSupport(nextRealm - 1);
                     return nextIdentity();
                 }
             } else {
+                ElytronMessages.log.traceDistributedRealmSkippingRealmNoEvidenceSupport(nextRealm);
                 nextRealm++;
                 return nextIdentity();
             }
@@ -158,8 +163,10 @@ public class DistributedSecurityRealm implements SecurityRealm {
         public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
             do {
                 if (currentIdentity.verifyEvidence(evidence)) {
+                    ElytronMessages.log.traceDistributedRealmEvidenceVerificationSucceeded(nextRealm - 1);
                     return true;
                 }
+                ElytronMessages.log.traceDistributedRealmEvidenceVerificationFailed(nextRealm - 1);
             } while (nextIdentity());
             return false;
         }
@@ -194,6 +201,7 @@ public class DistributedSecurityRealm implements SecurityRealm {
         private boolean nextIdentity() throws RealmUnavailableException {
             currentIdentity.dispose();
             if (nextRealm >= securityRealms.length) {
+                ElytronMessages.log.traceDistributedRealmAllRealmsExhausted();
                 currentIdentity = RealmIdentity.NON_EXISTENT;
                 return false;
             }
@@ -213,8 +221,10 @@ public class DistributedSecurityRealm implements SecurityRealm {
             }
             nextRealm++;
             if (!doesIdentityExist) {
+                ElytronMessages.log.traceDistributedRealmIdentityNotFound(principal.getName(), nextRealm - 1);
                 return nextIdentity();
             }
+            ElytronMessages.log.traceDistributedRealmIdentityFound(principal.getName(), nextRealm - 1);
             return true;
         }
 
