@@ -24,6 +24,8 @@ import org.wildfly.security.auth.realm.token.TokenValidator;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.evidence.BearerTokenEvidence;
+import org.wildfly.security.evidence.CommonTokenEvidence;
+import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.pem.PemEntry;
 
@@ -36,6 +38,9 @@ import jakarta.json.JsonValue;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.InvalidKeyException;
@@ -43,6 +48,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -117,25 +123,45 @@ public class JwtValidator implements TokenValidator {
 
     @Override
     public Attributes validate(BearerTokenEvidence evidence) throws RealmUnavailableException {
-        checkNotNullParam("evidence", evidence);
-        String jwt = evidence.getToken();
-        String[] parts = jwt.split("\\.", -1);
+        return validate((Evidence) evidence);
+    }
 
-        if (parts.length < 3) {
-            throw log.tokenRealmJwtInvalidFormat();
+    /**
+     * Process an RSA or EC (Ellipitic Curve) based JWT token.
+     * @param evidence
+     * @return claims as Attributes
+     * @throws RealmUnavailableException
+     */
+    public Attributes validate(Evidence evidence) throws RealmUnavailableException {
+        checkNotNullParam("evidence", evidence);
+        String jwt = null;
+        if (evidence instanceof CommonTokenEvidence) {
+            jwt = ((CommonTokenEvidence) evidence).getToken();
         }
 
-        String encodedHeader = parts[0];
-        String encodedClaims = parts[1];
-        String encodedSignature = parts[2];
+        // Split the JWT into its three parts (header, payload, signature)
+        if (jwt != null) {
+            String[] parts = jwt.split("\\.", -1);
 
-        JsonObject claims = extractClaims(encodedClaims);
+            if (parts.length < 3) {
+                throw log.tokenRealmJwtInvalidFormat();
+            }
 
-        if (verifySignature(encodedHeader, encodedClaims, encodedSignature)
+            // process the claims parts
+            JsonObject claims = extractClaims(parts[1]);
+
+            boolean isVerifiedSignature = false;
+            if (evidence instanceof BearerTokenEvidence) {
+                isVerifiedSignature = verifySignature(parts, (CommonTokenEvidence)evidence);
+            } else if (evidence instanceof CommonTokenEvidence) {
+                isVerifiedSignature = verifyECDSASignature(parts, (CommonTokenEvidence)evidence);
+            }
+            if (isVerifiedSignature
                 && hasValidIssuer(claims)
                 && hasValidAudience(claims)
                 && verifyTimeConstraints(claims)) {
-            return toAttributes(claims);
+                return toAttributes(claims);
+            }
         }
 
         return null;
@@ -181,16 +207,19 @@ public class JwtValidator implements TokenValidator {
         return retValue;
     }
 
-    private boolean verifySignature(String encodedHeader, String encodedClaims, String encodedSignature) throws RealmUnavailableException {
+    private boolean verifySignature(String[] parts, CommonTokenEvidence evidence) throws RealmUnavailableException {
         if (defaultPublicKey == null && jwkManager == null && namedKeys.isEmpty()) {
             return true;
         }
 
-        try {
-            Base64.Decoder urlDecoder = Base64.getUrlDecoder();
-            byte[] decodedSignature = urlDecoder.decode(encodedSignature);
+        String encodedHeader = parts[0];
+        String encodedClaims = parts[1];
+        String encodedSignature = parts[2];
 
-            Signature signature = createSignature(encodedHeader, encodedClaims);
+        try {
+            byte[] decodedSignature = Base64.getUrlDecoder().decode(encodedSignature);
+
+            Signature signature = createSignature(encodedHeader, encodedClaims, evidence);
             boolean verify = signature != null ? ByteIterator.ofBytes(decodedSignature).verify(signature) : false;
 
             if (!verify) {
@@ -201,6 +230,111 @@ public class JwtValidator implements TokenValidator {
         } catch (Exception cause) {
             throw log.tokenRealmJwtSignatureCheckFailed(cause);
         }
+    }
+
+    private boolean verifyECDSASignature(String[] parts, CommonTokenEvidence evidence) {
+        if (defaultPublicKey == null && jwkManager == null && namedKeys.isEmpty()) {
+            return true;
+        }
+
+        // The data that was signed is "header.payload" (using Base64URL encoding)
+        String signedData = parts[0] + "." + parts[1];
+        byte[] signedDataBytes = signedData.getBytes();
+
+        // Decode the signature part
+        byte[] jwsSignatureBytes = Base64.getUrlDecoder().decode(parts[2]);
+
+        // IMPORTANT: Convert JWS P1363 signature format to DER format
+        // java.security.Signature "SHA256withECDSA" expects ASN.1/DER encoding.
+        String headerAlg = null;
+        try {
+            byte[] derSignature = convertP1363ToDER(jwsSignatureBytes);
+
+            // Decode the header. Retrieve the EC hashDesignator. Lookup the
+            // corresponding signature algorithm.
+            String encodedHeader = parts[0];
+            byte[] headerDecoded = Base64.getUrlDecoder().decode(encodedHeader);
+            JsonObject headers = null;
+            try (final JsonReader jsonReader = Json.createReader(ByteIterator.ofBytes(headerDecoded).asInputStream())) {
+                headers = jsonReader.readObject();
+            }
+            headerAlg = resolveAlgorithm(headers, evidence);
+
+            // Retrieve the user's publicKey
+            PublicKey publicKey = resolvePublicKey(headers);
+            if (publicKey == null) {
+                log.debug("Public key could not be resolved.");
+                return false;
+            }
+
+            // Initialize the Signature object
+            Signature verifier = Signature.getInstance(headerAlg);
+            verifier.initVerify(publicKey);
+            verifier.update(signedDataBytes);
+
+            // Perform the verification
+            boolean verfiedSig = verifier.verify(derSignature);
+            log.debug("Signature verifcation is: " + verfiedSig);
+            return verfiedSig;
+
+        } catch (IOException e) {
+            throw log.errorCreatingEncodeDER(e.getMessage());
+        } catch (NoSuchAlgorithmException ee) {
+            throw log.unknownSignatureAlgorithm(headerAlg);
+        } catch (InvalidKeyException eee) {
+            throw log.invalidPublicKeyUsedInValidation(eee.getMessage());
+        } catch (SignatureException eeee) {
+            throw log.unableToValidateSignature(eeee.getMessage());
+        }
+    }
+
+    /**
+     * Converts a (P1363 signature) raw JWS concatenated R+S signature to ASN.1 DER format.
+     * @param p1363Sig The raw bytes of the P1363 signature
+     * @return The DER encoded signature bytes
+     */
+    private byte[] convertP1363ToDER(byte[] p1363Sig) throws IOException {
+        if (p1363Sig.length % 2 != 0) {
+            throw new IllegalArgumentException("Invalid P1363 signature length.");
+        }
+
+        int halfLength = p1363Sig.length / 2;
+
+        // Split into r and s components
+        byte[] rBytes = Arrays.copyOfRange(p1363Sig, 0, halfLength);
+        byte[] sBytes = Arrays.copyOfRange(p1363Sig, halfLength, p1363Sig.length);
+
+        // Convert to BigInteger (1 ensures positive signum to prevent negative interpretation)
+        BigInteger r = new BigInteger(1, rBytes);
+        BigInteger s = new BigInteger(1, sBytes);
+
+        return encodeDER(r, s);
+    }
+
+    private byte[] encodeDER(BigInteger r, BigInteger s) throws IOException {
+        byte[] rDer = r.toByteArray();
+        byte[] sDer = s.toByteArray();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        // Write the Sequence Header (0x30)
+        baos.write(0x30);
+
+        // Total length = (Type + Len + rContent) + (Type + Len + sContent)
+        int totalLength = (2 + rDer.length) + (2 + sDer.length);
+        baos.write(totalLength);
+
+        // Write r as an Integer (0x02)
+        baos.write(0x02);
+        baos.write(rDer.length);
+        baos.write(rDer);
+
+        // Write s as an Integer (0x02)
+        baos.write(0x02);
+        baos.write(sDer.length);
+        baos.write(sDer);
+
+        return baos.toByteArray();
     }
 
     private boolean hasValidAudience(JsonObject claims) throws RealmUnavailableException {
@@ -251,7 +385,7 @@ public class JwtValidator implements TokenValidator {
         return valid;
     }
 
-    private Signature createSignature(String encodedHeader, String encodedClaims) throws NoSuchAlgorithmException, SignatureException, RealmUnavailableException {
+    private Signature createSignature(String encodedHeader, String encodedClaims, CommonTokenEvidence evidence) throws NoSuchAlgorithmException, SignatureException, RealmUnavailableException {
 
         byte[] headerDecoded = Base64.getUrlDecoder().decode(encodedHeader);
         JsonObject headers = null;
@@ -259,7 +393,7 @@ public class JwtValidator implements TokenValidator {
             headers = jsonReader.readObject();
         }
 
-        String headerAlg = resolveAlgorithm(headers);
+        String headerAlg = resolveAlgorithm(headers, evidence);
         Signature signature = Signature.getInstance(headerAlg);
         try {
             PublicKey publicKey = resolvePublicKey(headers);
@@ -269,7 +403,7 @@ public class JwtValidator implements TokenValidator {
             }
             signature.initVerify(publicKey);
         } catch (InvalidKeyException e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
             return null;
         }
 
@@ -278,7 +412,7 @@ public class JwtValidator implements TokenValidator {
         return signature;
     }
 
-    private String resolveAlgorithm(JsonObject headers) {
+    private String resolveAlgorithm(JsonObject headers, CommonTokenEvidence evidence) {
         JsonString algClaim = (JsonString) headers.get("alg");
 
         if (algClaim == null) {
@@ -289,16 +423,11 @@ public class JwtValidator implements TokenValidator {
 
         log.debugf("Token is using algorithm [%s]", algorithm);
 
-        switch (algorithm) {
-            case "RS256":
-                return "SHA256withRSA";
-            case "RS384":
-                return "SHA384withRSA";
-            case "RS512":
-                return "SHA512withRSA";
-            default:
-                throw log.tokenRealmJwtSignatureInvalidAlgorithm(algorithm);
+        String sigAlgorithm = evidence.algorithmLookup(algorithm);
+        if (sigAlgorithm == null) {
+            throw log.tokenRealmJwtSignatureInvalidAlgorithm(algorithm);
         }
+        return sigAlgorithm;
     }
 
     private PublicKey resolvePublicKey(JsonObject headers) {

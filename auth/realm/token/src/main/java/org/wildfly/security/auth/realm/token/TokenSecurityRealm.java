@@ -29,6 +29,8 @@ import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.BearerTokenEvidence;
+import org.wildfly.security.evidence.CommonTokenEvidence;
+import org.wildfly.security.evidence.EllipticCurveTokenEvidence;
 import org.wildfly.security.evidence.Evidence;
 
 import java.security.Principal;
@@ -90,10 +92,9 @@ public final class TokenSecurityRealm implements SecurityRealm {
 
     @Override
     public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
-        if (isBearerTokenEvidence(evidenceType)) {
+        if (isBearerTokenEvidence(evidenceType) || isEllipticCurveEvidence(evidenceType)) {
             return SupportLevel.POSSIBLY_SUPPORTED;
         }
-
         return SupportLevel.UNSUPPORTED;
     }
 
@@ -103,6 +104,14 @@ public final class TokenSecurityRealm implements SecurityRealm {
 
     private boolean isBearerTokenEvidence(Class<?> evidenceType) {
         return BearerTokenEvidence.class.equals(evidenceType);
+    }
+
+    private boolean isEllipticCurveEvidence(Evidence evidence) {
+        return evidence != null && isEllipticCurveEvidence(evidence.getClass());
+    }
+
+    private boolean isEllipticCurveEvidence(Class<?> evidenceType) {
+        return EllipticCurveTokenEvidence.class.equals(evidenceType);
     }
 
     /**
@@ -127,15 +136,11 @@ public final class TokenSecurityRealm implements SecurityRealm {
 
     final class TokenRealmIdentity implements RealmIdentity {
 
-        private final BearerTokenEvidence evidence;
+        private final Evidence evidence;
         private Attributes claims;
 
         TokenRealmIdentity(Evidence evidence) {
-            if (isBearerTokenEvidence(evidence)) {
-                this.evidence = BearerTokenEvidence.class.cast(evidence);
-            } else {
-                this.evidence = null;
-            }
+            this.evidence = evidence;
         }
 
         @Override
@@ -191,7 +196,7 @@ public final class TokenSecurityRealm implements SecurityRealm {
 
         @Override
         public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
-            if (isBearerTokenEvidence(evidenceType)) {
+            if (isBearerTokenEvidence(evidenceType) || isEllipticCurveEvidence(evidenceType)) {
                 return SupportLevel.SUPPORTED;
             }
 
@@ -210,17 +215,18 @@ public final class TokenSecurityRealm implements SecurityRealm {
         }
 
         private Attributes validateToken(Evidence evidence) throws RealmUnavailableException {
-            if (!isBearerTokenEvidence(evidence)) {
+            if (!isBearerTokenEvidence(evidence) && !isEllipticCurveEvidence(evidence)) {
                 return null;
             }
-            BearerTokenEvidence tokenEvidence = BearerTokenEvidence.class.cast(evidence);
+
             try {
-                setClaims(strategy.validate(tokenEvidence));
+                setClaims(strategy.validate(evidence));
                 return this.claims;
             } catch (RealmUnavailableException rue) {
                 throw rue;
             } catch (Exception unknown) {
-                ElytronMessages.log.debugf(unknown, "Failed to validate token evidence [%s]", tokenEvidence.getToken());
+                ElytronMessages.log.debugf(unknown, "Failed to validate token evidence [%s]",
+                    ((CommonTokenEvidence) evidence).getToken());
             }
             return null;
         }
