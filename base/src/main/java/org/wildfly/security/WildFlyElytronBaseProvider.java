@@ -27,11 +27,13 @@ import java.lang.reflect.Constructor;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Provider.Service;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.function.Consumer;
 
 /**
@@ -64,47 +66,49 @@ public abstract class WildFlyElytronBaseProvider extends VersionedProvider {
     }
 
     protected void putPasswordImplementations() {
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "clear", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "crypt-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "sun-crypt-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "sun-crypt-md5-bare-salt", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "crypt-sha-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "crypt-sha-512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "simple-digest-md2", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "simple-digest-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "simple-digest-sha-1", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "simple-digest-sha-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "simple-digest-sha-384", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "simple-digest-sha-512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "digest-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "digest-sha", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "digest-sha-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "digest-sha-384", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "digest-sha-512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "digest-sha-512-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "password-salt-digest-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "password-salt-digest-sha-1", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "password-salt-digest-sha-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "password-salt-digest-sha-384", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "password-salt-digest-sha-512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "salt-password-digest-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "salt-password-digest-sha-1", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "salt-password-digest-sha-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "salt-password-digest-sha-384", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "salt-password-digest-sha-512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "crypt-des", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "bsd-crypt-des", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "bcrypt", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "scram-sha-1", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "scram-sha-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "scram-sha-384", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "scram-sha-512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "otp-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "otp-sha1", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "otp-sha256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "otp-sha384", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "otp-sha512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putMakedPasswordImplementations(this::putService, this);
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "clear", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "crypt-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "sun-crypt-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "sun-crypt-md5-bare-salt", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "crypt-sha-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "crypt-sha-512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "simple-digest-md2", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "simple-digest-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "simple-digest-sha-1", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "simple-digest-sha-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "simple-digest-sha-384", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "simple-digest-sha-512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "digest-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "digest-sha", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "digest-sha-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "digest-sha-384", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "digest-sha-512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "digest-sha-512-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "password-salt-digest-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "password-salt-digest-sha-1", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "password-salt-digest-sha-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "password-salt-digest-sha-384", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "password-salt-digest-sha-512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "salt-password-digest-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "salt-password-digest-sha-1", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "salt-password-digest-sha-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "salt-password-digest-sha-384", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "salt-password-digest-sha-512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "crypt-des", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "bsd-crypt-des", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "bcrypt", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "scram-sha-1", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "scram-sha-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "scram-sha-384", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "scram-sha-512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "otp-md5", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "otp-sha1", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "otp-sha256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "otp-sha384", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, "otp-sha512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        for (String algorithm : MASKED_ALGORITHMS) {
+            putService(new ProviderService(this, PASSWORD_FACTORY_TYPE, algorithm, "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap, false, false));
+        }
     }
 
     static void putMakedPasswordImplementations(Consumer<Service> consumer, Provider provider) {
@@ -116,46 +120,70 @@ public abstract class WildFlyElytronBaseProvider extends VersionedProvider {
     protected void putAlgorithmParametersImplementations() {
         putService(new Service(this, ALG_PARAMS_TYPE, "RSA", "org.wildfly.security.key.RSAParameterSpiImpl", emptyList, emptyMap));
 
-        putService(new Service(this, ALG_PARAMS_TYPE, "crypt-md5", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "sun-crypt-md5", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "sun-crypt-md5-bare-salt", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "crypt-sha-256", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "crypt-sha-512", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "digest-md5", "org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "digest-sha", "org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "digest-sha-256", "org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "digest-sha-384", "org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "digest-sha-512", "org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "digest-sha-512-256", "org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "password-salt-digest-md5", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "password-salt-digest-sha-1", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "password-salt-digest-sha-256", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "password-salt-digest-sha-384", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "password-salt-digest-sha-512", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "salt-password-digest-md5", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "salt-password-digest-sha-1", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "salt-password-digest-sha-256", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "salt-password-digest-sha-384", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "salt-password-digest-sha-512", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "crypt-des", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "bsd-crypt-des", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "bcrypt", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "scram-sha-1", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "scram-sha-256", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "scram-sha-384", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "scram-sha-512", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "otp-md5", "org.wildfly.security.password.impl.OneTimePasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "otp-sha1", "org.wildfly.security.password.impl.OneTimePasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "otp-sha256", "org.wildfly.security.password.impl.OneTimePasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "otp-sha384", "org.wildfly.security.password.impl.OneTimePasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "otp-sha512", "org.wildfly.security.password.impl.OneTimePasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putMakedAlgorithmParametersImplementations(this::putService, this);
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "crypt-md5", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "sun-crypt-md5", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "sun-crypt-md5-bare-salt", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "crypt-sha-256", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "crypt-sha-512", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "digest-md5", "org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "digest-sha", "org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "digest-sha-256", "org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "digest-sha-384", "org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "digest-sha-512", "org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "digest-sha-512-256", "org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "password-salt-digest-md5", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "password-salt-digest-sha-1", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "password-salt-digest-sha-256", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "password-salt-digest-sha-384", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "password-salt-digest-sha-512", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "salt-password-digest-md5", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "salt-password-digest-sha-1", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "salt-password-digest-sha-256", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "salt-password-digest-sha-384", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "salt-password-digest-sha-512", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "crypt-des", "org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "bsd-crypt-des", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "bcrypt", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "scram-sha-1", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "scram-sha-256", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "scram-sha-384", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "scram-sha-512", "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "otp-md5", "org.wildfly.security.password.impl.OneTimePasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "otp-sha1", "org.wildfly.security.password.impl.OneTimePasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "otp-sha256", "org.wildfly.security.password.impl.OneTimePasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "otp-sha384", "org.wildfly.security.password.impl.OneTimePasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        putService(new ProviderService(this, ALG_PARAMS_TYPE, "otp-sha512", "org.wildfly.security.password.impl.OneTimePasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        for (String algorithm : MASKED_ALGORITHMS) {
+            putService(new ProviderService(this, ALG_PARAMS_TYPE, algorithm, "org.wildfly.security.password.impl.MaskedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap, false, false));
+        }
     }
 
     static void putMakedAlgorithmParametersImplementations(Consumer<Service> consumer, Provider provider) {
         for (String algorithm : MASKED_ALGORITHMS) {
             consumer.accept(new Service(provider, ALG_PARAMS_TYPE, algorithm, "org.wildfly.security.password.impl.MaskedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
         }
+    }
+
+    private static volatile List<ServiceImplementationFactory> implementationFactories;
+
+    /**
+     * The {@link ServiceImplementationFactory} instances registered with the service loader, loaded once.
+     */
+    private static List<ServiceImplementationFactory> implementationFactories() {
+        List<ServiceImplementationFactory> factories = implementationFactories;
+        if (factories == null) {
+            synchronized (WildFlyElytronBaseProvider.class) {
+                factories = implementationFactories;
+                if (factories == null) {
+                    List<ServiceImplementationFactory> loaded = new ArrayList<>();
+                    for (ServiceImplementationFactory factory : ServiceLoader.load(ServiceImplementationFactory.class, WildFlyElytronBaseProvider.class.getClassLoader())) {
+                        loaded.add(factory);
+                    }
+                    factories = implementationFactories = Collections.unmodifiableList(loaded);
+                }
+            }
+        }
+        return factories;
     }
 
     protected class ProviderService extends Service {
@@ -184,7 +212,7 @@ public abstract class WildFlyElytronBaseProvider extends VersionedProvider {
                     synchronized(this) {
                         instance = this.instance;
                         if (instance == null || (response = instance.get()) == null) {
-                            response = withProvider ? newInstance() : super.newInstance(constructorParameter);
+                            response = createInstance(constructorParameter);
                             this.instance = new SoftReference<Object>(response);
                         }
                     }
@@ -193,6 +221,16 @@ public abstract class WildFlyElytronBaseProvider extends VersionedProvider {
                 return response;
             }
 
+            return createInstance(constructorParameter);
+        }
+
+        private Object createInstance(Object constructorParameter) throws NoSuchAlgorithmException {
+            for (ServiceImplementationFactory factory : implementationFactories()) {
+                Object instance = factory.newInstance(getClassName(), WildFlyElytronBaseProvider.this);
+                if (instance != null) {
+                    return instance;
+                }
+            }
             return withProvider ? newInstance() : super.newInstance(constructorParameter);
         }
 
