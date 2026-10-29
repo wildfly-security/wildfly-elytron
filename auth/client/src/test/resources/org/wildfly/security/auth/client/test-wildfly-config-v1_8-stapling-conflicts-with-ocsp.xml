@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright The WildFly Authors
+  ~ SPDX-License-Identifier: Apache-2.0
+-->
+<!-- Accept-ocsp-stapling combined with <ocsp> must not also specify its own soft-fail, responder-certificate 
+     or responder-keystore, since those would compete with the ones already applied from <ocsp>. -->
+<configuration>
+    <authentication-client xmlns="urn:elytron:client:preview:1.8">
+        <key-stores>
+            <key-store name="client-keystore" type="JKS">
+                <file name="./target/keystore/client.keystore"/>
+                <key-store-clear-password password="password"/>
+            </key-store>
+        </key-stores>
+        <ssl-contexts>
+            <ssl-context name="stapling-conflicts-with-ocsp">
+                <trust-store key-store-name="client-keystore"/>
+                <ocsp/>
+                <accept-ocsp-stapling accept-ocsp="true" soft-fail="true"/>
+            </ssl-context>
+        </ssl-contexts>
+        <ssl-context-rules>
+            <rule use-ssl-context="stapling-conflicts-with-ocsp">
+                <match-host name="stapling-conflicts-with-ocsp"/>
+            </rule>
+        </ssl-context-rules>
+    </authentication-client>
+</configuration>

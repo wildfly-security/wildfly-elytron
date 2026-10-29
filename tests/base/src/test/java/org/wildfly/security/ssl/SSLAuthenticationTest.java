@@ -47,8 +47,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -69,7 +71,9 @@ import org.bouncycastle.cert.X509v2CRLBuilder;
 import org.bouncycastle.openssl.MiscPEMGenerator;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.util.io.pem.PemWriter;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.common.Assert;
@@ -100,16 +104,51 @@ import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
 // has dependency on wildfly-elytron-client, wildfly-elytron-x500-cert, wildfly-elytron-realm, wildly-elytron-x500-deprecated
 public class SSLAuthenticationTest {
 
+    // Properties the stapling tests in this class can set via SSLContextBuilder.build() or the
+    // XML client config; these are JVM-wide JDK/Security properties, not reset by build() itself.
+    private static final String[] STAPLING_SYSTEM_PROPERTIES = {
+            "jdk.tls.server.enableStatusRequestExtension",
+            "jdk.tls.client.enableStatusRequestExtension",
+            "jdk.tls.stapling.responseTimeout",
+            "jdk.tls.stapling.cacheSize",
+            "jdk.tls.stapling.cacheLifetime",
+            "jdk.tls.stapling.responderURI",
+            "jdk.tls.stapling.responderOverride",
+            "jdk.tls.stapling.ignoreExtensions",
+    };
+    private final Map<String, String> staplingSystemPropertySnapshot = new HashMap<>();
+    private String staplingOcspEnableSnapshot;
+
+    @Before
+    public void snapshotStaplingProperties() {
+        for (String name : STAPLING_SYSTEM_PROPERTIES) {
+            staplingSystemPropertySnapshot.put(name, System.getProperty(name));
+        }
+        staplingOcspEnableSnapshot = Security.getProperty("ocsp.enable");
+    }
+
+    @After
+    public void restoreStaplingProperties() {
+        for (Map.Entry<String, String> entry : staplingSystemPropertySnapshot.entrySet()) {
+            if (entry.getValue() == null) {
+                System.clearProperty(entry.getKey());
+            } else {
+                System.setProperty(entry.getKey(), entry.getValue());
+            }
+        }
+        Security.setProperty("ocsp.enable", staplingOcspEnableSnapshot != null ? staplingOcspEnableSnapshot : "false");
+    }
+
     private static final int OCSP_PORT = 4854;
     private final int TESTING_PORT = 18201;
     private static final char[] PASSWORD = "Elytron".toCharArray();
 
-    private static final String JKS_LOCATION = "./target/test-classes/pkcs12";
+    private static final String PKCS_LOCATION = "./target/test-classes/pkcs12";
     private static final String CA_CRL_LOCATION = "./target/test-classes/ca/crl";
     private static final String ICA_CRL_LOCATION = "./target/test-classes/ica/crl";
     private static final File WORKING_DIR_CACRL = new File(CA_CRL_LOCATION);
     private static final File WORKING_DIR_ICACRL = new File(ICA_CRL_LOCATION);
-    private static final File SHORTWINGED_FILE = new File(JKS_LOCATION, "shortwinged.keystore");
+    private static final File SHORTWINGED_FILE = new File(PKCS_LOCATION, "shortwinged.keystore");
     private static final File CA_BLANK_PEM_CRL = new File(WORKING_DIR_CACRL, "blank.pem");
     private static final File ICA_BLANK_PEM_CRL = new File(WORKING_DIR_ICACRL, "blank.pem");
     private static final File BLANK_BLANK_PEM_CRL = new File(WORKING_DIR_ICACRL, "blank-blank.pem");
@@ -168,7 +207,7 @@ public class SSLAuthenticationTest {
         WORKING_DIR_ICACRL.mkdirs();
 
         caGenerationTool = CAGenerationTool.builder()
-                .setBaseDir(JKS_LOCATION)
+                .setBaseDir(PKCS_LOCATION)
                 .setRequestIdentities(Identity.values()) // Create all identities.
                 .build();
 
@@ -182,6 +221,7 @@ public class SSLAuthenticationTest {
         "ocsp-responder.keystore", new ExtendedKeyUsageExtension(false, Collections.singletonList(OID_KP_OCSP_SIGNING)));
         ocspResponderCertificate = responderIdentity.getCertificate();
 
+        /* =================== CLIENT SIDE OCSP RELATED CERTS =================== */
         // Generates GOOD certificate referencing the OCSP responder
         goodIdentity = intermediateCAIdentity.createIdentity("checked",
         new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedGood"),
@@ -209,14 +249,39 @@ public class SSLAuthenticationTest {
         X509Certificate greenJuneCertificate = caGenerationTool
                                                 .getDefinedIdentity(Identity.GREENJUNE)
                                                 .getCertificate();
+        /* =================== OCSP STAPLING RELATED CERTS =================== */
+        // Generates GOOD certificate referencing the OCSP responder
+        X509Certificate ocspCheckedGoodServerCertificate = caGenerationTool.createIdentity("checked",
+                new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedServerGood"),
+                "ocsp-stapling-checked-good.keystore", Identity.CA, new AuthorityInformationAccessExtension(Collections.singletonList(
+                        new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
+                )));
+
+        // Generates REVOKED certificate referencing the OCSP responder
+        X509Certificate ocspCheckedRevokedServerCertificate = caGenerationTool.createIdentity("checked",
+                new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedServerRevoked"),
+                "ocsp-stapling-checked-revoked.keystore", Identity.CA, (new AuthorityInformationAccessExtension(Collections.singletonList(
+                        new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
+                ))));
+
+        // Generates UNKNOWN certificate referencing the OCSP responder
+        X509Certificate ocspCheckedUnknownServerCertificate = caGenerationTool.createIdentity("checked",
+                new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedServerUnknown"),
+                "ocsp-stapling-checked-unknown.keystore", Identity.CA, new AuthorityInformationAccessExtension(Collections.singletonList(
+                        new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
+                )));
+
 
         KeyStore beetlesKeyStore = caGenerationTool.getBeetlesKeyStore();
         beetlesKeyStore.setCertificateEntry("ocspResponder", ocspResponderCertificate);
         beetlesKeyStore.setCertificateEntry("ocspCheckedGood", ocspCheckedGoodCertificate);
+        beetlesKeyStore.setCertificateEntry("ocspCheckedServerGood", ocspCheckedGoodServerCertificate);
         beetlesKeyStore.setCertificateEntry("ocspCheckedRevoked", ocspCheckedRevokedCertificate);
+        beetlesKeyStore.setCertificateEntry("ocspCheckedServerRevoked", ocspCheckedRevokedServerCertificate);
         beetlesKeyStore.setCertificateEntry("ocspCheckedUnknown", ocspCheckedUnknownCertificate);
+        beetlesKeyStore.setCertificateEntry("ocspCheckedServerUnknown", ocspCheckedUnknownServerCertificate);
         beetlesKeyStore.setCertificateEntry("green june", greenJuneCertificate);
-        createTemporaryKeyStoreFile(beetlesKeyStore, new File(JKS_LOCATION, "beetles.keystore"), PASSWORD);
+        createTemporaryKeyStoreFile(beetlesKeyStore, new File(PKCS_LOCATION, "beetles.keystore"), PASSWORD);
 
         // Adds trusted cert for shortwinged
         shortWingedKeyStore = createKeyStore();
@@ -352,7 +417,10 @@ public class SSLAuthenticationTest {
         ocspServer.createCertificate(1, 1, intermediateCAIdentity.getCertificate());
         ocspServer.createCertificate(2, 2, ocspCheckedGoodCertificate);
         ocspServer.createCertificate(3, 1, ocspCheckedRevokedCertificate);
+        ocspServer.createCertificate(4, 1, ocspCheckedGoodServerCertificate);
+        ocspServer.createCertificate(5, 1, ocspCheckedRevokedServerCertificate);
         ocspServer.revokeCertificate(3, 4);
+        ocspServer.revokeCertificate(5, 4);
         ocspServer.start();
 
     }
@@ -824,6 +892,311 @@ public class SSLAuthenticationTest {
     }
 
     @Test
+    public void testOcspStaplingGood() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity ocspStaplingGood = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_GOOD);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingGood.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
+                .setNeedClientAuth(true)
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way-ocsp-stapling-good.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedServerGood",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Ladybird", false);
+    }
+
+    @Test
+    public void testOcspStaplingRevoked() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity ocspStaplingRevoked = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_REVOKED);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingRevoked.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
+                .setNeedClientAuth(true)
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way-ocsp-stapling-revoked.org", false, "OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedServerRevoked",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Ladybird", false);
+    }
+
+    @Test
+    public void testOcspStaplingUnknownHardFail() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity ocspStaplingUnknown = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_UNKNOWN);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingUnknown.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
+                .setNeedClientAuth(true)
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way-ocsp-stapling-unknown.org", false, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedServerUnknown",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Ladybird", false);
+    }
+
+    @Test
+    public void testOcspStaplingUnknownSoftFail() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity ocspStaplingUnknown = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_UNKNOWN);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingUnknown.createKeyManager())
+                .setTrustManager(ca.createTrustManager())
+                .setNeedClientAuth(true)
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way-ocsp-stapling-unknown-soft-fail.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedServerUnknown",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Ladybird", false);
+    }
+
+    @Test
+    public void testOcspStaplingOneWayGood() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity ocspStaplingGood = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_GOOD);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingGood.createKeyManager())
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-one-way-ocsp-stapling-good.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedServerGood",
+                null, true);
+    }
+
+    /**
+     * Proves ElytronXmlParser wires accept-ocsp-stapling into the X509RevocationTrustManager built
+     * from an {@code <ocsp>} element (the crl||ocsp branch): the client config's {@code <ocsp
+     * responder="...">} is overridden, via an expression-resolved system property, to a port the
+     * test reserves then closes, so a live lookup cannot succeed; only a consumed staple can make
+     * the handshake pass.
+     */
+    @Test
+    public void testXmlOcspStaplingGoodProvenViaStaple() throws Throwable {
+        DefinedIdentity ocspStaplingGood = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_GOOD);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingGood.createKeyManager())
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        int deadOcspPort;
+        try (ServerSocket reserved = new ServerSocket(0)) {
+            deadOcspPort = reserved.getLocalPort();
+        }
+        System.setProperty("wildfly.elytron.test.ocsp.staple.proof.port", String.valueOf(deadOcspPort));
+        try {
+            performConnectionTest(serverContext, "protocol://test-xml-ocsp-stapling-good-proven.org", true,
+                    "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedServerGood", null, true);
+        } finally {
+            System.clearProperty("wildfly.elytron.test.ocsp.staple.proof.port");
+        }
+    }
+
+    /**
+     * Negative counterpart to {@link #testXmlOcspStaplingGoodProvenViaStaple()}: identical client
+     * {@code <ocsp>} config pointed at the same closed port, but without accept-ocsp-stapling, so
+     * the staple must be ignored and the handshake must fail.
+     */
+    @Test
+    public void testXmlOcspStaplingGoodFailsWithoutAcceptStapling() throws Throwable {
+        DefinedIdentity ocspStaplingGood = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_GOOD);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingGood.createKeyManager())
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        int deadOcspPort;
+        try (ServerSocket reserved = new ServerSocket(0)) {
+            deadOcspPort = reserved.getLocalPort();
+        }
+        System.setProperty("wildfly.elytron.test.ocsp.staple.proof.port", String.valueOf(deadOcspPort));
+        try {
+            performConnectionTest(serverContext, "protocol://test-xml-ocsp-stapling-good-no-accept.org", false,
+                    null, null, true);
+        } finally {
+            System.clearProperty("wildfly.elytron.test.ocsp.staple.proof.port");
+        }
+    }
+
+    /**
+     * Verifies the client obtains revocation status solely from the server's stapled OCSP
+     * response. The client's configured OCSP responder points at a closed port, so a live
+     * lookup cannot succeed, and soft-fail is disabled so an undetermined status would fail
+     * the handshake.
+     */
+    @Test
+    public void testOcspStaplingGoodProvenViaStaple() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity ocspStaplingGood = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_GOOD);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingGood.createKeyManager())
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        performStapleOnlyConnectionTest(serverContext, ca, false,
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedServerGood", true, true);
+    }
+
+    /**
+     * Negative counterpart to {@link #testOcspStaplingGoodProvenViaStaple()}: same server and same
+     * dead-port-only client, but the client's trust manager never calls
+     * {@code setAcceptOCSPStapling(true)}. The stapled response must then be ignored exactly as it
+     * would be without this feature, so with no live OCSP path available the handshake must fail.
+     */
+    @Test
+    public void testOcspStaplingGoodFailsWithoutAcceptFlag() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity ocspStaplingGood = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_GOOD);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingGood.createKeyManager())
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        performStapleOnlyConnectionTest(serverContext, ca, false, null, false, false);
+    }
+
+    /**
+     * Mirrors {@link #testOcspStaplingGoodProvenViaStaple()}: soft-fail is enabled here, so
+     * an undetermined status would let the handshake through regardless.
+     */
+    @Test
+    public void testOcspStaplingRevokedProvenViaStaple() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity ocspStaplingRevoked = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_REVOKED);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingRevoked.createKeyManager())
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        performStapleOnlyConnectionTest(serverContext, ca, true, null, false, true);
+    }
+
+    /**
+     * Proves the explicit server-side enable flag gates the stapling block: with provideOCSPStapling
+     * off, the otherwise-invalid responder-override-without-URI combination is never evaluated, so
+     * build() must not throw (the negative counterpart to {@link #testServerResponderOverrideRequiresUri()}).
+     * A handshake-based check isn't used here since the JDK's stapling switches are process-wide and
+     * can leak "enabled" state from earlier tests in this class (test-isolation gap, tracked separately).
+     */
+    @Test
+    public void testServerStaplingConfigIgnoredWhenFlagOff() throws Exception {
+        new SSLContextBuilder()
+                .setClientMode(false)
+                .setResponderOverride(true)
+                .build();
+    }
+
+    /**
+     * Builds a client that can only learn the server certificate's revocation status from a
+     * stapled OCSP response: its OCSP responder override points at a closed port, so no live
+     * lookup is possible. {@code softFail} controls whether an undetermined status is
+     * tolerated. Process-wide JDK stapling properties changed while building the context are
+     * restored in a finally block.
+     */
+    private void performStapleOnlyConnectionTest(SSLContext serverContext, DefinedCAIdentity ca, boolean softFail,
+            String expectedServerPrincipal, boolean expectValid, boolean acceptOCSPStapling) throws Throwable {
+        String previousOcspEnable = Security.getProperty("ocsp.enable");
+        String previousStatusRequest = System.getProperty("jdk.tls.client.enableStatusRequestExtension");
+
+        int deadOcspPort;
+        try (ServerSocket reserved = new ServerSocket(0)) {
+            deadOcspPort = reserved.getLocalPort();
+        }
+        // The port is now closed: a live OCSP request to it is refused, leaving the status undetermined
+        // unless the stapled response is consumed by the client's trust manager.
+        SSLContext clientContext = new SSLContextBuilder()
+                .setClientMode(true)
+                .setTrustManager(X509RevocationTrustManager.builder()
+                        .setTrustManagerFactory(getTrustManagerFactory())
+                        .setTrustStore(ca.loadKeyStore())
+                        .setOcspResponderCert(ocspResponderCertificate)
+                        .setResponderURI(new URI("http://localhost:" + deadOcspPort + "/ocsp"))
+                        .setSoftFail(softFail)
+                        .setAcceptOCSPStapling(acceptOCSPStapling)
+                        .build())
+                .build().create();
+
+        try {
+            testCommunication(serverContext, clientContext, expectedServerPrincipal, null, true);
+            if (!expectValid) fail("Expected SSLHandshakeException not thrown");
+        } catch (SSLHandshakeException|SocketException expected) {
+            if (expectValid) {
+                throw new IllegalStateException("Unexpected SSLHandshakeException", expected);
+            }
+        } catch (SSLException expected) {
+            if (expectValid) {
+                throw new IllegalStateException("Unexpected SSLException", expected);
+            } else if (!(expected.getCause() instanceof SocketException)) {
+                throw expected;
+            }
+        } finally {
+            Security.setProperty("ocsp.enable", previousOcspEnable != null ? previousOcspEnable : "false");
+            if (previousStatusRequest != null) {
+                System.setProperty("jdk.tls.client.enableStatusRequestExtension", previousStatusRequest);
+            } else {
+                System.clearProperty("jdk.tls.client.enableStatusRequestExtension");
+            }
+        }
+    }
+
+    /**
+     * A server-side stapling configuration that turns on responder-override without supplying a
+     * responder URI must be rejected up front (ELY-434). Before the fix this threw a
+     * NullPointerException instead of the intended {@link IllegalArgumentException}.
+     */
+    @Test(expected = IllegalArgumentException.class)
+    public void testServerResponderOverrideRequiresUri() throws Exception {
+        new SSLContextBuilder()
+                .setClientMode(false)
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .setResponderOverride(true)
+                .build();
+    }
+
+    @Test
     public void testWantClientAuthWithCorrectCertificate() throws Throwable {
         DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
         DefinedIdentity scarab = caGenerationTool.getDefinedIdentity(Identity.SCARAB);
@@ -890,6 +1263,29 @@ public class SSLAuthenticationTest {
         serverSocket.setSoTimeout(30000); // 30 second timeout
         clientSocket.setSoTimeout(30000); // 30 second timeout
 
+        ExecutorService clientExecutorService = Executors.newSingleThreadExecutor();
+        Future<byte[]> clientFuture = clientExecutorService.submit(() -> {
+            try {
+                byte[] received = new byte[2];
+                clientSocket.getOutputStream().write(new byte[]{0x12, 0x34});
+                clientSocket.getInputStream().read(received);
+
+                if (expectedServerPrincipal != null) {
+                    assertEquals(expectedServerPrincipal, clientSocket.getSession().getPeerPrincipal().getName());
+                }
+
+                if (oneWay) {
+                    assertNotEquals("TLSv1.3", clientSocket.getSession().getProtocol());// since TLS 1.3 is not enabled by default (ELY-1917)
+                } else {
+                    assertNotEquals("TLSv1.3", serverSocket.getSession().getProtocol()); // since TLS 1.3 is not enabled by default
+                    assertNotEquals("TLSv1.3", clientSocket.getSession().getProtocol()); // since TLS 1.3 is not enabled by default
+                }
+                return received;
+            } catch (Exception e) {
+                throw new RuntimeException("Client exception", e);
+            }
+        });
+
         ExecutorService serverExecutorService = Executors.newSingleThreadExecutor();
         Future<byte[]> serverFuture = serverExecutorService.submit(() -> {
             try {
@@ -914,32 +1310,9 @@ public class SSLAuthenticationTest {
             }
         });
 
-        ExecutorService clientExecutorService = Executors.newSingleThreadExecutor();
-        Future<byte[]> clientFuture = clientExecutorService.submit(() -> {
-            try {
-                byte[] received = new byte[2];
-                clientSocket.getOutputStream().write(new byte[]{0x12, 0x34});
-                clientSocket.getInputStream().read(received);
-
-                if (expectedServerPrincipal != null) {
-                    assertEquals(expectedServerPrincipal, clientSocket.getSession().getPeerPrincipal().getName());
-                }
-
-                if (oneWay) {
-                    assertNotEquals("TLSv1.3", clientSocket.getSession().getProtocol());// since TLS 1.3 is not enabled by default (ELY-1917)
-                } else {
-                    assertNotEquals("TLSv1.3", serverSocket.getSession().getProtocol()); // since TLS 1.3 is not enabled by default
-                    assertNotEquals("TLSv1.3", clientSocket.getSession().getProtocol()); // since TLS 1.3 is not enabled by default
-                }
-                return received;
-            } catch (Exception e) {
-                throw new RuntimeException("Client exception", e);
-            }
-        });
-
         try {
-            assertArrayEquals(new byte[]{0x12, 0x34}, serverFuture.get());
             assertArrayEquals(new byte[]{0x56, 0x78}, clientFuture.get());
+            assertArrayEquals(new byte[]{0x12, 0x34}, serverFuture.get());
         } catch (ExecutionException e) {
             if (e.getCause() != null && e.getCause() instanceof RuntimeException && e.getCause().getCause() != null) {
                 throw e.getCause().getCause(); // unpack

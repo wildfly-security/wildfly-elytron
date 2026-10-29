@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright The WildFly Authors
+  ~ SPDX-License-Identifier: Apache-2.0
+-->
+<!-- Negative case (ELY-434): accept-ocsp-stapling without a trust-store or trust-manager must be
+     rejected at parse time, because the stapling flag would otherwise be silently ignored. -->
+<configuration>
+    <authentication-client xmlns="urn:elytron:client:preview:1.8">
+        <key-stores>
+            <key-store name="client-keystore" type="JKS">
+                <file name="./target/keystore/client.keystore"/>
+                <key-store-clear-password password="password"/>
+            </key-store>
+        </key-stores>
+        <ssl-contexts>
+            <ssl-context name="stapling-no-trust">
+                <key-store-ssl-certificate key-store-name="client-keystore" alias="testclient1">
+                    <key-store-clear-password password="password"/>
+                </key-store-ssl-certificate>
+                <accept-ocsp-stapling accept-ocsp="true" soft-fail="true"/>
+            </ssl-context>
+        </ssl-contexts>
+        <ssl-context-rules>
+            <rule use-ssl-context="stapling-no-trust">
+                <match-host name="stapling-no-trust"/>
+            </rule>
+        </ssl-context-rules>
+    </authentication-client>
+</configuration>

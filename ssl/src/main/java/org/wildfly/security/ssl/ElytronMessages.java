@@ -193,4 +193,7 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 15001, value = "No '%s' provided by the configured providers")
     NoSuchAlgorithmException noSslContextProvided(String type);
+
+    @Message(id = 15002, value = "ResponderURI needs to be provided to override AIA extension.")
+    IllegalArgumentException responderURIRequired();
 }
