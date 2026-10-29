@@ -269,6 +269,21 @@
                 <trust-store key-store-name="ocsp-stapling-checked-unknown"/>
                 <accept-ocsp-stapling accept-ocsp="true" soft-fail="true" responder-keystore="beetles" responder-certificate="ocspResponder"/>
             </ssl-context>
+            <ssl-context name="one-way-xml-ocsp-stapling-good-proven-ssl">
+                <providers>
+                    <global/>
+                </providers>
+                <trust-store key-store-name="ocsp-stapling-checked-good"/>
+                <ocsp responder="http://localhost:${wildfly.elytron.test.ocsp.staple.proof.port}/ocsp" responder-keystore="beetles" responder-certificate="ocspResponder"/>
+                <accept-ocsp-stapling accept-ocsp="true"/>
+            </ssl-context>
+            <ssl-context name="one-way-xml-ocsp-stapling-good-no-accept-ssl">
+                <providers>
+                    <global/>
+                </providers>
+                <trust-store key-store-name="ocsp-stapling-checked-good"/>
+                <ocsp responder="http://localhost:${wildfly.elytron.test.ocsp.staple.proof.port}/ocsp" responder-keystore="beetles" responder-certificate="ocspResponder"/>
+            </ssl-context>
         </ssl-contexts>
         <ssl-context-rules>
             <rule use-ssl-context="one-way-ssl">
@@ -333,6 +348,12 @@
             </rule>
             <rule use-ssl-context="two-way-ocsp-stapling-unknown-soft-fail">
                 <match-host name="test-two-way-ocsp-stapling-unknown-soft-fail.org"/>
+            </rule>
+            <rule use-ssl-context="one-way-xml-ocsp-stapling-good-proven-ssl">
+                <match-host name="test-xml-ocsp-stapling-good-proven.org"/>
+            </rule>
+            <rule use-ssl-context="one-way-xml-ocsp-stapling-good-no-accept-ssl">
+                <match-host name="test-xml-ocsp-stapling-good-no-accept.org"/>
             </rule>
         </ssl-context-rules>
     </authentication-client>

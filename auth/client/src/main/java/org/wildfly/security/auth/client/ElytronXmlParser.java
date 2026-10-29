@@ -565,6 +565,10 @@ public final class ElytronXmlParser {
                 if (finalAcceptOcspStapling && !initTrustManager) {
                     throw xmlLog.xmlAcceptOcspStaplingRequiresTrustManager(location);
                 }
+                // A soft-fail/responder-certificate/responder-keystore set on accept-ocsp-stapling would compete with the ones already applied from <ocsp>/CRL.
+                if (finalAcceptOcspStapling && trustManagerBuilder.isOcspOrCrlConfigured() && trustManagerBuilder.hasStaplingOwnOverride()) {
+                    throw xmlLog.xmlAcceptOcspStaplingConflictsWithOcspOrCrl(location);
+                }
 
                 sslContextsMap.putIfAbsent(name, () -> {
                     final SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
@@ -591,7 +595,6 @@ public final class ElytronXmlParser {
                     sslContextBuilder.setProviderName(finalProviderName);
                     sslContextBuilder.setProviderSupplier(finalProvidersSupplier);
                     sslContextBuilder.setUseCipherSuitesOrder(true);
-                    sslContextBuilder.setAcceptOCSPStapling(finalAcceptOcspStapling);
                     return sslContextBuilder.build();
                 });
                 return;
@@ -650,6 +653,9 @@ public final class ElytronXmlParser {
         if (gotResponderKeystore && ! gotResponderCertAlias) {
             throw xmlLog.xmlResponderKeystoreWithoutResponderCertificate(reader.getLocation());
         }
+        if (gotSoftFail || gotResponderCertAlias || gotResponderKeystore) {
+            builder.setStaplingHasOwnOverride();
+        }
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == END_ELEMENT) {
@@ -676,6 +682,7 @@ public final class ElytronXmlParser {
         boolean onlyLeafCert = false;
         boolean softFail = false;
         boolean staplingSoftFail = false;
+        boolean staplingHasOwnOverride = false;
         URI ocspResponder = null;
         boolean maxCertPathSet = false;
         String responderCertAlias = null;
@@ -739,6 +746,18 @@ public final class ElytronXmlParser {
             this.staplingSoftFail = staplingSoftFail;
         }
 
+        void setStaplingHasOwnOverride() {
+            this.staplingHasOwnOverride = true;
+        }
+
+        boolean hasStaplingOwnOverride() {
+            return staplingHasOwnOverride;
+        }
+
+        boolean isOcspOrCrlConfigured() {
+            return ocsp || crl;
+        }
+
         public void setOcspResponder(URI ocspResponder) {
             this.ocspResponder = ocspResponder;
         }
@@ -768,6 +787,7 @@ public final class ElytronXmlParser {
                 revocationBuilder.setOnlyEndEntity(onlyLeafCert);
                 revocationBuilder.setSoftFail(softFail);
                 revocationBuilder.setMaxCertPath(maxCertPath);
+                revocationBuilder.setAcceptOCSPStapling(ocspStapling);
 
                 if (crl && ocsp) {
                     revocationBuilder.setPreferCrls(preferCrls);
@@ -794,6 +814,7 @@ public final class ElytronXmlParser {
                 revocationBuilder.setOnlyEndEntity(onlyLeafCert);
                 revocationBuilder.setSoftFail(staplingSoftFail);
                 revocationBuilder.setMaxCertPath(maxCertPath);
+                revocationBuilder.setAcceptOCSPStapling(true);
                 if (responderCertAlias != null) {
                     KeyStore responderStore = responderStoreSupplier != null ? responderStoreSupplier.get() : trustStore;
                     X509Certificate responderCert = (X509Certificate) responderStore.getCertificate(responderCertAlias);

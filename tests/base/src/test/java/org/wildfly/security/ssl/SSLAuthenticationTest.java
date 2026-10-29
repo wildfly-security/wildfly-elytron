@@ -47,8 +47,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -69,7 +71,9 @@ import org.bouncycastle.cert.X509v2CRLBuilder;
 import org.bouncycastle.openssl.MiscPEMGenerator;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.util.io.pem.PemWriter;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.common.Assert;
@@ -99,6 +103,41 @@ import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
  */
 // has dependency on wildfly-elytron-client, wildfly-elytron-x500-cert, wildfly-elytron-realm, wildly-elytron-x500-deprecated
 public class SSLAuthenticationTest {
+
+    // Properties the stapling tests in this class can set via SSLContextBuilder.build() or the
+    // XML client config; these are JVM-wide JDK/Security properties, not reset by build() itself.
+    private static final String[] STAPLING_SYSTEM_PROPERTIES = {
+            "jdk.tls.server.enableStatusRequestExtension",
+            "jdk.tls.client.enableStatusRequestExtension",
+            "jdk.tls.stapling.responseTimeout",
+            "jdk.tls.stapling.cacheSize",
+            "jdk.tls.stapling.cacheLifetime",
+            "jdk.tls.stapling.responderURI",
+            "jdk.tls.stapling.responderOverride",
+            "jdk.tls.stapling.ignoreExtensions",
+    };
+    private final Map<String, String> staplingSystemPropertySnapshot = new HashMap<>();
+    private String staplingOcspEnableSnapshot;
+
+    @Before
+    public void snapshotStaplingProperties() {
+        for (String name : STAPLING_SYSTEM_PROPERTIES) {
+            staplingSystemPropertySnapshot.put(name, System.getProperty(name));
+        }
+        staplingOcspEnableSnapshot = Security.getProperty("ocsp.enable");
+    }
+
+    @After
+    public void restoreStaplingProperties() {
+        for (Map.Entry<String, String> entry : staplingSystemPropertySnapshot.entrySet()) {
+            if (entry.getValue() == null) {
+                System.clearProperty(entry.getKey());
+            } else {
+                System.setProperty(entry.getKey(), entry.getValue());
+            }
+        }
+        Security.setProperty("ocsp.enable", staplingOcspEnableSnapshot != null ? staplingOcspEnableSnapshot : "false");
+    }
 
     private static final int OCSP_PORT = 4854;
     private final int TESTING_PORT = 18201;
@@ -946,6 +985,68 @@ public class SSLAuthenticationTest {
     }
 
     /**
+     * Proves ElytronXmlParser wires accept-ocsp-stapling into the X509RevocationTrustManager built
+     * from an {@code <ocsp>} element (the crl||ocsp branch): the client config's {@code <ocsp
+     * responder="...">} is overridden, via an expression-resolved system property, to a port the
+     * test reserves then closes, so a live lookup cannot succeed; only a consumed staple can make
+     * the handshake pass.
+     */
+    @Test
+    public void testXmlOcspStaplingGoodProvenViaStaple() throws Throwable {
+        DefinedIdentity ocspStaplingGood = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_GOOD);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingGood.createKeyManager())
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        int deadOcspPort;
+        try (ServerSocket reserved = new ServerSocket(0)) {
+            deadOcspPort = reserved.getLocalPort();
+        }
+        System.setProperty("wildfly.elytron.test.ocsp.staple.proof.port", String.valueOf(deadOcspPort));
+        try {
+            performConnectionTest(serverContext, "protocol://test-xml-ocsp-stapling-good-proven.org", true,
+                    "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedServerGood", null, true);
+        } finally {
+            System.clearProperty("wildfly.elytron.test.ocsp.staple.proof.port");
+        }
+    }
+
+    /**
+     * Negative counterpart to {@link #testXmlOcspStaplingGoodProvenViaStaple()}: identical client
+     * {@code <ocsp>} config pointed at the same closed port, but without accept-ocsp-stapling, so
+     * the staple must be ignored and the handshake must fail.
+     */
+    @Test
+    public void testXmlOcspStaplingGoodFailsWithoutAcceptStapling() throws Throwable {
+        DefinedIdentity ocspStaplingGood = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_GOOD);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingGood.createKeyManager())
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        int deadOcspPort;
+        try (ServerSocket reserved = new ServerSocket(0)) {
+            deadOcspPort = reserved.getLocalPort();
+        }
+        System.setProperty("wildfly.elytron.test.ocsp.staple.proof.port", String.valueOf(deadOcspPort));
+        try {
+            performConnectionTest(serverContext, "protocol://test-xml-ocsp-stapling-good-no-accept.org", false,
+                    null, null, true);
+        } finally {
+            System.clearProperty("wildfly.elytron.test.ocsp.staple.proof.port");
+        }
+    }
+
+    /**
      * Verifies the client obtains revocation status solely from the server's stapled OCSP
      * response. The client's configured OCSP responder points at a closed port, so a live
      * lookup cannot succeed, and soft-fail is disabled so an undetermined status would fail
@@ -965,7 +1066,29 @@ public class SSLAuthenticationTest {
                 .build().create();
 
         performStapleOnlyConnectionTest(serverContext, ca, false,
-                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedServerGood", true);
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedServerGood", true, true);
+    }
+
+    /**
+     * Negative counterpart to {@link #testOcspStaplingGoodProvenViaStaple()}: same server and same
+     * dead-port-only client, but the client's trust manager never calls
+     * {@code setAcceptOCSPStapling(true)}. The stapled response must then be ignored exactly as it
+     * would be without this feature, so with no live OCSP path available the handshake must fail.
+     */
+    @Test
+    public void testOcspStaplingGoodFailsWithoutAcceptFlag() throws Throwable {
+        DefinedCAIdentity ca = caGenerationTool.getDefinedCAIdentity(Identity.CA);
+        DefinedIdentity ocspStaplingGood = caGenerationTool.getDefinedIdentity(Identity.OCSP_STAPLING_GOOD);
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain(caGenerationTool.getBeetlesKeyStore()))
+                .setKeyManager(ocspStaplingGood.createKeyManager())
+                .setProvideOCSPStapling(true)
+                .setResponseTimeout(5000)
+                .setCacheSize(256)
+                .setCacheLifetime(3600)
+                .build().create();
+
+        performStapleOnlyConnectionTest(serverContext, ca, false, null, false, false);
     }
 
     /**
@@ -985,7 +1108,7 @@ public class SSLAuthenticationTest {
                 .setCacheLifetime(3600)
                 .build().create();
 
-        performStapleOnlyConnectionTest(serverContext, ca, true, null, false);
+        performStapleOnlyConnectionTest(serverContext, ca, true, null, false, true);
     }
 
     /**
@@ -1011,7 +1134,7 @@ public class SSLAuthenticationTest {
      * restored in a finally block.
      */
     private void performStapleOnlyConnectionTest(SSLContext serverContext, DefinedCAIdentity ca, boolean softFail,
-            String expectedServerPrincipal, boolean expectValid) throws Throwable {
+            String expectedServerPrincipal, boolean expectValid, boolean acceptOCSPStapling) throws Throwable {
         String previousOcspEnable = Security.getProperty("ocsp.enable");
         String previousStatusRequest = System.getProperty("jdk.tls.client.enableStatusRequestExtension");
 
@@ -1029,8 +1152,8 @@ public class SSLAuthenticationTest {
                         .setOcspResponderCert(ocspResponderCertificate)
                         .setResponderURI(new URI("http://localhost:" + deadOcspPort + "/ocsp"))
                         .setSoftFail(softFail)
+                        .setAcceptOCSPStapling(acceptOCSPStapling)
                         .build())
-                .setAcceptOCSPStapling(true)
                 .build().create();
 
         try {

@@ -90,7 +90,7 @@
             <xsd:element name="accept-ocsp-stapling" type="accept-ocsp-stapling-type" minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
-                        Indicated whether the client will accept OCSP stapled responses from the server.
+                        Indicates whether the client will accept OCSP stapled responses from the server.
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>

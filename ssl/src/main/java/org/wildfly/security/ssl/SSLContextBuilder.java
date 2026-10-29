@@ -21,7 +21,6 @@ package org.wildfly.security.ssl;
 import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.Provider;
-import java.security.Security;
 import java.util.function.Supplier;
 
 import javax.net.ssl.KeyManager;
@@ -83,7 +82,6 @@ public final class SSLContextBuilder {
     private String responderURI;
     private boolean responderOverride;
     private boolean ignoreExtensions;
-    private boolean acceptOCSPStapling;
     private boolean provideOCSPStapling;
 
     /**
@@ -318,9 +316,10 @@ public final class SSLContextBuilder {
     }
 
     /**
-     * Set the response timeout, which will be used for OCSP Stapling.
+     * Set the response timeout, which will be used for OCSP Stapling. See
+     * {@link #setProvideOCSPStapling(boolean)} for how this value is applied.
      *
-     * @param responseTimeout controls the maximum amount of time the server will use to obtain OCSP responses, whether from the cache or by contacting an OCSP responder.
+     * @param responseTimeout controls the maximum amount of time, in milliseconds, the server will use to obtain OCSP responses, whether from the cache or by contacting an OCSP responder.
      * @return this builder
      */
     public SSLContextBuilder setResponseTimeout(final int responseTimeout) {
@@ -330,9 +329,10 @@ public final class SSLContextBuilder {
     }
 
     /**
-     * Set the cache size, which will be used for OCSP Stapling.
+     * Set the cache size, which will be used for OCSP Stapling. See
+     * {@link #setProvideOCSPStapling(boolean)} for how this value is applied.
      *
-     * @param cacheSize controls the maximum cache size in entries.
+     * @param cacheSize controls the maximum cache size in entries. A value of 0 is treated by the JDK as unbounded.
      * @return this builder
      */
     public SSLContextBuilder setCacheSize(final int cacheSize) {
@@ -342,9 +342,10 @@ public final class SSLContextBuilder {
     }
 
     /**
-     * Set the cache lifetime, which will be used for OCSP Stapling.
+     * Set the cache lifetime, which will be used for OCSP Stapling. See
+     * {@link #setProvideOCSPStapling(boolean)} for how this value is applied.
      *
-     * @param cacheLifetime controls the maximum life of a cached response.
+     * @param cacheLifetime controls the maximum life, in seconds, of a cached response. A value of 0 disables the lifetime limit; a response is then valid until its own nextUpdate, and a response without nextUpdate is not cached.
      * @return this builder
      */
     public SSLContextBuilder setCacheLifetime(final int cacheLifetime) {
@@ -354,7 +355,8 @@ public final class SSLContextBuilder {
     }
 
     /**
-     * Set the responder URI, which will be used for OCSP Stapling.
+     * Set the responder URI, which will be used for OCSP Stapling. See
+     * {@link #setProvideOCSPStapling(boolean)} for how this value is applied.
      *
      * @param responderURI enables the administrator to set a default URI in the event that certificates used for TLS do not have the Authority Info Access (AIA) extension.
      * @return this builder
@@ -365,7 +367,8 @@ public final class SSLContextBuilder {
     }
 
     /**
-     * Set the responder override property, which will be used for OCSP Stapling.
+     * Set the responder override property, which will be used for OCSP Stapling. See
+     * {@link #setProvideOCSPStapling(boolean)} for how this value is applied.
      *
      * @param responderOverride enables a URI provided through the jdk.tls.stapling.responderURI property to override any AIA extension value.
      * @return this builder
@@ -376,7 +379,8 @@ public final class SSLContextBuilder {
     }
 
     /**
-     * Set the ignore extensions property, which will be used for OCSP Stapling.
+     * Set the ignore extensions property, which will be used for OCSP Stapling. See
+     * {@link #setProvideOCSPStapling(boolean)} for how this value is applied.
      *
      * @param ignoreExtensions disables the forwarding of OCSP extensions specified in the status_request or status_request_v2 TLS extensions.
      * @return this builder
@@ -387,20 +391,13 @@ public final class SSLContextBuilder {
     }
 
     /**
-     * Indicates whether the client will accept OCSP Stapled responses from the server.
-     *
-     * @param acceptOCSPStapling will enable or disable client side OCSP stapling.
-     * @return this builder
-     */
-    public SSLContextBuilder setAcceptOCSPStapling(final boolean acceptOCSPStapling) {
-        this.acceptOCSPStapling = acceptOCSPStapling;
-        return this;
-    }
-
-    /**
      * Indicates whether the server will provide OCSP stapled responses to clients. When enabled the
      * OCSP stapling tuning parameters (response timeout, cache size, cache lifetime, responder URI,
-     * responder override and ignore extensions) are applied.
+     * responder override and ignore extensions) are applied. This is implemented with JVM-wide JDK
+     * system properties ({@code jdk.tls.server.enableStatusRequestExtension} and the
+     * {@code jdk.tls.stapling.*} properties): the most recent server-side {@link #build()} call
+     * across the whole process determines the active values, and {@code build()} does not reset
+     * them when stapling is disabled.
      *
      * @param provideOCSPStapling will enable or disable server side OCSP stapling.
      * @return this builder
@@ -432,23 +429,16 @@ public final class SSLContextBuilder {
         final boolean wrap  = this.wrap;
         final int responseTimeout = this.responseTimeout;
         final int cacheSize = this.cacheSize;
+        final int cacheLifetime = this.cacheLifetime;
         final String responderURI = this.responderURI;
         final boolean responderOverride = this.responderOverride;
         final boolean ignoreExtensions = this.ignoreExtensions;
-        final boolean acceptOCSPStapling = this.acceptOCSPStapling;
         final boolean provideOCSPStapling = this.provideOCSPStapling;
         final MechanismConfigurationSelector mechanismConfigurationSelector = this.mechanismConfigurationSelector != null ?
                 this.mechanismConfigurationSelector :
                 MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY);
 
-        if (clientMode && acceptOCSPStapling) {   // client-ssl-context
-            // enable client side OCSP fall back
-            Security.setProperty("ocsp.enable", Boolean.TRUE.toString());
-
-            // Enable client side support for accepting OCSP stapling
-            System.setProperty("jdk.tls.client.enableStatusRequestExtension", Boolean.TRUE.toString());
-
-        } else if (!clientMode && provideOCSPStapling) {    //server-ssl-context
+        if (!clientMode && provideOCSPStapling) {    //server-ssl-context
             // Validate before mutating any global state so an invalid config never partially applies
             if (responderOverride && (responderURI == null || responderURI.isEmpty())) {
                 throw ElytronMessages.log.responderURIRequired();
@@ -461,8 +451,11 @@ public final class SSLContextBuilder {
             System.setProperty("jdk.tls.stapling.responseTimeout", String.valueOf(responseTimeout));
             System.setProperty("jdk.tls.stapling.cacheSize", String.valueOf(cacheSize));
             System.setProperty("jdk.tls.stapling.cacheLifetime", String.valueOf(cacheLifetime));
-            if (responderURI != null)
+            if (responderURI != null) {
                 System.setProperty("jdk.tls.stapling.responderURI", responderURI);
+            } else {
+                System.clearProperty("jdk.tls.stapling.responderURI");
+            }
             System.setProperty("jdk.tls.stapling.responderOverride", String.valueOf(responderOverride));
             System.setProperty("jdk.tls.stapling.ignoreExtensions", String.valueOf(ignoreExtensions));
         }
@@ -492,7 +485,6 @@ public final class SSLContextBuilder {
                                 "    needClientAuth = %s%n" +
                                 "    useCipherSuitesOrder = %s%n" +
                                 "    wrap = %s%n" +
-                                "    acceptOCSPStapling = %s%n" +
                                 "    responseTimeout = %s%n" +
                                 "    cacheSize = %s%n" +
                                 "    cacheLifetime = %s%n" +
@@ -501,7 +493,7 @@ public final class SSLContextBuilder {
                                 "    ignoreExtensions = %s%n",
                         securityDomain, canAuthPeers, cipherSuiteSelector, protocolSelector, x509TrustManager,
                         x509KeyManager, providerSupplier, clientMode, authenticationOptional, sessionCacheSize,
-                        sessionTimeout, wantClientAuth, needClientAuth, useCipherSuitesOrder, wrap, acceptOCSPStapling,
+                        sessionTimeout, wantClientAuth, needClientAuth, useCipherSuitesOrder, wrap,
                         responseTimeout, cacheSize, cacheLifetime, responderURI, responderOverride, ignoreExtensions);
             }
 

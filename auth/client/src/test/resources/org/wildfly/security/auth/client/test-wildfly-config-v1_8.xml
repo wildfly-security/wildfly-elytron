@@ -43,6 +43,13 @@
                 <trust-store key-store-name="client-keystore"/>
                 <accept-ocsp-stapling accept-ocsp="true" soft-fail="true" responder-keystore="client-keystore" responder-certificate="testauthority"/>
             </ssl-context>
+            <!-- accept-ocsp-stapling combined with <ocsp>: the stapling flag rides along with the 
+                 already-configured OCSP revocation checking instead of replacing it. -->
+            <ssl-context name="client-ssl-context-stapling-with-ocsp">
+                <trust-store key-store-name="client-keystore"/>
+                <ocsp/>
+                <accept-ocsp-stapling accept-ocsp="true"/>
+            </ssl-context>
         </ssl-contexts>
         <authentication-rules>
             <rule use-configuration="clear-cred">
@@ -55,6 +62,9 @@
             </rule>
             <rule use-ssl-context="client-ssl-context-stapling-responder">
                 <match-host name="stapling-responder"/>
+            </rule>
+            <rule use-ssl-context="client-ssl-context-stapling-with-ocsp">
+                <match-host name="stapling-with-ocsp"/>
             </rule>
         </ssl-context-rules>
     </authentication-client>

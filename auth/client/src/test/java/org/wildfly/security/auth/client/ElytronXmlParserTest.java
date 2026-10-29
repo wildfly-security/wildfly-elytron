@@ -199,6 +199,33 @@ public class ElytronXmlParserTest {
     }
 
     /**
+     * ELY-434: accept-ocsp-stapling combined with a bare &lt;ocsp/&gt; (no competing soft-fail,
+     * responder-certificate or responder-keystore of its own) must parse and build.
+     */
+    @Test
+    public void checkSSLContextWithOCSPStaplingCombinedWithOcsp() throws Exception {
+        URL config = getClass().getResource("test-wildfly-config-v1_8.xml");
+        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
+        checkSSLContext(authContext, "http://stapling-with-ocsp");
+    }
+
+    /**
+     * ELY-434: accept-ocsp-stapling combined with &lt;ocsp&gt; must be rejected at parse time if
+     * the stapling element also carries its own soft-fail, responder-certificate or
+     * responder-keystore.
+     */
+    @Test
+    public void staplingConflictingWithOcspIsRejected() throws Exception {
+        URL config = getClass().getResource("test-wildfly-config-v1_8-stapling-conflicts-with-ocsp.xml");
+        try {
+            ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
+            Assert.fail("Expected ConfigXMLParseException for accept-ocsp-stapling conflicting with ocsp");
+        } catch (ConfigXMLParseException expected) {
+            Assert.assertTrue("Expected ELY14011 in: " + expected.getMessage(), expected.getMessage().contains("ELY14011"));
+        }
+    }
+
+    /**
      * ELY-434: an accept-ocsp-stapling context without a trust-store or trust-manager must be rejected.
      */
     @Test
@@ -208,7 +235,7 @@ public class ElytronXmlParserTest {
             ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
             Assert.fail("Expected ConfigXMLParseException for accept-ocsp-stapling without a trust manager");
         } catch (ConfigXMLParseException expected) {
-            // expected
+            Assert.assertTrue("Expected ELY14009 in: " + expected.getMessage(), expected.getMessage().contains("ELY14009"));
         }
     }
 
@@ -222,7 +249,7 @@ public class ElytronXmlParserTest {
             ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
             Assert.fail("Expected ConfigXMLParseException for responder-keystore without responder-certificate");
         } catch (ConfigXMLParseException expected) {
-            // expected
+            Assert.assertTrue("Expected ELY14010 in: " + expected.getMessage(), expected.getMessage().contains("ELY14010"));
         }
     }
 
@@ -236,7 +263,7 @@ public class ElytronXmlParserTest {
             ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
             Assert.fail("Expected ConfigXMLParseException for an unknown responder-keystore");
         } catch (ConfigXMLParseException expected) {
-            // expected
+            Assert.assertTrue("Expected ELY02010 in: " + expected.getMessage(), expected.getMessage().contains("ELY02010"));
         }
     }
 
@@ -254,7 +281,7 @@ public class ElytronXmlParserTest {
             checkSSLContext(authContext, "http://stapling-unknown-responder-cert");
             Assert.fail("Expected ConfigXMLParseException for an unknown responder-certificate alias");
         } catch (ConfigXMLParseException expected) {
-            // expected
+            Assert.assertTrue("Expected ELY01159 in: " + expected.getMessage(), expected.getMessage().contains("ELY01159"));
         }
     }
 

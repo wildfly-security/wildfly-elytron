@@ -144,6 +144,13 @@
                             </includes>
                             <systemId>src/test/resources/schema/wrapped-elytron-client-1_7.xsd</systemId>
                         </validationSet>
+                        <validationSet>
+                            <dir>${project.parent.basedir}/auth/client/src/test/resources/</dir>
+                            <includes>
+                                <include>**/*-v1_8.xml</include>
+                            </includes>
+                            <systemId>src/test/resources/schema/wrapped-elytron-client-1_8.xsd</systemId>
+                        </validationSet>
                     </validationSets>
                 </configuration>
                 <executions>
