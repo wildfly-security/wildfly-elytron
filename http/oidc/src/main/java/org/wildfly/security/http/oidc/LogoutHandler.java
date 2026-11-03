@@ -277,7 +277,49 @@ final class LogoutHandler {
     }
 
     private boolean isLogoutCallbackPath(OidcHttpFacade facade) {
-        return matchesLogoutCallbackPath(facade.getRequest().getRelativePath(), getLogoutCallbackPath(facade));
+        String configuredLogoutCallbackPath = getLogoutCallbackPath(facade);
+        URL configuredAbsoluteUri = parseAbsoluteHttpOrHttpsUri(configuredLogoutCallbackPath);
+        if (configuredAbsoluteUri != null) {
+            // An absolute configured value must be compared against the full path of the
+            // incoming request URI, including the deployment's context segment, not the
+            // context-relative path.
+            String requestPath = extractPathFromRequestUri(facade.getRequest().getURI());
+            return matchesLogoutCallbackPath(requestPath, configuredLogoutCallbackPath);
+        }
+        return matchesLogoutCallbackPath(facade.getRequest().getRelativePath(), configuredLogoutCallbackPath);
+    }
+
+    /**
+     * Parses the configured value as an absolute {@code http} or {@code https} URI, or returns
+     * {@code null} if it is not one (e.g. a relative path, or malformed).
+     */
+    private static URL parseAbsoluteHttpOrHttpsUri(String configuredLogoutCallbackPath) {
+        if (configuredLogoutCallbackPath == null) {
+            return null;
+        }
+        try {
+            URL url = new URL(configuredLogoutCallbackPath.trim());
+            String protocol = url.getProtocol();
+            return "http".equalsIgnoreCase(protocol) || "https".equalsIgnoreCase(protocol) ? url : null;
+        } catch (MalformedURLException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Extracts the raw path component of the full incoming request URI (including the
+     * deployment's context segment), for comparison against an absolute {@code logout-callback-path}.
+     */
+    private static String extractPathFromRequestUri(String requestUri) {
+        if (requestUri == null) {
+            return null;
+        }
+        try {
+            return new URL(requestUri).getPath();
+        } catch (MalformedURLException e) {
+            log.tracef("Unable to resolve request URI [%s] for logout callback path matching", requestUri);
+            return null;
+        }
     }
 
     /**
