@@ -46,7 +46,12 @@ import org.wildfly.security.pem.PemEntry;
  * Utility functions for manipulating KeyStores.
  *
  * @author <a href="mailto:mmazanek@redhat.com">Martin Mazanek</a>
+ * @deprecated Use {@code org.wildfly.security.keystore.util.KeyStoreUtil} from
+ *             the
+ *             {@code wildfly-elytron-keystore-util} module instead.
+ *             This class is deprecated and will be removed in a future release.
  */
+@Deprecated
 public class KeyStoreUtil {
 
     private static final String BCFKS = "BCFKS";
