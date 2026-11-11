@@ -6,6 +6,7 @@
 package org.wildfly.security.http.oidc;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.wildfly.security.http.oidc.Oidc.DISABLE_TYP_CLAIM_VALIDATION_PROPERTY_NAME;
 import static org.wildfly.security.http.oidc.Oidc.LOGOUT_EVENTS_CLAIM_MEMBER_NAME;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_NAME;
@@ -15,6 +16,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.security.auth.callback.CallbackHandler;
 
@@ -35,6 +37,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
+import org.wildfly.security.http.HttpServerMechanismsResponder;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerRequestWrapper;
 
@@ -151,6 +154,13 @@ public class LogoutCallbackPathSpiTest extends OidcBaseTest {
         assertEquals(Status.COMPLETE, delegate.getResult());
     }
 
+    @Test
+    public void schemelessRequestUriMatchesFullRequestPath() throws Exception {
+        assertFrontChannelResult(Status.IN_PROGRESS,
+                "/" + CLIENT_APP + "/callback", "/callback",
+                getClientUrl() + "/callback");
+    }
+
     // ----------------------------------------------------------------------------------------
     // Back-channel (POST, logout_token) coverage: same matcher, different call site.
     // ----------------------------------------------------------------------------------------
@@ -158,6 +168,7 @@ public class LogoutCallbackPathSpiTest extends OidcBaseTest {
     @Test
     public void backChannelAbsoluteUriMatchesFullRequestPath() throws Exception {
         String logoutToken = signLogoutToken("session-1");
+        AtomicBoolean authenticationFailedCalled = new AtomicBoolean(false);
         TestingHttpServerRequest delegate = new TestingHttpServerRequest(
                 "POST", null, new URI(getClientUrl() + "/callback"));
         HttpServerRequest request = new HttpServerRequestWrapper(delegate) {
@@ -170,12 +181,19 @@ public class LogoutCallbackPathSpiTest extends OidcBaseTest {
             public String getFirstParameterValue(String name) {
                 return "logout_token".equals(name) ? logoutToken : super.getFirstParameterValue(name);
             }
+
+            @Override
+            public void authenticationFailed(String message, HttpServerMechanismsResponder responder) {
+                authenticationFailedCalled.set(true);
+                super.authenticationFailed(message, responder);
+            }
         };
 
         HttpServerAuthenticationMechanism mechanism = buildMechanism(buildClientConfiguration(getClientUrl() + "/callback", true));
         mechanism.evaluateRequest(request);
 
         assertEquals(Status.IN_PROGRESS, delegate.getResult());
+        assertFalse("logout token was rejected", authenticationFailedCalled.get());
     }
 
     // ----------------------------------------------------------------------------------------

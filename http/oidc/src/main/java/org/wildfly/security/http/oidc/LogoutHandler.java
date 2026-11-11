@@ -23,6 +23,7 @@ import static org.wildfly.security.http.HttpConstants.NONCE;
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.LinkedHashMap;
@@ -315,8 +316,13 @@ final class LogoutHandler {
             return null;
         }
         try {
-            return new URL(requestUri).getPath();
-        } catch (MalformedURLException e) {
+            URI uri = new URI(requestUri);
+            String scheme = uri.getScheme();
+            if (scheme != null && !"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
+                return null;
+            }
+            return uri.getRawPath();
+        } catch (URISyntaxException e) {
             log.tracef("Unable to resolve request URI [%s] for logout callback path matching", requestUri);
             return null;
         }
