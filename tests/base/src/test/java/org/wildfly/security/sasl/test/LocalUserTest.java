@@ -25,6 +25,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.Provider;
@@ -50,6 +52,7 @@ import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.sasl.SaslMechanismSelector;
+import org.wildfly.security.auth.callback.SocketAddressQueryCallbackHandler;
 import org.wildfly.security.sasl.localuser.LocalUserServerFactory;
 
 /**
@@ -456,6 +459,58 @@ public class LocalUserTest {
         server.dispose();
     }
 
+
+    /**
+     * Verify that a non-loopback peer is rejected before the server creates or returns any
+     * challenge file reference. This is the default behaviour (requireLoopback=true).
+     */
+    @Test
+    public void testNonLocalPeerRejectedByDefault() throws Exception {
+        final InetSocketAddress localAddr = new InetSocketAddress(InetAddress.getLoopbackAddress(), 8080);
+        // 203.0.113.x is RFC 5737 TEST-NET-3, guaranteed non-routable
+        final InetSocketAddress remoteAddr = new InetSocketAddress(InetAddress.getByName("203.0.113.1"), 54321);
+
+        final SaslServer server = new LocalUserServerFactory().createSaslServer(
+                LOCAL_USER, "TestProtocol", "TestServer",
+                Collections.emptyMap(),
+                new SocketAddressQueryCallbackHandler(callbacks -> {}, localAddr, remoteAddr));
+
+        try {
+            server.evaluateResponse("George".getBytes(StandardCharsets.UTF_8));
+            fail("Expected SaslException for non-local peer");
+        } catch (SaslException expected) {
+            // correct: server rejected without creating a challenge file
+        } finally {
+            server.dispose();
+        }
+    }
+
+    /**
+     * Verify that setting {@code wildfly.sasl.local-user.require-loopback=false} allows the
+     * server to proceed past the peer check for non-loopback connections.
+     */
+    @Test
+    public void testNonLocalPeerAllowedWhenRequireLoopbackDisabled() throws Exception {
+        final InetSocketAddress localAddr = new InetSocketAddress(InetAddress.getLoopbackAddress(), 8080);
+        final InetSocketAddress remoteAddr = new InetSocketAddress(InetAddress.getByName("203.0.113.1"), 54321);
+
+        final Map<String, Object> props = new HashMap<>();
+        props.put(LocalUserServerFactory.LOCAL_USER_REQUIRE_LOOPBACK, "false");
+
+        final SaslServer server = new LocalUserServerFactory().createSaslServer(
+                LOCAL_USER, "TestProtocol", "TestServer",
+                props,
+                new SocketAddressQueryCallbackHandler(callbacks -> {}, localAddr, remoteAddr));
+
+        try {
+            // server should proceed past the loopback check and return a challenge
+            final byte[] challenge = server.evaluateResponse("George".getBytes(StandardCharsets.UTF_8));
+            assertTrue("Server should have returned a challenge when requireLoopback is disabled",
+                    challenge != null && challenge.length > 0);
+        } finally {
+            server.dispose();
+        }
+    }
 
     private CallbackHandler createClientCallbackHandler(final String expectedUsername) throws Exception {
         final AuthenticationContext context = AuthenticationContext.empty()

@@ -33,6 +33,14 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices(value = SaslServerFactory.class)
 public class LocalUserServerFactory extends LocalUserSaslFactory implements SaslServerFactory {
 
+    /**
+     * Mechanism property: when set to {@code "true"} (the default), the server rejects
+     * JBOSS-LOCAL-USER exchanges from non-loopback peers before creating or returning any
+     * challenge file reference. Set to {@code "false"} only when the deployment routes
+     * loopback traffic through non-loopback addresses.
+     */
+    public static final String LOCAL_USER_REQUIRE_LOOPBACK = "wildfly.sasl.local-user.require-loopback";
+
     @Override
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         if (! isIncluded(mechanism)) {

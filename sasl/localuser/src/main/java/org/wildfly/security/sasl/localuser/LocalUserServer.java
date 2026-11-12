@@ -22,6 +22,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -41,6 +44,7 @@ import javax.security.sasl.SaslServer;
 import org.wildfly.common.Assert;
 import org.wildfly.common.array.Arrays2;
 import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.auth.callback.SocketAddressQueryCallbackHandler;
 import org.wildfly.security.manager.action.ReadPropertyAction;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 
@@ -59,6 +63,7 @@ final class LocalUserServer extends AbstractSaslServer implements SaslServer {
     public static final String LEGACY_LOCAL_USER_CHALLENGE_PATH = "jboss.sasl.local-user.challenge-path";
     public static final String DEFAULT_USER = "wildfly.sasl.local-user.default-user";
     public static final String LEGACY_DEFAULT_USER = "jboss.sasl.local-user.default-user";
+    static final String LOCAL_USER_REQUIRE_LOOPBACK = LocalUserServerFactory.LOCAL_USER_REQUIRE_LOOPBACK;
 
     private static final byte UTF8NUL = 0x00;
 
@@ -71,6 +76,7 @@ final class LocalUserServer extends AbstractSaslServer implements SaslServer {
     private final File basePath;
     private final String defaultUser;
     private final boolean useSecureRandom;
+    private final boolean requireLoopback;
 
     LocalUserServer(final String protocol, final String serverName, Map<String, ?> props, final CallbackHandler callbackHandler) {
         super(LocalUserSaslFactory.JBOSS_LOCAL_USER, protocol, serverName, callbackHandler, saslLocal);
@@ -118,6 +124,20 @@ final class LocalUserServer extends AbstractSaslServer implements SaslServer {
             defaultUser = (String) props.get(LEGACY_DEFAULT_USER);
         } else {
             defaultUser = null;
+        }
+
+        Object requireLoopbackObj = null;
+        if (props.containsKey(LOCAL_USER_REQUIRE_LOOPBACK)) {
+            requireLoopbackObj = props.get(LOCAL_USER_REQUIRE_LOOPBACK);
+        } else {
+            requireLoopbackObj = getProperty(LOCAL_USER_REQUIRE_LOOPBACK);
+        }
+        if (requireLoopbackObj instanceof Boolean) {
+            requireLoopback = ((Boolean) requireLoopbackObj).booleanValue();
+        } else if (requireLoopbackObj instanceof String) {
+            requireLoopback = Boolean.parseBoolean((String) requireLoopbackObj);
+        } else {
+            requireLoopback = true;
         }
     }
 
@@ -177,18 +197,30 @@ final class LocalUserServer extends AbstractSaslServer implements SaslServer {
                 } else {
                     authorizationId = new String(message, StandardCharsets.UTF_8);
                 }
+                if (requireLoopback) {
+                    final CallbackHandler cbh = getCallbackHandler();
+                    if (cbh instanceof SocketAddressQueryCallbackHandler) {
+                        final SocketAddress peerAddr = ((SocketAddressQueryCallbackHandler) cbh).getPeerAddress();
+                        if (peerAddr instanceof InetSocketAddress) {
+                            final InetAddress addr = ((InetSocketAddress) peerAddr).getAddress();
+                            if (addr != null && ! addr.isLoopbackAddress()) {
+                                throw saslLocal.mechLocalUserNotAvailableForNonLocalPeers().toSaslException();
+                            }
+                        }
+                    }
+                }
                 final Random random = getRandom();
                 try {
                     challengeFile = File.createTempFile("local", ".challenge", basePath);
                 } catch (IOException e) {
-                    throw saslLocal.mechFailedToCreateChallengeFile(e).toSaslException();
+                    throw saslLocal.mechFailedToCreateChallengeFile().toSaslException();
                 }
 
                 final FileOutputStream fos;
                 try {
                     fos = new FileOutputStream(challengeFile);
                 } catch (FileNotFoundException e) {
-                    throw saslLocal.mechFailedToCreateChallengeFile(e).toSaslException();
+                    throw saslLocal.mechFailedToCreateChallengeFile().toSaslException();
                 }
                 boolean ok = false;
                 final byte[] bytes;
@@ -200,7 +232,7 @@ final class LocalUserServer extends AbstractSaslServer implements SaslServer {
                         fos.close();
                         ok = true;
                     } catch (IOException e) {
-                        throw saslLocal.mechFailedToCreateChallengeFile(e).toSaslException();
+                        throw saslLocal.mechFailedToCreateChallengeFile().toSaslException();
                     }
                 } finally {
                     if (!ok) {
