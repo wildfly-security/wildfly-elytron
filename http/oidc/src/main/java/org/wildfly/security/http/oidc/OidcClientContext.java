@@ -635,7 +635,7 @@ public class OidcClientContext {
             String scheme = request.getScheme();
             if (oidcClientConfig.getSSLRequired().isRequired(facade.getRequest().getRemoteAddr())) {
                 scheme = "https";
-                if (! request.getScheme().equals(scheme) && request.getPort() != -1) {
+                if (! scheme.equals(request.getScheme()) && request.getPort() != -1) {
                     log.error("request scheme: " + request.getScheme() + " ssl required");
                     throw log.unableToResolveARelativeUrl();
                 }

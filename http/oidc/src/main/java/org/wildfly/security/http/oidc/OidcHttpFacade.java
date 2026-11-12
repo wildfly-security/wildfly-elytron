@@ -215,7 +215,7 @@ public class OidcHttpFacade {
 
             @Override
             public boolean isSecure() {
-                return request.getRequestURI().getScheme().equals("https");
+                return "https".equals(request.getRequestURI().getScheme());
             }
 
             @Override
