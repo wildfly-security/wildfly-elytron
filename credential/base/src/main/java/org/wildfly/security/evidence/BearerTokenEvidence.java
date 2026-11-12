@@ -17,16 +17,12 @@
  */
 package org.wildfly.security.evidence;
 
-import org.wildfly.common.Assert;
-
 /**
  * A piece of evidence that is comprised of a bearer security token.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public final class BearerTokenEvidence implements Evidence {
-
-    private final String token;
+public final class BearerTokenEvidence extends CommonTokenEvidence {
 
     /**
      * Construct a new instance.
@@ -34,15 +30,32 @@ public final class BearerTokenEvidence implements Evidence {
      * @param token the bearer security token (must not be {@code null})
      */
     public BearerTokenEvidence(String token) {
-        this.token = Assert.checkNotNullParam("token", token);
+        super(token);
     }
 
     /**
-     * Get the bearer security token.
+     * Returns the digital signature algorithm associated with
+     * the designator for the cryptographic hash function.
      *
-     * @return the bearer security token
+     * Table for elliptic curves
+     *         RS256 >> "SHA256withRSA"  SHA-256
+     *         RS384 >> "SHA384withRSA"  SHA-384
+     *         RS521 >> "SHA512withRSA"  SHA-512
+     *
+     * @param hashDesignator  designator for the cryptographic hash function
+     * @return the corresponding digital signature algorithm; null when none found
      */
-    public String getToken() {
-        return this.token;
+    @Override
+    public String algorithmLookup (String hashDesignator) {
+        switch (hashDesignator) {
+            case "RS256":
+                return "SHA256withRSA";
+            case "RS384":
+                return "SHA384withRSA";
+            case "RS512":
+                return "SHA512withRSA";
+            default:
+                return null;
+        }
     }
 }

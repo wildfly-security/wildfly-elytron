@@ -18,9 +18,8 @@
 
 package org.wildfly.security.auth.realm.token._private;
 
+import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
-
-import java.net.URL;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -41,7 +40,7 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 @MessageLogger(projectCode = "ELY", length = 5)
 @ValidIdRanges({
     @ValidIdRange(min = 1104, max = 1180),
-    @ValidIdRange(min = 1181, max = 1185)
+    @ValidIdRange(min = 1181, max = 1190)
 })
 public interface ElytronMessages extends BasicLogger {
 
@@ -84,23 +83,27 @@ public interface ElytronMessages extends BasicLogger {
     void tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
 
     @LogMessage(level = WARN)
-    @Message(id = 1178, value = "Unable to update jwk set from \"%1$s\".")
-    void unableToFetchJwks(String url);
-
-    @LogMessage(level = WARN)
     @Message(id = 1179, value = "SSL not configured. jku claim will not be supported.")
     void tokenRealmJwtNoSSLIgnoringJku();
-
-    @LogMessage
-    @Message(id = 1180, value = "Fetched jwk does not contain \"%1$s\" claim, ignoring...")
-    void tokenRealmJwkMissingClaim(String claim);
-
-    @LogMessage(level = WARN)
-    @Message(id = 1181, value = "Not sending new request to jwks url \"%s\". Last request time was %d.")
-    void avoidingFetchJwks(URL url, long timestamp);
 
     @LogMessage(level = WARN)
     @Message(id = 1182, value = "Allowed jku values haven't been configured for the JWT validator. Token validation will fail if the token contains a 'jku' header parameter.")
     void allowedJkuValuesNotConfigured();
+
+    @LogMessage(level = TRACE)
+    @Message(id = 1183, value = "Signature verification failed; retrying with a forced key refresh.")
+    void retryingVerificationWithForcedKeyRefresh();
+
+    @Message(id = 1184, value = "Error creating encodeDER. [%s]")
+    IllegalArgumentException errorCreatingEncodeDER(String msg);
+
+    @Message(id = 1185, value = "Signature class does not support signature algorithm [%s]")
+    IllegalArgumentException unknownSignatureAlgorithm(String algorithm);
+
+    @Message(id = 1186, value = "Invalid publicKey used in validation. [%s]")
+    IllegalArgumentException invalidPublicKeyUsedInValidation(String msg);
+
+    @Message(id = 1187, value = "Unable to validate signature. [%s]")
+    IllegalArgumentException unableToValidateSignature(String msg);
 }
 
