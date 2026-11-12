@@ -52,6 +52,15 @@ public final class SocketAddressQueryCallbackHandler implements CallbackHandler 
         this.peerAddress = peerAddress;
     }
 
+    /**
+     * Get the peer socket address.
+     *
+     * @return the peer socket address, or {@code null} if unknown
+     */
+    public SocketAddress getPeerAddress() {
+        return peerAddress;
+    }
+
     public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
         if (localAddress == null && peerAddress == null || ! once.compareAndSet(false, true)) {
             delegate.handle(callbacks);

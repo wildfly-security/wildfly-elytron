@@ -105,7 +105,7 @@ public final class LocalUserClient extends AbstractSaslClient {
                         safeClose(stream);
                     }
                 } catch (IOException e) {
-                    throw saslLocal.mechFailedToReadChallengeFile(e).toSaslException();
+                    throw saslLocal.mechFailedToReadChallengeFile().toSaslException();
                 }
                 String authenticationId = getAuthorizationId();
                 String authenticationRealm = null;
