@@ -21,12 +21,15 @@ import org.jboss.logmanager.ExtLogRecord;
 import org.jboss.logmanager.LogContext;
 import org.jboss.logmanager.Logger;
 import org.junit.Test;
+import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPairGenerator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -36,6 +39,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.wildfly.security.http.oidc.Oidc.AUTH_SERVER_URL;
 import static org.wildfly.security.http.oidc.Oidc.CREDENTIALS;
+import static org.wildfly.security.http.oidc.Oidc.OIDC_NAME;
 import static org.wildfly.security.http.oidc.Oidc.PUBLIC_CLIENT;
 import static org.wildfly.security.http.oidc.Oidc.REALM;
 import static org.wildfly.security.http.oidc.Oidc.RESOURCE;
@@ -96,11 +100,57 @@ public class RelativePathAsAuthServerUrlUnitTest extends OidcBaseTest {
         }
     }
 
+    /**
+     * A request whose URI has no scheme component (e.g. a path-only URI as produced by some containers) must not
+     * make resolution of a relative auth-server-url throw, even when SSL is required.
+     */
+    @Test
+    public void testUnitRelativeAuthServerUrlWithSchemelessRequestDoesNotThrow() throws Exception {
+        OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(
+                getOidcConfigurationInputStream(CLIENT_SECRET, "/keycloak", null, "ALL"));
+        assertEquals(OidcClientConfiguration.RelativeUrlsUsed.ALWAYS, oidcClientConfiguration.getRelativeUrls());
+        OidcClientContext oidcClientContext = new OidcClientContext(oidcClientConfiguration);
+        oidcClientContext.resolveUrls(
+                oidcClientConfiguration,
+                new OidcHttpFacade(new TestingHttpServerRequest(null, new URI("/myTestApp")), oidcClientContext, null)
+        );
+    }
+
+    /**
+     * Test a request whose {@link java.net.URI} has no scheme component through the public
+     * {@link HttpServerAuthenticationMechanism#evaluateRequest}, which {@link OidcHttpFacade.Request#isSecure()}
+     * parses without checking for a {@code null} result.
+     */
+    @Test
+    public void testUnitSchemelessRequestUriDoesNotThrowDuringLoginRedirect() throws Exception {
+        TestingHttpServerRequest delegate = new TestingHttpServerRequest(null, new URI("/" + CLIENT_APP + "/secured"));
+
+        OidcClientConfiguration config = new OidcClientConfiguration();
+        config.setClientId(CLIENT_ID);
+        config.setPublicKeyLocator(new HardcodedPublicKeyLocator(KeyPairGenerator.getInstance("RSA").generateKeyPair().getPublic()));
+        config.setProviderUrl("http://" + CLIENT_HOST_NAME + ":8080/realms/myrealm");
+        config.setPublicClient(true);
+        config.setSSLRequired(Oidc.SSLRequired.EXTERNAL);
+
+        OidcClientContext oidcClientContext = new OidcClientContext(config);
+        OidcMechanismFactory factory = new OidcMechanismFactory(oidcClientContext);
+        HttpServerAuthenticationMechanism mechanism = factory.createAuthenticationMechanism(
+                OIDC_NAME, Collections.emptyMap(), getCallbackHandler());
+
+        mechanism.evaluateRequest(delegate);
+
+        assertEquals(Status.NO_AUTH, delegate.getResult());
+    }
+
     private InputStream getOidcConfigurationInputStream(String clientSecret, String authServerUrl) {
-        return getOidcConfigurationInputStream(clientSecret, authServerUrl, null);
+        return getOidcConfigurationInputStream(clientSecret, authServerUrl, null, "EXTERNAL");
     }
 
     private InputStream getOidcConfigurationInputStream(String clientSecret, String authServerUrl, String providerUrl) {
+        return getOidcConfigurationInputStream(clientSecret, authServerUrl, providerUrl, "EXTERNAL");
+    }
+
+    private InputStream getOidcConfigurationInputStream(String clientSecret, String authServerUrl, String providerUrl, String sslRequired) {
         String providerEntry = providerUrl != null
                 ? ",\n    \"provider-url\" : \"" + providerUrl + "\""
                 : "";
@@ -109,7 +159,7 @@ public class RelativePathAsAuthServerUrlUnitTest extends OidcBaseTest {
                 "    \"" + RESOURCE + "\" : \"" + CLIENT_ID + "\",\n" +
                 "    \"" + PUBLIC_CLIENT + "\" : \"false\",\n" +
                 "    \"" + AUTH_SERVER_URL + "\" : \"" + authServerUrl + "\",\n" +
-                "    \"" + SSL_REQUIRED + "\" : \"EXTERNAL\",\n" +
+                "    \"" + SSL_REQUIRED + "\" : \"" + sslRequired + "\",\n" +
                 "    \"" + CREDENTIALS + "\" : {\n" +
                 "        \"" + Oidc.ClientCredentialsProviderType.SECRET.getValue() + "\" : \"" + clientSecret + "\"\n" +
                 "    }" + providerEntry + "\n" +
