@@ -194,4 +194,6 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 13019, value = "The brute force tracking session cache for security realm '%s' is at capacity, tracking sessions are being evicted.")
     void bruteForceSessionEvicted(String realmName);
 
+    @Message(id = 13019, value = "Interrupted while waiting for identity lock")
+    RealmUnavailableException interruptedWaitingForIdentityLock(@Cause InterruptedException cause);
 }
