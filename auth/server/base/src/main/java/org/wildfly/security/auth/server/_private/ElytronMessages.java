@@ -147,4 +147,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 16002, value = "Can not handle SecurityEvent with SecurityIdentity from other SecurityDomain")
     IllegalArgumentException securityEventIdentityWrongDomain();
+
+    @Message(id = 16006, value = "Can not read the provided properties file.")
+    IllegalStateException cantReadPropertiesFile(@Cause Throwable cause);
+
+
 }
