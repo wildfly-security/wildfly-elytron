@@ -413,10 +413,13 @@ public interface ElytronMessages extends BasicLogger {
     AuthenticationMechanismException mechReceivedMaxMessageSizeWhenNoSecurityLayer(int length);
 
     @Message(id = 5128, value = "Failed to read challenge file")
-    AuthenticationMechanismException mechFailedToReadChallengeFile(@Cause Throwable cause);
+    AuthenticationMechanismException mechFailedToReadChallengeFile();
 
     @Message(id = 5129, value = "Failed to create challenge file")
-    AuthenticationMechanismException mechFailedToCreateChallengeFile(@Cause Throwable cause);
+    AuthenticationMechanismException mechFailedToCreateChallengeFile();
+
+    @Message(id = 5130, value = "JBOSS-LOCAL-USER authentication is not available for non-local peers")
+    AuthenticationMechanismException mechLocalUserNotAvailableForNonLocalPeers();
 
     @Message(id = 5150, value = "Authentication mechanism authorization ID is too long")
     AuthenticationMechanismException mechAuthorizationIdTooLong();
