@@ -783,6 +783,121 @@ public class JwtSecurityRealmTest {
         assertIdentityExist(securityRealm, evidence2);
     }
 
+    @Test
+    public void testJkuFallbackResolvesKidWithoutJkuHeader() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", null));
+
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50831")
+                        .setJkuFallbackUrl("https://localhost:50831")
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, evidence);
+    }
+
+    @Test
+    public void testJkuFallbackRejectedWhenNotInAllowedJkuValues() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", null));
+
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50832")
+                        .setJkuFallbackUrl("https://localhost:50831")
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+    }
+
+    @Test
+    public void testNamedKeysTakePrecedenceOverJkuFallback() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", null));
+
+        Map<String, PublicKey> namedKeys = new LinkedHashMap<>();
+        namedKeys.put("1", keyPair3.getPublic());
+
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50831")
+                        .publicKeys(namedKeys)
+                        .setJkuFallbackUrl("https://localhost:50831")
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+    }
+
+    @Test
+    public void testJkuFallbackUsedWhenKidMissingFromNamedKeys() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", null));
+
+        Map<String, PublicKey> namedKeys = new LinkedHashMap<>();
+        namedKeys.put("2", keyPair2.getPublic());
+
+        SSLContext sslContext = getSSLContext();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50831")
+                        .publicKeys(namedKeys)
+                        .setJkuFallbackUrl("https://localhost:50831")
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a, b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, evidence);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetJkuFallbackUrlRejectsInvalidUrl() {
+        JwtValidator.builder().setJkuFallbackUrl("not a url :)");
+    }
+
+    @Test
+    public void testJkuFallbackWithoutSslIsRejected() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", null));
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50831")
+                        .setJkuFallbackUrl("https://localhost:50831")
+                        .build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+    }
+
     private void assertIdentityNotExist(SecurityRealm realm, Evidence evidence) throws RealmUnavailableException {
         RealmIdentity identity = realm.getRealmIdentity(evidence);
         assertNotNull(identity);
