@@ -67,65 +67,55 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
 
     private X509Certificate[] acceptedIssuers;
     private final X509TrustManager trustManager;
+    private final boolean acceptOCSPStapling;
 
     private X509RevocationTrustManager(Builder builder) {
+        this.acceptOCSPStapling = builder.acceptOCSPStapling;
 
         try {
             PKIXBuilderParameters params = new PKIXBuilderParameters(builder.trustStore, new X509CertSelector());
 
-            if (builder.checkRevocation) {  // for ocspStapling
-                CertPathBuilder cpb = CertPathBuilder.getInstance("PKIX");
-                PKIXRevocationChecker rc = (PKIXRevocationChecker) cpb.getRevocationChecker();
-
-                if (builder.softFail)
-                    rc.setOptions(EnumSet.of(PKIXRevocationChecker.Option.SOFT_FAIL));
-
-                if (builder.ocspResponderCert != null) {
-                    rc.setOcspResponderCert(builder.ocspResponderCert);
-                }
-
-                params.addCertPathChecker(rc);
-            } else {    // for other revocation checking
-
-                if (builder.crlStreams != null && ! builder.crlStreams.isEmpty()) {
-                    CertStoreParameters csp = new CollectionCertStoreParameters(getCRLs(builder.crlStreams));
-                    CertStore store = CertStore.getInstance("Collection", csp);
-                    params.addCertStore(store);
-                }
-
-                CertPathBuilder cpb = CertPathBuilder.getInstance("PKIX");
-                PKIXRevocationChecker rc = (PKIXRevocationChecker) cpb.getRevocationChecker();
-
-                if (builder.ocspResponderCert != null) {
-                    rc.setOcspResponderCert(builder.ocspResponderCert);
-                }
-
-                EnumSet<PKIXRevocationChecker.Option> options = EnumSet.noneOf(PKIXRevocationChecker.Option.class);
-                if (builder.onlyEndEntity) {
-                    options.add(PKIXRevocationChecker.Option.ONLY_END_ENTITY);
-                }
-                if (builder.preferCrls) {
-                    options.add(PKIXRevocationChecker.Option.PREFER_CRLS);
-                }
-                if (builder.softFail) {
-                    options.add(PKIXRevocationChecker.Option.SOFT_FAIL);
-                }
-                if (builder.noFallback) {
-                    options.add(PKIXRevocationChecker.Option.NO_FALLBACK);
-                }
-
-                rc.setOptions(options);
-                if (builder.responderUri != null) {
-                    rc.setOcspResponder(builder.responderUri);
-                }
-                params.setRevocationEnabled(true);
-                params.addCertPathChecker(rc);
-
-                PKIXCertPathChecker maxPathLengthChecker = new MaxPathLengthChecker(builder.maxCertPath);
-                params.addCertPathChecker(maxPathLengthChecker);
-                params.setMaxPathLength(builder.maxCertPath);
-
+            // The same PKIX/revocation configuration is applied whether or not OCSP stapling is
+            // accepted: accepting a stapled response is additive on top of the normal revocation
+            // checking, not a replacement for it.
+            if (builder.crlStreams != null && ! builder.crlStreams.isEmpty()) {
+                CertStoreParameters csp = new CollectionCertStoreParameters(getCRLs(builder.crlStreams));
+                CertStore store = CertStore.getInstance("Collection", csp);
+                params.addCertStore(store);
             }
+
+            CertPathBuilder cpb = CertPathBuilder.getInstance("PKIX");
+            PKIXRevocationChecker rc = (PKIXRevocationChecker) cpb.getRevocationChecker();
+
+            if (builder.ocspResponderCert != null) {
+                rc.setOcspResponderCert(builder.ocspResponderCert);
+            }
+
+            EnumSet<PKIXRevocationChecker.Option> options = EnumSet.noneOf(PKIXRevocationChecker.Option.class);
+            if (builder.onlyEndEntity) {
+                options.add(PKIXRevocationChecker.Option.ONLY_END_ENTITY);
+            }
+            if (builder.preferCrls) {
+                options.add(PKIXRevocationChecker.Option.PREFER_CRLS);
+            }
+            if (builder.softFail) {
+                options.add(PKIXRevocationChecker.Option.SOFT_FAIL);
+            }
+            if (builder.noFallback) {
+                options.add(PKIXRevocationChecker.Option.NO_FALLBACK);
+            }
+
+            rc.setOptions(options);
+            if (builder.responderUri != null) {
+                rc.setOcspResponder(builder.responderUri);
+            }
+            params.setRevocationEnabled(true);
+            params.addCertPathChecker(rc);
+
+            PKIXCertPathChecker maxPathLengthChecker = new MaxPathLengthChecker(builder.maxCertPath);
+            params.addCertPathChecker(maxPathLengthChecker);
+            params.setMaxPathLength(builder.maxCertPath);
+
             builder.trustManagerFactory.init(new CertPathTrustManagerParameters(params));
             X509TrustManager[] trustManagers = Stream.of(builder.trustManagerFactory.getTrustManagers()).map(trustManager -> trustManager instanceof X509TrustManager ? (X509TrustManager) trustManager : null).filter(Objects::nonNull).toArray(X509TrustManager[]::new);
 
@@ -155,22 +145,38 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
 
     @Override
     public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
-        trustManager.checkClientTrusted(chain, authType);
+        if (acceptOCSPStapling && trustManager instanceof X509ExtendedTrustManager) {
+            ((X509ExtendedTrustManager) trustManager).checkClientTrusted(chain, authType, socket);
+        } else {
+            trustManager.checkClientTrusted(chain, authType);
+        }
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
-        trustManager.checkServerTrusted(chain, authType);
+        if (acceptOCSPStapling && trustManager instanceof X509ExtendedTrustManager) {
+            ((X509ExtendedTrustManager) trustManager).checkServerTrusted(chain, authType, socket);
+        } else {
+            trustManager.checkServerTrusted(chain, authType);
+        }
     }
 
     @Override
     public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine sslEngine) throws CertificateException {
-        trustManager.checkClientTrusted(chain, authType);
+        if (acceptOCSPStapling && trustManager instanceof X509ExtendedTrustManager) {
+            ((X509ExtendedTrustManager) trustManager).checkClientTrusted(chain, authType, sslEngine);
+        } else {
+            trustManager.checkClientTrusted(chain, authType);
+        }
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine sslEngine) throws CertificateException {
-        trustManager.checkServerTrusted(chain, authType);
+        if (acceptOCSPStapling && trustManager instanceof X509ExtendedTrustManager) {
+            ((X509ExtendedTrustManager) trustManager).checkServerTrusted(chain, authType, sslEngine);
+        } else {
+            trustManager.checkServerTrusted(chain, authType);
+        }
     }
 
     @Override
@@ -211,7 +217,7 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
         private boolean onlyEndEntity = false;
         private boolean softFail = false;
         private boolean noFallback = false;
-        private boolean checkRevocation = false;
+        private boolean acceptOCSPStapling = false;
 
 
         private Builder() {}
@@ -343,17 +349,6 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
         }
 
         /**
-         * Enables revocation checking on the client side. Default false
-         *
-         * @param checkRevocation determines whether revocation checking should be enabled on the client side
-         * @return this Builder for subsequent changes
-         */
-        public Builder setCheckRevocation(boolean checkRevocation) {
-            this.checkRevocation = checkRevocation;
-            return this;
-        }
-
-        /**
          * Set OCSP responder's certificate. By default issuer certificate of certificate being validated is used.
          *
          * @param ocspResponderCert OCSP responder certificate
@@ -361,6 +356,21 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
          */
         public Builder setOcspResponderCert(X509Certificate ocspResponderCert) {
             this.ocspResponderCert = ocspResponderCert;
+            return this;
+        }
+
+        /**
+         * Set whether a stapled OCSP response from the TLS session may be consumed for revocation
+         * checking. Default false: the Socket/SSLEngine-aware {@code check*Trusted} overloads then
+         * behave exactly as the 2-argument overloads, ignoring the connection (including any
+         * endpoint identification the caller configured on it).
+         *
+         * @param acceptOCSPStapling true to consume a stapled OCSP response and apply the
+         *                           connection's endpoint identification, if any
+         * @return this Builder for subsequent changes
+         */
+        public Builder setAcceptOCSPStapling(boolean acceptOCSPStapling) {
+            this.acceptOCSPStapling = acceptOCSPStapling;
             return this;
         }
 
