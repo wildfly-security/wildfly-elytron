@@ -21,6 +21,7 @@ package org.wildfly.security.ssl;
 import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.Provider;
+import java.security.Security;
 import java.util.function.Supplier;
 
 import javax.net.ssl.KeyManager;
@@ -53,6 +54,8 @@ import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
  *     <li>The "require client authentication" flag defaults to {@code false}</li>
  *     <li>The provider supplier defaults to {@link Security#getProviders() Security::getProviders}</li>
  * </ul>
+ * <p>With SunJSSE, server-side OCSP stapling is configured at JVM startup with
+ * {@code jdk.tls.server.enableStatusRequestExtension}; this builder does not change JVM system or security properties.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -76,14 +79,6 @@ public final class SSLContextBuilder {
     private String providerName;
     private boolean wrap = true;
     private MechanismConfigurationSelector mechanismConfigurationSelector;
-    private boolean provideOCSPStapling;
-
-    /**
-     * Single lock shared by every {@code SSLContext} this class constructs, to prevent
-     * the server-side OCSP stapling property being affected by a <em>different</em> call
-     * to {@code SSLContextBuilder.build()} running concurrently in another thread.
-     */
-    private static final Object STAPLING_LOCK = new Object();
 
     /**
      * Set the security domain to use to authenticate clients.
@@ -317,27 +312,6 @@ public final class SSLContextBuilder {
     }
 
     /**
-     * Indicates whether the server will provide OCSP stapled responses to clients.
-     *
-     * <p>Server-side stapling is switched on through the JVM-wide system property
-     * {@code jdk.tls.server.enableStatusRequestExtension}. With {@code true}, this builder sets the
-     * property only while it creates its {@link SSLContext} and then restores the previous value.
-     * With {@code false}, the property is left untouched, so a value set with {@code -D} still
-     * applies.
-     *
-     * <p>This only has effect for server-side contexts. It is ignored when {@link #setClientMode(boolean)}
-     * is {@code true}. A server that provides stapled responses may add latency to the first handshake,
-     * while the response is obtained.
-     *
-     * @param provideOCSPStapling {@code true} to enable server-side OCSP stapling for the context this builder creates
-     * @return this builder
-     */
-    public SSLContextBuilder setProvideOCSPStapling(final boolean provideOCSPStapling) {
-        this.provideOCSPStapling = provideOCSPStapling;
-        return this;
-    }
-
-    /**
      * Build a security factory for the new context.  The factory will cache the constructed instance.
      *
      * @return the security factory
@@ -357,31 +331,14 @@ public final class SSLContextBuilder {
         final boolean needClientAuth = this.needClientAuth;
         final boolean useCipherSuitesOrder = this.useCipherSuitesOrder;
         final boolean wrap  = this.wrap;
-        final boolean provideOCSPStapling = this.provideOCSPStapling;
         final MechanismConfigurationSelector mechanismConfigurationSelector = this.mechanismConfigurationSelector != null ?
                 this.mechanismConfigurationSelector :
                 MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY);
 
-        final boolean enableServerStapling = !clientMode && provideOCSPStapling;    //server-ssl-context
-
         return new OneTimeSecurityFactory<>(() -> {
             final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier, providerName);
-            final SSLContext sslContext;
-            synchronized (STAPLING_LOCK) {
-                String prevEnable = null;
-                if (enableServerStapling) {
-                    prevEnable = System.getProperty("jdk.tls.server.enableStatusRequestExtension");
-                    System.setProperty("jdk.tls.server.enableStatusRequestExtension", Boolean.TRUE.toString());
-                }
-                try {
-                    // construct the original context
-                    sslContext = sslContextFactory.create();
-                } finally {
-                    if (enableServerStapling) {
-                        restoreProperty("jdk.tls.server.enableStatusRequestExtension", prevEnable);
-                    }
-                }
-            }
+            // construct the original context
+            final SSLContext sslContext = sslContextFactory.create();
             final X509KeyManager x509KeyManager = keyManagerSecurityFactory == null ? null : keyManagerSecurityFactory.create();
             final X509TrustManager x509TrustManager = trustManagerSecurityFactory.create();
             final boolean canAuthPeers = securityDomain != null && securityDomain.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class).mayBeSupported();
@@ -429,14 +386,5 @@ public final class SSLContextBuilder {
             final ConfiguredSSLContextSpi contextSpi = new ConfiguredSSLContextSpi(sslContext, sslConfigurator, wrap);
             return new DelegatingSSLContext(contextSpi);
         });
-    }
-
-    /** Restore a JVM-wide property to its prior value, or clear it if it was absent before. */
-    private static void restoreProperty(final String name, final String previousValue) {
-        if (previousValue != null) {
-            System.setProperty(name, previousValue);
-        } else {
-            System.clearProperty(name);
-        }
     }
 }
