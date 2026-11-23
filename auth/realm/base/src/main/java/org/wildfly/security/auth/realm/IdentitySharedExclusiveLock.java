@@ -18,6 +18,10 @@
 
 package org.wildfly.security.auth.realm;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 /**
  * A simple shared/exclusive lock for a realm identity.
  *
@@ -25,71 +29,30 @@ package org.wildfly.security.auth.realm;
  */
 public class IdentitySharedExclusiveLock {
 
-    private int sharedHoldCount;
-    private boolean isExclusiveLocked;
-    private int exclusiveRequests;
+    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
 
     /**
-     * Acquire the exclusive lock. An invocation of this method will block until the lock can be acquired.
+     * Acquire the exclusive lock. An invocation of this method will block until the lock can be acquired,
+     * or the thread is interrupted.
      *
      * @return a lock object representing the newly acquired lock
+     * @throws InterruptedException if the current thread is interrupted while waiting for the lock
      */
-    public synchronized IdentityLock lockExclusive() {
-        boolean interrupted = false;
-        try {
-            exclusiveRequests++;
-            while ((sharedHoldCount > 0) || isExclusiveLocked) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    interrupted = true;
-                }
-            }
-            isExclusiveLocked = true;
-            exclusiveRequests--;
-            return new IdentityLock(true);
-        } finally {
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
-        }
-
+    public IdentityLock lockExclusive() throws InterruptedException {
+        readWriteLock.writeLock().lockInterruptibly();
+        return new IdentityLock(true, readWriteLock.writeLock());
     }
 
     /**
-     * Acquire a shared lock. An invocation of this method will block until the lock can be acquired.
+     * Acquire a shared lock. An invocation of this method will block until the lock can be acquired,
+     * or the thread is interrupted.
      *
      * @return a lock object representing the newly acquired lock
+     * @throws InterruptedException if the current thread is interrupted while waiting for the lock
      */
-    public synchronized IdentityLock lockShared() {
-        boolean interrupted = false;
-        try {
-            while (isExclusiveLocked || (exclusiveRequests > 0)) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    interrupted = true;
-                }
-            }
-            sharedHoldCount++;
-            return new IdentityLock(false);
-        } finally {
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
-
-    private synchronized void release(IdentityLock identityLock) {
-        if (identityLock.isExclusive()) {
-            isExclusiveLocked = false;
-            notifyAll();
-        } else {
-            if (--sharedHoldCount == 0) {
-                notifyAll();
-            }
-        }
-
+    public IdentityLock lockShared() throws InterruptedException {
+        readWriteLock.readLock().lockInterruptibly();
+        return new IdentityLock(false, readWriteLock.readLock());
     }
 
     /**
@@ -100,24 +63,29 @@ public class IdentitySharedExclusiveLock {
     public class IdentityLock implements AutoCloseable {
 
         private final boolean exclusive;
+        private final Lock internalLock;
         private volatile boolean valid = true;
 
         /**
          * Construct a new instance.
          *
          * @param exclusive {@code true} if this lock is exclusive, {@code false} if this lock is shared
+         * @param internalLock the underlying lock instance
          */
-        public IdentityLock(final boolean exclusive) {
+        public IdentityLock(final boolean exclusive, final Lock internalLock) {
             this.exclusive = exclusive;
+            this.internalLock = internalLock;
         }
 
         /**
          * Release this lock. Invoking this method has no effect if this lock is invalid.
          */
-        public synchronized void release() {
-            if (valid) {
-                IdentitySharedExclusiveLock.this.release(this);
-                valid = false;
+        public void release() {
+            synchronized (this) {
+                if (valid) {
+                    internalLock.unlock();
+                    valid = false;
+                }
             }
         }
 

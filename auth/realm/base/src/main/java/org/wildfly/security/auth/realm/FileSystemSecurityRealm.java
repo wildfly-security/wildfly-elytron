@@ -439,21 +439,27 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         // no need to register the listener given that changes to identities are done through the realm
     }
 
-    private ModifiableRealmIdentity getRealmIdentity(final String name, final boolean exclusive) {
+    private ModifiableRealmIdentity getRealmIdentity(String name, boolean exclusive) throws RealmUnavailableException {
         final String finalName = nameRewriter.rewriteName(name);
         if (finalName == null) {
             throw ElytronMessages.log.invalidName();
         }
 
+        IdentitySharedExclusiveLock lockObject = getRealmIdentityLockForName(finalName);
+        IdentitySharedExclusiveLock.IdentityLock identityLock;
+        
         // Acquire the appropriate lock for the realm identity
-        IdentitySharedExclusiveLock realmIdentityLock = getRealmIdentityLockForName(finalName);
-        IdentityLock lock;
-        if (exclusive) {
-            lock = realmIdentityLock.lockExclusive();
-        } else {
-            lock = realmIdentityLock.lockShared();
+        try {
+            if (exclusive) {
+                identityLock = lockObject.lockExclusive();
+            } else {
+                identityLock = lockObject.lockShared();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw ElytronMessages.log.interruptedWaitingForIdentityLock(e);
         }
-        return new Identity(finalName, pathFor(finalName), lock, hashCharset, hashEncoding, providers, secretKey, privateKey, publicKey, hasIntegrityEnabled());
+        return new Identity(finalName, pathFor(finalName), identityLock, hashCharset, hashEncoding, providers, secretKey, privateKey, publicKey, hasIntegrityEnabled());
     }
 
     @Override
