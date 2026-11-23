@@ -40,6 +40,7 @@ import java.net.URI;
 import java.security.AccessController;
 import java.security.KeyStore;
 import java.security.Principal;
+import java.security.PrivateKey;
 import java.security.PrivilegedAction;
 import java.security.Security;
 import java.security.cert.X509Certificate;
@@ -118,8 +119,9 @@ public class SSLAuthenticationTest {
     private static final File ROVE_REVOKED_PEM_CRL = new File(WORKING_DIR_ICACRL, "rove-revoked.pem");
     private static CAGenerationTool caGenerationTool = null;
     private static final File LADYBUG_REVOKED_PEM_CRL = new File(WORKING_DIR_CACRL, "ladybug-revoked.pem");
-    private static TestingOcspServer ocspServer = null;
+    private static SimpleOcspServer ocspServer = null;
     private static X509Certificate ocspResponderCertificate;
+    private static PrivateKey ocspResponderSigningKey;
     private static KeyStore shortWingedKeyStore;
     private static CustomIdentity goodIdentity;
     private static CustomIdentity revokedIdentity;
@@ -181,6 +183,7 @@ public class SSLAuthenticationTest {
         new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=OcspResponder"),
         "ocsp-responder.keystore", new ExtendedKeyUsageExtension(false, Collections.singletonList(OID_KP_OCSP_SIGNING)));
         ocspResponderCertificate = responderIdentity.getCertificate();
+        ocspResponderSigningKey = (PrivateKey) responderIdentity.loadKeyStore().getKey("ocspResponder", PASSWORD);
 
         // Generates GOOD certificate referencing the OCSP responder
         goodIdentity = intermediateCAIdentity.createIdentity("checked",
@@ -346,13 +349,11 @@ public class SSLAuthenticationTest {
         ladybugRevokedCrlOutput.close();
         roveRevokedCrlOutput.close();
 
-        ocspServer = new TestingOcspServer(OCSP_PORT);
-        ocspServer.createIssuer(1, caIdentity.getCertificate());
-        ocspServer.createIssuer(2, intermediateCAIdentity.getCertificate());
-        ocspServer.createCertificate(1, 1, intermediateCAIdentity.getCertificate());
-        ocspServer.createCertificate(2, 2, ocspCheckedGoodCertificate);
-        ocspServer.createCertificate(3, 1, ocspCheckedRevokedCertificate);
-        ocspServer.revokeCertificate(3, 4);
+        ocspServer = new SimpleOcspServer(OCSP_PORT, ocspResponderCertificate, ocspResponderSigningKey);
+        ocspServer.addCertificate(caIdentity.getCertificate(), ocspCheckedGoodCertificate, SimpleOcspServer.RevocationStatus.GOOD);
+        ocspServer.addCertificate(caIdentity.getCertificate(), ocspCheckedRevokedCertificate, SimpleOcspServer.RevocationStatus.REVOKED);
+        ocspServer.addCertificate(caIdentity.getCertificate(), intermediateCAIdentity.getCertificate(), SimpleOcspServer.RevocationStatus.GOOD);
+        ocspServer.addCertificate(intermediateCAIdentity.getCertificate(), ocspCheckedGoodCertificate, SimpleOcspServer.RevocationStatus.GOOD);
         ocspServer.start();
 
     }
