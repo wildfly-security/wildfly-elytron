@@ -27,8 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.wildfly.security.auth.server.RealmIdentity;
 
@@ -54,7 +53,12 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
      */
     private final Map<Principal, Set<Principal>> domainPrincipalMap;
 
-    private final AtomicBoolean writing = new AtomicBoolean(false);
+    /**
+     * ELY-3093 - Guards all access to {@link #identityCache} and {@link #domainPrincipalMap}. Neither map is thread-safe and,
+     * since {@code identityCache} is an access-order {@link LinkedHashMap}, even a {@code get} mutates its internal
+     * linked list, so reads cannot be allowed to run concurrently with each other or with writes.
+     */
+    private final ReentrantLock lock = new ReentrantLock();
 
     private final long maxAge;
 
@@ -88,11 +92,8 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
 
     @Override
     public void put(Principal key, RealmIdentity newValue) {
+        lock.lock();
         try {
-            if (parkForWriteAndCheckInterrupt()) {
-                return;
-            }
-
             CacheEntry entry = identityCache.computeIfAbsent(key, principal -> {
                 domainPrincipalMap.computeIfAbsent(newValue.getRealmIdentityPrincipal(), principal1 -> {
                     Set<Principal> principals = new HashSet<>();
@@ -108,59 +109,60 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
                 domainPrincipalMap.get(entry.value().getRealmIdentityPrincipal()).add(key);
             }
         } finally {
-            writing.lazySet(false);
+            lock.unlock();
         }
     }
 
     @Override
     public RealmIdentity get(Principal key) {
-        if (parkForReadAndCheckInterrupt()) {
+        lock.lock();
+        try {
+            CacheEntry cached = identityCache.get(key);
+
+            if (cached != null) {
+                return removeIfExpired(cached);
+            }
+
+            Set<Principal> domainPrincipal = domainPrincipalMap.get(key);
+
+            if (domainPrincipal != null) {
+                return removeIfExpired(identityCache.get(domainPrincipal.iterator().next()));
+            }
+
             return null;
+        } finally {
+            lock.unlock();
         }
-
-        CacheEntry cached = identityCache.get(key);
-
-        if (cached != null) {
-            return removeIfExpired(cached);
-        }
-
-        Set<Principal> domainPrincipal = domainPrincipalMap.get(key);
-
-        if (domainPrincipal != null) {
-            return removeIfExpired(identityCache.get(domainPrincipal.iterator().next()));
-        }
-
-        return null;
     }
 
     @Override
     public void remove(Principal key) {
+        lock.lock();
         try {
-            if (parkForWriteAndCheckInterrupt()) {
-                return;
-            }
-
             if (identityCache.containsKey(key)) {
                 domainPrincipalMap.remove(identityCache.remove(key).value().getRealmIdentityPrincipal()).forEach(identityCache::remove);
             } else if (domainPrincipalMap.containsKey(key)) {
                 domainPrincipalMap.remove(key).forEach(identityCache::remove);
             }
         } finally {
-            writing.lazySet(false);
+            lock.unlock();
         }
     }
 
     @Override
     public void clear() {
+        lock.lock();
         try {
-            parkForWriteAndCheckInterrupt();
             identityCache.clear();
             domainPrincipalMap.clear();
         } finally {
-            writing.lazySet(false);
+            lock.unlock();
         }
     }
 
+    /**
+     * Must be called while holding {@link #lock}.
+     */
     private RealmIdentity removeIfExpired(CacheEntry cached) {
         if (cached == null) {
             return null;
@@ -172,26 +174,6 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
         }
 
         return cached.value();
-    }
-
-    private boolean parkForWriteAndCheckInterrupt() {
-        while (!writing.compareAndSet(false, true)) {
-            LockSupport.parkNanos(1L);
-            if (Thread.interrupted()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean parkForReadAndCheckInterrupt() {
-        while (writing.get()) {
-            LockSupport.parkNanos(1L);
-            if (Thread.interrupted()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static final class CacheEntry {
