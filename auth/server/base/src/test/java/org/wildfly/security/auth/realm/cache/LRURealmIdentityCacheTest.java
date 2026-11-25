@@ -20,11 +20,20 @@ package org.wildfly.security.auth.realm.cache;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -146,6 +155,63 @@ public class LRURealmIdentityCacheTest {
 
         cache.remove(principals.get(4));
         assertNull(cache.get(principals.get(4)));
+    }
+
+    /**
+     * ELY-3093 - Hammers a single cache instance with concurrent put/get/remove from many threads to reproduce the
+     * {@code ConcurrentModificationException} that could previously be thrown from
+     * {@code LRURealmIdentityCache.put} when a reader raced a writer on the underlying maps.
+     */
+    @Test
+    public void testConcurrentAccess() throws Exception {
+        int threadCount = 16;
+        int iterationsPerThread = 50_000;
+        int keySpace = 50;
+
+        List<Principal> keys = new ArrayList<>();
+        for (int i = 0; i < keySpace; i++) {
+            createPrincipal(keys);
+        }
+
+        // small maxEntries and a short maxAge to force evictions and expiry-triggered removals during the run
+        RealmIdentityCache concurrentCache = new LRURealmIdentityCache(keySpace / 2, 1);
+
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
+
+        for (int t = 0; t < threadCount; t++) {
+            executor.submit(() -> {
+                try {
+                    ThreadLocalRandom random = ThreadLocalRandom.current();
+                    for (int i = 0; i < iterationsPerThread; i++) {
+                        Principal key = keys.get(random.nextInt(keySpace));
+                        switch (random.nextInt(3)) {
+                            case 0:
+                                concurrentCache.put(key, createRealmIdentity());
+                                break;
+                            case 1:
+                                concurrentCache.get(key);
+                                break;
+                            default:
+                                concurrentCache.remove(key);
+                                break;
+                        }
+                    }
+                } catch (Throwable e) {
+                    failures.add(e);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        assertTrue("threads did not finish in time", latch.await(60, TimeUnit.SECONDS));
+        executor.shutdownNow();
+
+        if (!failures.isEmpty()) {
+            fail(failures.size() + " thread(s) failed, first failure: " + failures.get(0));
+        }
     }
 
     @Test
