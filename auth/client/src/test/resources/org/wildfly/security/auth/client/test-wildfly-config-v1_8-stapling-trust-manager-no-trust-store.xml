@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright The WildFly Authors
+  ~ SPDX-License-Identifier: Apache-2.0
+-->
+<!-- Negative case (ELY-434): a trust-manager without a trust-store is not enough for accept-ocsp-stapling;
+     it must be rejected at parse time with an XML location. -->
+<configuration>
+    <authentication-client xmlns="urn:elytron:client:preview:1.8">
+        <ssl-contexts>
+            <ssl-context name="stapling-trust-manager-only">
+                <trust-manager/>
+                <accept-ocsp-stapling accept-ocsp="true"/>
+            </ssl-context>
+        </ssl-contexts>
+        <ssl-context-rules>
+            <rule use-ssl-context="stapling-trust-manager-only">
+                <match-host name="stapling-trust-manager-only"/>
+            </rule>
+        </ssl-context-rules>
+    </authentication-client>
+</configuration>

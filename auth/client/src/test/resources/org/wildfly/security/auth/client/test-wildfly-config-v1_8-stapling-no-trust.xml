@@ -3,7 +3,7 @@
   ~ Copyright The WildFly Authors
   ~ SPDX-License-Identifier: Apache-2.0
 -->
-<!-- Negative case (ELY-434): accept-ocsp-stapling without a trust-store or trust-manager must be
+<!-- Negative case (ELY-434): accept-ocsp-stapling without a trust-store must be
      rejected at parse time, because the stapling flag would otherwise be silently ignored. -->
 <configuration>
     <authentication-client xmlns="urn:elytron:client:preview:1.8">

@@ -560,10 +560,10 @@ public final class ElytronXmlParser {
                 final boolean initTrustManager = finalTrustStoreSupplier != null || isSet(foundBits, 7);
                 final boolean finalAcceptOcspStapling = acceptOcspStapling;
 
-                // Accepting OCSP stapling only has an effect when a revocation-aware trust manager is
-                // installed (without a trust-store or trust-manager the flag would silently be ignored).
-                if (finalAcceptOcspStapling && !initTrustManager) {
-                    throw xmlLog.xmlAcceptOcspStaplingRequiresTrustManager(location);
+                // The revocation-aware trust manager that consumes a stapled response is built from a trust store,
+                // so a trust-store is required; a trust-manager alone is not enough.
+                if (finalAcceptOcspStapling && finalTrustStoreSupplier == null) {
+                    throw xmlLog.xmlAcceptOcspStaplingRequiresTrustStore(location);
                 }
                 // A soft-fail/responder-certificate/responder-keystore set on accept-ocsp-stapling would compete with the ones already applied from <ocsp>/CRL.
                 if (finalAcceptOcspStapling && trustManagerBuilder.isOcspOrCrlConfigured() && trustManagerBuilder.hasStaplingOwnOverride()) {

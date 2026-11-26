@@ -225,16 +225,33 @@ public class ElytronXmlParserTest {
     }
 
     /**
-     * ELY-434: an accept-ocsp-stapling context without a trust-store or trust-manager must be rejected.
+     * ELY-434: an accept-ocsp-stapling context without a trust-store must be rejected.
      */
     @Test
-    public void testStaplingWithoutTrustManagerIsRejected() throws Exception {
-        URL config = getClass().getResource("test-wildfly-config-v1_8-stapling-no-trust.xml");
+    public void testStaplingWithoutTrustStoreIsRejected() throws Exception {
+        assertStaplingRejectedWithoutTrustStore("test-wildfly-config-v1_8-stapling-no-trust.xml");
+    }
+
+    /**
+     * ELY-434: a trust-manager without a trust-store is not enough for accept-ocsp-stapling. It must be
+     * rejected at parse time with ELY14009 and an XML location, not with an IllegalArgumentException
+     * from the trust manager builder.
+     */
+    @Test
+    public void testStaplingWithTrustManagerButNoTrustStoreIsRejected() throws Exception {
+        assertStaplingRejectedWithoutTrustStore("test-wildfly-config-v1_8-stapling-trust-manager-no-trust-store.xml");
+    }
+
+    private void assertStaplingRejectedWithoutTrustStore(String resource) throws Exception {
+        URL config = getClass().getResource(resource);
         try {
             ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
-            Assert.fail("Expected ConfigXMLParseException for accept-ocsp-stapling without a trust manager");
+            Assert.fail("Expected ConfigXMLParseException for accept-ocsp-stapling without a trust-store");
         } catch (ConfigXMLParseException expected) {
             Assert.assertTrue("Expected ELY14009 in: " + expected.getMessage(), expected.getMessage().contains("ELY14009"));
+            Assert.assertTrue("Expected a trust-store only message: " + expected.getMessage(), expected.getMessage().contains("requires a \"trust-store\" to be configured"));
+            Assert.assertNotNull("Expected an XML location", expected.getLocation());
+            Assert.assertTrue("Expected a line number in the location: " + expected.getLocation(), expected.getLocation().getLineNumber() > 0);
         }
     }
 

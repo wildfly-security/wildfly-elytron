@@ -120,6 +120,7 @@
         <xsd:annotation>
             <xsd:documentation>
                 An empty element has no effect because accept-ocsp defaults to false.
+                When accept-ocsp is true, a trust-store must be configured in the same ssl-context; a trust-manager element alone is not enough.
                 When enabled without ocsp or certificate-revocation-list configuration, revocation is checked for the entire certificate path.
                 If a certificate has no revocation source and soft-fail is false, the connection is rejected.
                 Set only-leaf-cert=true on trust-manager to limit checking to the leaf.
