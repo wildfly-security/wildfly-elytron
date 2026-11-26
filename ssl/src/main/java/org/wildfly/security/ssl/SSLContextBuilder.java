@@ -54,6 +54,8 @@ import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
  *     <li>The "require client authentication" flag defaults to {@code false}</li>
  *     <li>The provider supplier defaults to {@link Security#getProviders() Security::getProviders}</li>
  * </ul>
+ * <p>With SunJSSE, server-side OCSP stapling is configured at JVM startup with
+ * {@code jdk.tls.server.enableStatusRequestExtension}; this builder does not change JVM system or security properties.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -308,8 +310,6 @@ public final class SSLContextBuilder {
         this.mechanismConfigurationSelector = mechanismConfigurationSelector;
         return this;
     }
-
-
 
     /**
      * Build a security factory for the new context.  The factory will cache the constructed instance.
