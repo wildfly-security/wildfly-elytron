@@ -298,11 +298,6 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
             0x4f727068, 0x65616e42, 0x65686f6c, 0x64657253, 0x63727944, 0x6f756274
     };
 
-    // 128-bit salt that has all bits set to zero (used in the enhanced key schedule).
-    private static final byte[] zeroedSalt = {
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-    };
-
     /**
      * <p>
      * Hashes the password with the given salt and cost using the bcrypt algorithm. The algorithm is defined as follows:
@@ -407,8 +402,8 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
         // repeat (2^cost) rounds
         final int rounds = 1 << cost;
         for (int i = 0; i < rounds; i++) {
-            expandKey(state, zeroedSalt, key);
-            expandKey(state, zeroedSalt, salt);
+            expandKey(state, key);
+            expandKey(state, salt);
         }
         return state;
     }
@@ -466,6 +461,36 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
             S[i+1] = ctext[1];
         }
 
+    }
+
+    /**
+     * <p>
+     * Performs the expandKey step with a salt that has all bits set to zero, as used in the expensive rounds of the
+     * key schedule setup. Xoring the ctext with a zero salt is a no-op, so the salt is not read at all.
+     * </p>
+     *
+     * @param state the current bcrypt state (P-array and S-boxes).
+     * @param key   the key material to be used.
+     */
+    private static void expandKey(final BCryptState state, final byte[] key) {
+        CyclicByteBuffer keyBuffer = new CyclicByteBuffer(key);
+        int[] P = state.getPArray();
+        int[] S = state.getSBoxes();
+
+        for (int i = 0; i < P.length; i++) {
+            P[i] = P[i] ^ keyBuffer.readNextInt();
+        }
+        int[] ctext = {0, 0};
+        for (int i = 0; i < P.length; i += 2) {
+            encrypt(state, ctext);
+            P[i] = ctext[0];
+            P[i+1] = ctext[1];
+        }
+        for (int i = 0; i < S.length; i += 2) {
+            encrypt(state, ctext);
+            S[i] = ctext[0];
+            S[i+1] = ctext[1];
+        }
     }
 
     /**

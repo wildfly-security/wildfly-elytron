@@ -199,6 +199,38 @@ public class BCryptPasswordTest {
         Assert.assertEquals(cryptString, ModularCrypt.encodeAsString(password));
     }
 
+    /**
+     * <p>
+     * Test hashing with non-ASCII passwords, a password at the 72-byte limit and salts with all bits clear or all bits
+     * set.
+     * </p>
+     *
+     * @throws Exception if an error occurs while running the test.
+     */
+    @Test
+    public void testHashEdgeCases() throws Exception {
+        String[][] vectors = {
+                {"p\u00e4ssw\u00f6rd", "$2a$04$./CgKyPTXlcGkYo5xL1s9uBkpb364PBEn8LrJymglKBchzjB94sO2"}, // pässwörd
+                {"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "$2a$04$Bv2rNCrYYVgFjoUyu7Jf6.DfY3H8HNgCn527cV5WgGAa3KY7y.NbK"},
+                {"\u20acuro \u00fcn\u00efcode \u5bc6\u7801", "$2a$05$999999999999999999999urACcnfBLzFlBCBr0Xz3wlx2gglddNNO"}, // €uro ünïcode 密码, salt 16 x 0xFF
+                {"x", "$2a$06$......................QiwItHmglOjoL8IomkfnmiQ.lL3Nyjy"} // salt 16 x 0x00
+        };
+        PasswordFactory factory = PasswordFactory.getInstance(ALGORITHM_BCRYPT);
+        for (String[] vector : vectors) {
+            char[] correctPassword = vector[0].toCharArray();
+            BCryptPassword password = (BCryptPassword) factory.translate(ModularCrypt.decode(vector[1]));
+
+            // verify the hash using the correct password and check if an incorrect password gets rejected.
+            Assert.assertTrue(factory.verify(password, correctPassword));
+            Assert.assertFalse(factory.verify(password, "wrongpassword".toCharArray()));
+
+            // hash the password again with the same salt and cost and check if it yields the same crypt string.
+            password = (BCryptPassword) factory.generatePassword(new EncryptablePasswordSpec(correctPassword,
+                    new IteratedSaltedPasswordAlgorithmSpec(password.getIterationCount(), password.getSalt())));
+            Assert.assertEquals(vector[1], ModularCrypt.encodeAsString(password));
+        }
+    }
+
     @Test
     public void testLongKeys() throws Exception {
         byte[] salt = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
